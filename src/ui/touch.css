@@ -1,0 +1,63 @@
+/* Dokunmatik kontroller */
+#touch {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  display: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+#touch.show { display: block; }
+#touch .pad {
+  position: absolute;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+}
+#touch .pad.left { left: max(18px, env(safe-area-inset-left)); }
+#touch .pad.right { right: max(18px, env(safe-area-inset-right)); }
+#touch button {
+  pointer-events: auto;
+  touch-action: none;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.75);
+  background: rgba(11, 42, 85, 0.35);
+  color: #fff;
+  font-family: var(--tt-font-display);
+  font-size: 30px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 5px 0 rgba(11, 42, 85, 0.35);
+  transition: transform 0.06s, background 0.06s;
+  -webkit-tap-highlight-color: transparent;
+}
+#touch button.down { transform: translateY(3px) scale(0.95); background: rgba(255, 210, 63, 0.75); color: var(--tt-navy); box-shadow: 0 2px 0 rgba(11, 42, 85, 0.35); }
+#touch .drift { width: 104px; height: 104px; font-size: 22px; background: rgba(255, 106, 26, 0.45); }
+#touch .item { width: 68px; height: 68px; font-size: 16px; margin-bottom: 70px; }
+#touch .brake { width: 60px; height: 60px; font-size: 13px; }
+#touch .gas { display: none; width: 84px; height: 84px; font-size: 18px; background: rgba(46, 224, 122, 0.45); }
+#touch.manual-gas .gas { display: block; }
+
+/* Dokunmatikte HUD yerleşimi: mini harita sol üstte, hız göstergesi gizli (kontroller alta) */
+@media (pointer: coarse) {
+  #hud #hud-map { bottom: auto; top: calc(max(14px, env(safe-area-inset-top)) + 84px); transform: scale(0.7); transform-origin: left top; }
+  #hud #hud-speed { display: none; }
+}
+/* Dar (dikey) ekran: sağ grup üst üste, butonlar biraz küçük */
+@media (max-width: 520px) {
+  #touch .pad { gap: 10px; }
+  #touch .pad.right { flex-direction: column; align-items: flex-end; }
+  #touch button { width: 70px; height: 70px; font-size: 24px; }
+  #touch .drift { width: 86px; height: 86px; font-size: 18px; }
+  #touch .item { width: 60px; height: 60px; font-size: 14px; margin-bottom: 0; }
+  #touch .brake { width: 54px; height: 54px; font-size: 12px; }
+}
+@media (pointer: coarse) and (max-height: 480px) {
+  #touch button { width: 70px; height: 70px; font-size: 24px; }
+  #touch .drift { width: 88px; height: 88px; }
+  #touch .item { width: 58px; height: 58px; margin-bottom: 56px; }
+}

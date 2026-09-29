@@ -1,0 +1,420 @@
+import crypto from 'node:crypto';
+
+// Oda / lobi / yarış yönetimi. Tek süreç, bellekte; veritabanı yok.
+//
+// Mesajlar JSON: { type, ... }. İstemci → sunucu:
+//   create {name, character}          join {code, name, character}
+//   resume {code, token}              character {character}
+//   settings {laps, difficulty}       ready {ready}
+//   start {trackCount}                state {s: {...}, bots: [{id, s}]}
+//   finish {id, time}                 backToLobby
+//   item {kind, id, owner, p, v}      hit {id, target}      box {i}
+//   leave                             ping {t}
+// Sunucu → istemci:
+//   welcome {id, token, code}         room {...}           error {msg}
+//   start {goAt, laps, difficulty, entrants}              states {list}
+//   finish {id, time, place}          raceOver             pong {t, server}
+
+const MAX_PLAYERS = 8;
+const CHARACTERS = ['fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot'];
+const TRACKS = ['palmCove', 'pineValley'];
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // karışan 0/O, 1/I yok
+const COUNTDOWN_MS = 3600 + 1500; // istemci geri sayımı + kamera geçişi payı
+const RECONNECT_GRACE_MS = 60_000;
+const STATE_HZ = 20;
+const MIN_LAP_SECONDS = 12; // bundan hızlı tur = hile/hata
+const MAX_PROGRESS_RATE = 24; // örnek/saniye (~60 m/s), üstü reddedilir
+const RESULTS_TIMEOUT_MS = 45_000; // ilk bitiren + bu süre → yarış biter
+
+const rooms = new Map();
+
+const now = () => Date.now();
+const cleanName = (s) =>
+  String(s ?? '')
+    .replace(/[\u0000-\u001f<>]/g, '')
+    .trim()
+    .slice(0, 14) || 'Pilot';
+
+function newCode() {
+  for (;;) {
+    let code = '';
+    for (let i = 0; i < 5; i++) code += CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)];
+    if (!rooms.has(code)) return code;
+  }
+}
+
+function send(ws, msg) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg));
+}
+
+function broadcast(room, msg, exceptId = null) {
+  const data = JSON.stringify(msg);
+  for (const p of room.players.values()) {
+    if (p.id !== exceptId && p.ws?.readyState === 1) p.ws.send(data);
+  }
+}
+
+function roomView(room) {
+  return {
+    type: 'room',
+    code: room.code,
+    hostId: room.hostId,
+    phase: room.phase,
+    settings: room.settings,
+    players: [...room.players.values()].map((p) => ({
+      id: p.id,
+      name: p.name,
+      character: p.character,
+      ready: p.ready,
+      connected: !!p.ws,
+    })),
+  };
+}
+
+const syncRoom = (room) => broadcast(room, roomView(room));
+
+function freeCharacter(room, wanted, exceptId) {
+  const taken = new Set([...room.players.values()].filter((p) => p.id !== exceptId).map((p) => p.character));
+  if (CHARACTERS.includes(wanted) && !taken.has(wanted)) return wanted;
+  return CHARACTERS.find((c) => !taken.has(c));
+}
+
+function addPlayer(room, ws, name, character) {
+  const p = {
+    id: crypto.randomUUID().slice(0, 8),
+    token: crypto.randomUUID(),
+    name: cleanName(name),
+    character: freeCharacter(room, character, null),
+    ready: false,
+    ws,
+    leftAt: 0,
+    // yarış durumu (sunucu doğrulaması için)
+    lastState: null,
+    progress: null,
+    progressAt: 0,
+    finished: false,
+  };
+  room.players.set(p.id, p);
+  ws.player = p;
+  ws.room = room;
+  send(ws, { type: 'welcome', id: p.id, token: p.token, code: room.code });
+  return p;
+}
+
+function pickHost(room) {
+  const next = [...room.players.values()].find((p) => p.ws);
+  room.hostId = next?.id ?? null;
+}
+
+function removePlayer(room, p) {
+  room.players.delete(p.id);
+  if (room.hostId === p.id) pickHost(room);
+  if (room.players.size === 0) {
+    rooms.delete(room.code);
+    return;
+  }
+  if (room.phase === 'racing') checkRaceOver(room);
+  syncRoom(room);
+}
+
+// --- Yarış ---
+function startRace(room, trackCount) {
+  room.trackCount = trackCount;
+  const humans = [...room.players.values()].filter((p) => p.ws);
+  // İnsanlar karışık sırayla önde, botlar arkada
+  const order = humans.sort(() => Math.random() - 0.5);
+  const taken = new Set(order.map((p) => p.character));
+  const bots = CHARACTERS.filter((c) => !taken.has(c)).map((c) => ({ id: `bot-${c}`, character: c }));
+  room.entrants = [
+    ...order.map((p) => ({ id: p.id, character: p.character, name: p.name, bot: false })),
+    ...bots.map((b) => ({ id: b.id, character: b.character, name: null, bot: true })),
+  ];
+  room.botState = new Map(); // bot id → {state, progress, finished}
+  room.things = new Map(); // item id → {kind, t, consumed}
+  room.lastItemAt = new Map();
+  room.finishOrder = [];
+  room.firstFinishAt = 0;
+  room.phase = 'racing';
+  room.goAt = now() + COUNTDOWN_MS;
+  for (const p of room.players.values()) {
+    p.ready = false;
+    p.lastState = null;
+    p.progress = null;
+    p.finished = false;
+  }
+  broadcast(room, { type: 'start', goAt: room.goAt, laps: room.settings.laps, difficulty: room.settings.difficulty, track: room.settings.track, entrants: room.entrants });
+  syncRoom(room);
+}
+
+// İlerleme makul mü? (ışınlanma / aşırı hız)
+function acceptProgress(holder, progress, t) {
+  if (typeof progress !== 'number' || !Number.isFinite(progress)) return false;
+  if (holder.progress === null) {
+    holder.progress = progress;
+    holder.progressAt = t;
+    return true;
+  }
+  const dt = Math.max(0.05, (t - holder.progressAt) / 1000);
+  const rate = (progress - holder.progress) / dt;
+  if (rate > MAX_PROGRESS_RATE) return false;
+  holder.progress = progress;
+  holder.progressAt = t;
+  return true;
+}
+
+// Bu oyuncu bu kartı (kendisi ya da oda sahibiyse bot) yönetebilir mi?
+function controls(room, p, kartId) {
+  if (kartId === p.id) return true;
+  return room.hostId === p.id && room.entrants?.some((e) => e.id === kartId && e.bot);
+}
+
+function recordFinish(room, id, time) {
+  if (room.finishOrder.some((f) => f.id === id)) return;
+  const minTime = MIN_LAP_SECONDS * room.settings.laps;
+  if (!(time >= minTime)) return; // imkansız derecede hızlı
+  // Sunucunun gördüğü süreyle de karşılaştır (istemci saati biraz sapabilir)
+  const serverTime = (now() - room.goAt) / 1000;
+  if (Math.abs(serverTime - time) > 5) time = serverTime;
+  room.finishOrder.push({ id, time });
+  if (!room.firstFinishAt) room.firstFinishAt = now();
+  broadcast(room, { type: 'finish', id, time, place: room.finishOrder.length });
+  checkRaceOver(room);
+}
+
+function checkRaceOver(room) {
+  if (room.phase !== 'racing') return;
+  const humansLeft = [...room.players.values()].filter((p) => p.ws && !room.finishOrder.some((f) => f.id === p.id));
+  const timedOut = room.firstFinishAt && now() - room.firstFinishAt > RESULTS_TIMEOUT_MS;
+  if (humansLeft.length === 0 || timedOut) {
+    room.phase = 'results';
+    broadcast(room, { type: 'raceOver' });
+    syncRoom(room);
+  }
+}
+
+// --- Mesaj işleme ---
+export function handleMessage(ws, raw) {
+  let msg;
+  try {
+    msg = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!msg || typeof msg.type !== 'string') return;
+  const p = ws.player;
+  const room = ws.room;
+
+  switch (msg.type) {
+    case 'ping':
+      send(ws, { type: 'pong', t: msg.t, server: now() });
+      return;
+
+    case 'create': {
+      if (p) return;
+      const code = newCode();
+      const r = { code, hostId: null, phase: 'lobby', settings: { laps: 3, difficulty: 'normal', track: 'palmCove' }, players: new Map(), emptySince: 0 };
+      rooms.set(code, r);
+      const me = addPlayer(r, ws, msg.name, msg.character);
+      r.hostId = me.id;
+      syncRoom(r);
+      return;
+    }
+
+    case 'join': {
+      if (p) return;
+      const r = rooms.get(String(msg.code ?? '').toUpperCase());
+      if (!r) return send(ws, { type: 'error', code: 'no-room', msg: 'Bu kodla bir oda bulunamadı.' });
+      if (r.phase !== 'lobby') return send(ws, { type: 'error', code: 'in-race', msg: 'Bu odada yarış sürüyor. Bitince tekrar dene.' });
+      if (r.players.size >= MAX_PLAYERS) return send(ws, { type: 'error', code: 'full', msg: 'Oda dolu (en fazla 8 oyuncu).' });
+      addPlayer(r, ws, msg.name, msg.character);
+      if (!r.hostId) pickHost(r);
+      syncRoom(r);
+      return;
+    }
+
+    case 'resume': {
+      // Bağlantı koptuktan sonra aynı oyuncu olarak geri dön
+      const r = rooms.get(String(msg.code ?? '').toUpperCase());
+      const old = r && [...r.players.values()].find((x) => x.token === msg.token);
+      if (!old) return send(ws, { type: 'error', code: 'no-resume', msg: 'Oturum süresi doldu.' });
+      if (old.ws && old.ws !== ws) old.ws.close();
+      old.ws = ws;
+      old.leftAt = 0;
+      ws.player = old;
+      ws.room = r;
+      if (!r.hostId) pickHost(r);
+      send(ws, { type: 'welcome', id: old.id, token: old.token, code: r.code, resumed: true });
+      syncRoom(r); // önce oda (kim sahip), sonra yarış bilgisi
+      if (r.phase === 'racing') {
+        send(ws, {
+          type: 'start',
+          goAt: r.goAt,
+          laps: r.settings.laps,
+          difficulty: r.settings.difficulty,
+          track: r.settings.track,
+          entrants: r.entrants,
+          resume: old.lastState,
+          bots: [...r.botState].filter(([, b]) => b.state).map(([id, b]) => ({ id, s: b.state })),
+          finishes: r.finishOrder,
+        });
+      }
+      return;
+    }
+  }
+
+  if (!p || !room) return;
+
+  switch (msg.type) {
+    case 'character':
+      if (room.phase !== 'lobby') return;
+      p.character = freeCharacter(room, msg.character, p.id);
+      syncRoom(room);
+      return;
+
+    case 'name':
+      p.name = cleanName(msg.name);
+      syncRoom(room);
+      return;
+
+    case 'settings':
+      if (room.hostId !== p.id || room.phase !== 'lobby') return;
+      if ([1, 3, 5].includes(msg.laps)) room.settings.laps = msg.laps;
+      if (['easy', 'normal', 'hard'].includes(msg.difficulty)) room.settings.difficulty = msg.difficulty;
+      if (TRACKS.includes(msg.track)) room.settings.track = msg.track;
+      syncRoom(room);
+      return;
+
+    case 'ready':
+      p.ready = !!msg.ready;
+      syncRoom(room);
+      return;
+
+    case 'start': {
+      if (room.hostId !== p.id || room.phase !== 'lobby') return;
+      const others = [...room.players.values()].filter((x) => x.ws && x.id !== p.id);
+      if (others.some((x) => !x.ready)) return send(ws, { type: 'error', code: 'not-ready', msg: 'Herkes hazır olmadan başlatılamaz.' });
+      const count = Number(msg.trackCount);
+      if (!(count > 50 && count < 5000)) return;
+      startRace(room, count);
+      return;
+    }
+
+    case 'state': {
+      if (room.phase !== 'racing' || !msg.s) return;
+      const t = now();
+      if (acceptProgress(p, msg.s.pr, t)) p.lastState = msg.s;
+      // Botları sadece oda sahibi gönderebilir
+      if (room.hostId === p.id && Array.isArray(msg.bots)) {
+        for (const b of msg.bots.slice(0, MAX_PLAYERS)) {
+          if (!room.entrants.some((e) => e.id === b.id && e.bot)) continue;
+          let holder = room.botState.get(b.id);
+          if (!holder) room.botState.set(b.id, (holder = { progress: null, progressAt: 0, state: null }));
+          if (acceptProgress(holder, b.s?.pr, t)) holder.state = b.s;
+        }
+      }
+      return;
+    }
+
+    // --- Itemler ---
+    case 'item': {
+      // Fırlatılan hindistan cevizi / bırakılan yağ lekesi: diğerlerine duyur
+      if (room.phase !== 'racing' || !['coconut', 'oil'].includes(msg.kind)) return;
+      const owner = String(msg.owner ?? '');
+      if (!controls(room, p, owner)) return;
+      const id = String(msg.id ?? '');
+      if (!id.startsWith(owner + ':') || id.length > 40 || room.things.has(id)) return;
+      const t = now();
+      if (t - (room.lastItemAt.get(owner) ?? 0) < 700) return; // item yağmuru yok
+      room.lastItemAt.set(owner, t);
+      room.things.set(id, { kind: msg.kind, t, consumed: false });
+      const vec = (a) => (Array.isArray(a) && a.length === 3 && a.every(Number.isFinite) ? a : [0, 0, 0]);
+      broadcast(room, { type: 'item', kind: msg.kind, id, owner, p: vec(msg.p), v: vec(msg.v) }, p.id);
+      return;
+    }
+
+    case 'hit': {
+      // Vurulan kartın cihazı isabeti bildirir; item gerçekten var ve tüketilmemiş olmalı
+      if (room.phase !== 'racing') return;
+      const target = String(msg.target ?? '');
+      if (!controls(room, p, target)) return;
+      const thing = room.things.get(String(msg.id));
+      if (!thing || thing.consumed || now() - thing.t > 30_000) return;
+      thing.consumed = true;
+      broadcast(room, { type: 'hit', id: String(msg.id), target }, p.id);
+      return;
+    }
+
+    case 'box':
+      if (room.phase === 'racing' && Number.isInteger(msg.i) && msg.i >= 0 && msg.i < 64) broadcast(room, { type: 'box', i: msg.i }, p.id);
+      return;
+
+    case 'finish': {
+      if (room.phase !== 'racing') return;
+      const id = msg.id ?? p.id;
+      const isMe = id === p.id;
+      const isBot = room.hostId === p.id && room.entrants.some((e) => e.id === id && e.bot);
+      if (!isMe && !isBot) return;
+      // Sunucunun takip ettiği ilerleme tur sayısına ulaşmış olmalı
+      const holder = isMe ? p : room.botState.get(id);
+      const needed = room.trackCount * room.settings.laps;
+      if (!holder || holder.progress === null || holder.progress < needed - 5) return;
+      recordFinish(room, id, Number(msg.time));
+      return;
+    }
+
+    case 'backToLobby':
+      if (room.phase === 'results' || (room.phase === 'racing' && room.hostId === p.id)) {
+        room.phase = 'lobby';
+        syncRoom(room);
+      }
+      return;
+
+    case 'leave':
+      ws.player = null;
+      ws.room = null;
+      removePlayer(room, p);
+      return;
+  }
+}
+
+export function handleClose(ws) {
+  const p = ws.player;
+  const room = ws.room;
+  if (!p || !room || p.ws !== ws) return;
+  p.ws = null;
+  p.leftAt = now();
+  if (room.hostId === p.id) {
+    // Kısa kopmalarda (sayfa yenileme, anlık ağ kaybı) sahipliği hemen devretme
+    setTimeout(() => {
+      if (!p.ws && room.hostId === p.id && rooms.has(room.code)) {
+        pickHost(room);
+        syncRoom(room);
+      }
+    }, 4000);
+  }
+  syncRoom(room);
+  if (room.phase === 'racing') checkRaceOver(room);
+}
+
+// Periyodik: durum yayını + zaman aşımları
+export function startTicker() {
+  setInterval(() => {
+    const t = now();
+    for (const room of rooms.values()) {
+      if (room.phase === 'racing') {
+        const list = [];
+        for (const p of room.players.values()) if (p.lastState && p.ws) list.push({ id: p.id, s: p.lastState });
+        for (const [id, b] of room.botState) if (b.state) list.push({ id, s: b.state });
+        if (list.length) broadcast(room, { type: 'states', server: t, list });
+        for (const [id, th] of room.things) if (t - th.t > 30_000) room.things.delete(id);
+        checkRaceOver(room);
+      }
+      // Uzun süredir kopuk oyuncuları çıkar
+      for (const p of [...room.players.values()]) {
+        if (!p.ws && p.leftAt && t - p.leftAt > (room.phase === 'lobby' ? 15_000 : RECONNECT_GRACE_MS)) removePlayer(room, p);
+      }
+    }
+  }, 1000 / STATE_HZ);
+}
+
+export const stats = () => ({ rooms: rooms.size, players: [...rooms.values()].reduce((n, r) => n + r.players.size, 0) });

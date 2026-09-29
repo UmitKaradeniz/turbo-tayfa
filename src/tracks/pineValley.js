@@ -1,0 +1,120 @@
+// "Çam Vadisi" — dağlarla çevrili bir vadide çam ormanı, göl kenarı ve kamp alanı.
+// Tepeye tırmanan uzun bir yokuş, oradan inen virajlı bir iniş ve göl kıyısında şikan.
+// Kontrol noktaları: [x, z, yükseklik].
+
+export default {
+  id: 'pineValley',
+  name: 'Çam Vadisi',
+  meta: 'Orman · göl · tepe',
+  halfWidth: 8,
+  curbWidth: 1,
+  shoulder: 5,
+  terrainSize: 600,
+  shoreMargin: () => 90, // pistin dışında geniş kara, sonra dağ yamacı
+  outer: 'mountains', // pist alanının dışı denize inmek yerine dağa yükselir
+  baseHeight: 1.2,
+  ponds: [{ x: 18, z: -52, r: 30 }], // iç göl
+  palette: { base: 0x7cc452, shore: 0x8a6a45, patch: 0x5a9e3c, patchDark: 0x467f2f, shoulder: 0xa8825a, cliff: 0x9aa0a8 },
+  dust: [0.62, 0.5, 0.36],
+  sky: { top: 0x4a8fd6, horizon: 0xd9eef8, fog: 0xcfe6f2 },
+  water: { shallow: 0x5cc9bd, deep: 0x1d5f8c },
+  control: [
+    [-60, -112, 1.4], // başlangıç düzlüğü (göl kıyısı)
+    [0, -114, 1.4],
+    [60, -108, 1.8],
+    [110, -84, 3.2],
+    [138, -40, 6],
+    [132, 6, 9], // tepeye tırmanış
+    [104, 42, 11],
+    [64, 54, 11],
+    [30, 34, 9.5], // iniş ve S virajları
+    [6, 8, 8],
+    [-24, 16, 7],
+    [-42, 54, 6],
+    [-82, 88, 4.5],
+    [-128, 72, 3],
+    [-152, 22, 2],
+    [-148, -40, 1.6],
+    [-120, -94, 1.4],
+  ],
+
+  models: [
+    'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
+    'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',
+    'nature/tree_pineTallA', 'nature/tree_pineTallB', 'nature/tree_pineRoundA', 'nature/tree_pineRoundC',
+    'nature/tree_pineDefaultA', 'nature/tree_cone', 'nature/tree_detailed', 'nature/rock_tallA', 'nature/rock_tallB',
+    'nature/rock_largeA', 'nature/rock_largeB', 'nature/stump_round', 'nature/log_stack', 'nature/log',
+    'nature/mushroom_red', 'nature/mushroom_redGroup', 'nature/plant_bush', 'nature/plant_bushLarge', 'nature/grass_large',
+    'nature/grass', 'nature/flower_purpleA', 'nature/flower_yellowA', 'nature/tent_detailedOpen', 'nature/tent_smallOpen',
+    'nature/campfire_stones', 'nature/canoe', 'nature/platform_beach', 'nature/statue_obelisk',
+  ],
+
+  decorate(ctx) {
+    const { track } = ctx;
+    const hw = this.halfWidth;
+    const edge = track.edge;
+    const probe = ctx.along(0, 30);
+    const outerSide = track.insideLoop(probe.x, probe.z) ? -1 : 1;
+    const innerSide = -outerSide;
+
+    // --- Başlangıç alanı ---
+    const gantry = ctx.along(0, 0);
+    ctx.place('racing/overheadLights', gantry.x, gantry.z, gantry.acrossY, (2 * (hw + 1) + 3) / 1.26, track.centerline[0].y - 0.15);
+    for (const s of [-1, 1]) {
+      const f = ctx.along(1, s * (hw + 3));
+      ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 7);
+    }
+    for (let k = -2; k <= 1; k++) {
+      const g = ctx.along(k * 5, outerSide * (edge + 7));
+      ctx.place('racing/grandStandCovered', g.x, g.z, g.faceTrackY, 10);
+      ctx.reserve(g.x, g.z, 12);
+    }
+    for (let k = -24; k <= 24; k += 8) {
+      if (Math.abs(k) < 4) continue;
+      const b = ctx.along(k, innerSide * (edge + 2.5));
+      ctx.place(k % 16 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
+    }
+
+    // --- Göl kıyısında kamp ---
+    const lake = this.ponds[0];
+    for (let k = 0; k < 3; k++) {
+      const a = 2.3 + k * 0.45;
+      const x = lake.x + Math.cos(a) * (lake.r + 8);
+      const z = lake.z + Math.sin(a) * (lake.r + 8);
+      ctx.place(k === 1 ? 'nature/tent_detailedOpen' : 'nature/tent_smallOpen', x, z, -a + Math.PI / 2, 6);
+      ctx.reserve(x, z, 8);
+    }
+    ctx.place('nature/campfire_stones', lake.x + Math.cos(2.75) * (lake.r + 16), lake.z + Math.sin(2.75) * (lake.r + 16), 0, 6);
+    ctx.place('nature/log', lake.x + Math.cos(2.95) * (lake.r + 18), lake.z + Math.sin(2.95) * (lake.r + 18), 1.1, 6);
+    ctx.place('nature/canoe', lake.x + 6, lake.z + 4, 0.8, 6, 0.1);
+    for (let k = 0; k < 4; k++) {
+      const x = lake.x + Math.cos(4.1) * (lake.r - 3 + k * 5);
+      const z = lake.z + Math.sin(4.1) * (lake.r - 3 + k * 5);
+      ctx.place('nature/platform_beach', x, z, -4.1, 7, 0.35);
+    }
+
+    // Tepede dikilitaş (manzara noktası)
+    const top = Math.round(track.count * 0.36);
+    const o = ctx.along(top, track.innerSide[top] * (edge + 14));
+    ctx.place('nature/statue_obelisk', o.x, o.z, 0, 9);
+    ctx.reserve(o.x, o.z, 8);
+
+    // --- Orman ---
+    ctx.noShadow('nature/grass', 'nature/grass_large', 'nature/flower_purpleA', 'nature/flower_yellowA', 'nature/mushroom_red');
+    const off = (d, m) => d > edge + m;
+    ctx.scatter({
+      keys: ['nature/tree_pineTallA', 'nature/tree_pineTallB', 'nature/tree_pineRoundA', 'nature/tree_pineRoundC', 'nature/tree_pineDefaultA', 'nature/tree_cone'],
+      count: 420,
+      scale: [7, 12],
+      where: (s, d) => s > -40 && off(d, 5),
+    });
+    ctx.scatter({ keys: ['nature/tree_detailed'], count: 40, scale: [7, 10], where: (s, d) => s > 5 && off(d, 7) });
+    ctx.scatter({ keys: ['nature/rock_tallA', 'nature/rock_tallB'], count: 70, scale: [8, 16], where: (s, d) => s < -5 && off(d, 12) });
+    ctx.scatter({ keys: ['nature/rock_largeA', 'nature/rock_largeB'], count: 60, scale: [4, 9], where: (s, d) => off(d, 4) });
+    ctx.scatter({ keys: ['nature/stump_round', 'nature/log_stack', 'nature/log'], count: 50, scale: [5, 7], where: (s, d) => s > 0 && off(d, 4) });
+    ctx.scatter({ keys: ['nature/mushroom_red', 'nature/mushroom_redGroup'], count: 90, scale: [4, 7], where: (s, d) => s > 0 && off(d, 3) });
+    ctx.scatter({ keys: ['nature/plant_bushLarge', 'nature/plant_bush'], count: 200, scale: [6, 9], where: (s, d) => off(d, 3) });
+    ctx.scatter({ keys: ['nature/grass_large', 'nature/grass'], count: 520, scale: [5, 8], where: (s, d) => s > -20 && off(d, 1.5) });
+    ctx.scatter({ keys: ['nature/flower_purpleA', 'nature/flower_yellowA'], count: 260, scale: [4, 6], where: (s, d) => s > 0 && off(d, 3) });
+  },
+};

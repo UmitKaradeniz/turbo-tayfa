@@ -1,0 +1,148 @@
+// "Palmiye Koyu" — Turbo Tayfa'nın ilk pisti. Tropikal bir adada sahil boyunca
+// uzun bir düzlük, tepeye tırmanan S virajları, bir firkete ve lagün kenarı.
+// Kontrol noktaları: [x, z, yükseklik]. Pist bu noktalardan geçen kapalı bir eğridir.
+
+export default {
+  id: 'palmCove',
+  name: 'Palmiye Koyu',
+  meta: 'Tropikal sahil · lagün',
+  dust: [0.93, 0.82, 0.6],
+  sky: { top: 0x3d9df2, horizon: 0xcdeeff, fog: 0xc4e8fb },
+  water: { shallow: 0x3fe0d0, deep: 0x1673c9 },
+  halfWidth: 8,
+  curbWidth: 1,
+  shoulder: 5, // bordür ile bariyer arasındaki kum şeridi
+  terrainSize: 560,
+  // Pistin dışında kıyıya kadar kalan kara genişliği (t: 0..1 pist boyunca konum)
+  shoreMargin: (t) => 46 - 18 * Math.cos(t * Math.PI * 2 * 3),
+  ponds: [{ x: -40, z: -8, r: 34 }], // iç lagün
+  control: [
+    [-40, 95, 0.6], // başlangıç düzlüğü (sahil)
+    [20, 95, 0.6],
+    [75, 92, 0.6],
+    [118, 70, 0.8],
+    [135, 30, 1.2],
+    [120, -8, 2.2], // S virajları tepeye tırmanır
+    [135, -45, 4.0],
+    [122, -85, 5.2],
+    [98, -115, 5.4], // firkete
+    [58, -118, 4.8],
+    [38, -88, 3.6],
+    [6, -64, 2.4],
+    [-30, -82, 1.6], // lagün kenarı
+    [-65, -95, 1.0],
+    [-110, -80, 0.8],
+    [-140, -35, 0.7],
+    [-134, 10, 0.7], // batı sahili boyunca geniş yay
+    [-118, 55, 0.6],
+    [-88, 86, 0.6],
+  ],
+
+  // Dekor listesindeki tüm modeller (yükleme ekranı bunları önceden yükler)
+  models: [
+    'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
+    'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/lightPostModern',
+    'racing/billboard', 'racing/tent', 'racing/tentClosedLong',
+    'nature/tree_palmTall', 'nature/tree_palmBend', 'nature/tree_palmShort', 'nature/tree_palmDetailedTall',
+    'nature/tree_palmDetailedShort', 'nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC',
+    'nature/rock_tallA', 'nature/plant_bushLarge', 'nature/plant_bush', 'nature/grass_large', 'nature/grass',
+    'nature/flower_redA', 'nature/flower_yellowA', 'nature/platform_beach', 'nature/canoe',
+    'nature/tent_detailedOpen', 'nature/campfire_stones', 'nature/log', 'nature/statue_head',
+  ],
+
+  decorate(ctx) {
+    const { track, rng } = ctx;
+    const hw = this.halfWidth;
+    const edge = track.edge;
+    const p0 = ctx.along(0, 30);
+    const seaSide = track.insideLoop(p0.x, p0.z) ? -1 : 1;
+    const landSide = -seaSide;
+
+    // --- Başlangıç alanı ---
+    const gantry = ctx.along(0, 0);
+    ctx.place('racing/overheadLights', gantry.x, gantry.z, gantry.acrossY, (2 * (hw + 1) + 3) / 1.26, track.centerline[0].y - 0.15);
+    for (const s of [-1, 1]) {
+      const f = ctx.along(1, s * (hw + 3));
+      ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 7);
+    }
+
+    // Tribünler (kara tarafında, piste dönük)
+    for (let k = -2; k <= 2; k++) {
+      const g = ctx.along(k * 5, landSide * (edge + 7));
+      ctx.place('racing/grandStandCovered', g.x, g.z, g.faceTrackY, 10);
+      ctx.reserve(g.x, g.z, 12);
+    }
+    // Çadırlar tribünlerin iki ucunda
+    for (const k of [-16, 16]) {
+      const t = ctx.along(k, landSide * (edge + 8));
+      ctx.place('racing/tentClosedLong', t.x, t.z, t.faceTrackY, 8);
+      ctx.reserve(t.x, t.z, 10);
+    }
+
+    // Düzlük boyunca bayrak kuleleri ve lambalar
+    for (let k = -28; k <= 28; k += 7) {
+      if (Math.abs(k) < 4) continue;
+      const b = ctx.along(k, seaSide * (edge + 2.5));
+      ctx.place(k % 2 ? 'racing/bannerTowerRed' : 'racing/bannerTowerGreen', b.x, b.z, b.faceTrackY, 9);
+      const l = ctx.along(k + 3, seaSide * (edge + 2));
+      ctx.place('racing/lightPostModern', l.x, l.z, l.faceTrackY, 11);
+    }
+
+    // Lagün kenarında reklam panoları (özgün "tankco" logosu Kenney'in hayali markası)
+    for (let k = 0; k < 4; k++) {
+      const i = Math.round(track.count * (0.56 + k * 0.035));
+      const outer = -track.innerSide[i];
+      const b = ctx.along(i, outer * (edge + 4));
+      ctx.place('racing/billboard', b.x, b.z, b.faceTrackY, 9);
+      ctx.reserve(b.x, b.z, 8);
+    }
+
+    // --- Sahil: iskeleler, kanolar, kamp ---
+    const shore = (i, side) => {
+      // pistten dışarı doğru yürüyüp kıyı çizgisini bul
+      for (let d = edge + 6; d < 120; d += 1.5) {
+        const p = ctx.along(i, side * d);
+        if (track.terrain.landAt(p.x, p.z) < 0) return { ...p, d };
+      }
+      return null;
+    };
+    for (const i of [Math.round(track.count * 0.03), Math.round(track.count * 0.93)]) {
+      const s = shore(i, seaSide);
+      if (!s) continue;
+      const dock = ctx.along(i, seaSide * (s.d + 6));
+      for (let k = 0; k < 4; k++) {
+        const p = ctx.along(i, seaSide * (s.d - 2 + k * 6));
+        ctx.place('nature/platform_beach', p.x, p.z, p.acrossY, 7, 0.35);
+      }
+      ctx.place('nature/canoe', dock.x + 6, dock.z + 3, rng() * 6, 6, 0.1);
+      const camp = ctx.along(i + 6, seaSide * (s.d - 12));
+      ctx.place('nature/tent_detailedOpen', camp.x, camp.z, camp.faceTrackY, 6);
+      ctx.place('nature/campfire_stones', camp.x + 6, camp.z - 5, 0, 6);
+      ctx.place('nature/log', camp.x + 10, camp.z - 2, 1.2, 6);
+      ctx.reserve(camp.x, camp.z, 14);
+    }
+
+    // Tepedeki taş kafalar (firketenin iç tarafı)
+    const hill = Math.round(track.count * 0.37);
+    for (let k = 0; k < 3; k++) {
+      const h = ctx.along(hill + k * 6, track.innerSide[hill] * (edge + 16 + k * 3));
+      ctx.place('nature/statue_head', h.x, h.z, h.faceTrackY + (k - 1) * 0.4, 7 + k);
+      ctx.reserve(h.x, h.z, 8);
+    }
+
+    // --- Doğa ---
+    ctx.noShadow('nature/grass', 'nature/grass_large', 'nature/flower_redA', 'nature/flower_yellowA');
+    const off = (d, m) => d > edge + m;
+    ctx.scatter({
+      keys: ['nature/tree_palmTall', 'nature/tree_palmBend', 'nature/tree_palmShort', 'nature/tree_palmDetailedTall', 'nature/tree_palmDetailedShort'],
+      count: 320,
+      scale: [7, 11],
+      where: (s, d) => s > 1.5 && s < 45 && off(d, 5),
+    });
+    ctx.scatter({ keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC'], count: 120, scale: [4, 10], where: (s, d) => s > -5 && s < 2 && off(d, 4) });
+    ctx.scatter({ keys: ['nature/rock_tallA'], count: 25, scale: [6, 10], where: (s, d) => s > 20 && off(d, 10) });
+    ctx.scatter({ keys: ['nature/plant_bushLarge', 'nature/plant_bush'], count: 260, scale: [6, 9], where: (s, d) => s > 12 && off(d, 3) });
+    ctx.scatter({ keys: ['nature/grass_large', 'nature/grass'], count: 520, scale: [5, 8], where: (s, d) => s > 5 && off(d, 1.5) });
+    ctx.scatter({ keys: ['nature/flower_redA', 'nature/flower_yellowA'], count: 300, scale: [4, 6], where: (s, d) => s > 16 && off(d, 3) });
+  },
+};

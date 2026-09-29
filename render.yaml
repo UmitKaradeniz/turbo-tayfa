@@ -1,0 +1,15 @@
+# Render Blueprint: Render panelinde "New → Blueprint" ile bu repoyu seçince
+# servis otomatik kurulur. Ücretsiz plan 15 dk boşta kalınca uyur; ilk açılış ~1 dk sürer.
+services:
+  - type: web
+    name: turbo-tayfa
+    runtime: node
+    region: frankfurt # Türkiye'ye en yakın bölge
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

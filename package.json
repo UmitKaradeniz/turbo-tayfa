@@ -1,0 +1,25 @@
+{
+  "name": "turbo-tayfa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.js",
+    "build": "vite build",
+    "start": "node server/index.js --prod",
+    "fake": "node tools/fake-player.mjs"
+  },
+  "dependencies": {
+    "compression": "^1.8.2",
+    "express": "^4.21.2",
+    "three": "^0.170.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "description": "Turbo Tayfa — tarayıcıda arkadaşlarla oynanan 3D kart yarışı"
+}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Turbo Tayfa</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a6fd6'/><text x='32' y='46' font-family='Arial Black,Arial' font-weight='900' font-size='40' text-anchor='middle' fill='%23ffd23f' stroke='%230b2a55' stroke-width='3' paint-order='stroke'>T</text></svg>" />
+    <meta name="theme-color" content="#0a6fd6" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #cdeeff; font-family: system-ui, sans-serif; }
+      #app canvas { display: block; }
+      #debug {
+        position: fixed; top: 76px; left: 50%; transform: translateX(-50%); padding: 4px 9px; border-radius: 8px; z-index: 11;
+        background: rgba(10, 20, 40, 0.45); color: #fff; font-size: 12px; pointer-events: none; font-variant-numeric: tabular-nums;
+      }
+
+      /* Geçici yükleme ekranı (Aşama 4'te gerçek arayüz gelecek) */
+      #loading {
+        position: fixed; inset: 0; display: grid; place-content: center; gap: 18px; text-align: center;
+        background: linear-gradient(160deg, #1fb6ff, #0a6fd6 60%, #0a3d91); color: #fff;
+        transition: opacity 0.5s; z-index: 100;
+      }
+      #loading.done { opacity: 0; pointer-events: none; }
+      #loading h1 { margin: 0; font-family: 'Lilita One', system-ui, sans-serif; font-weight: 400; font-size: clamp(40px, 9vw, 72px); letter-spacing: 1px; text-shadow: 0 4px 0 #083b80; }
+      #loading .bar { width: min(320px, 70vw); height: 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.25); overflow: hidden; }
+      #loading .tip { font-weight: 700; opacity: 0.85; max-width: 80vw; }
+      #loading .bar > div { width: 0; height: 100%; background: #ffd23f; border-radius: 99px; transition: width 0.2s; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="debug"></div>
+    <div id="loading">
+      <h1>Turbo Tayfa</h1>
+      <div class="bar"><div></div></div>
+      <div class="tip">İpucu: Virajlarda Space ile drift yap, kıvılcımlar renk değiştirsin!</div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
