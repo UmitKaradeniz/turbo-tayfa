@@ -41,6 +41,14 @@ renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.getElementById('app').appendChild(renderer.domElement);
 
+// Ekran kartı adı (FPS göstergesinde; sürücüye özgü sorunları ayırt etmek için)
+const gpuName = (() => {
+  const gl = renderer.getContext();
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
+  const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+  return name.replace(/^ANGLE \(|\)$/g, '').replace(/Direct3D.*$/, '').replace(/\s*\(0x[0-9a-f]+\)/i, '').trim().slice(0, 60);
+})();
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 1500);
 const postfx = createPostFX(renderer, scene, camera, QUALITY);
@@ -749,7 +757,8 @@ function frame(now) {
   if (fpsTime >= 0.5) {
     const ping = online && net.connected ? ` · ${Math.round(net.rtt)} ms` : '';
     const fps = fpsFrames / fpsTime;
-    debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · x${pixelRatio.toFixed(2)}${ping}`;
+    const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · msaa ${QUALITY.bloom ? QUALITY.msaa : 'yok'}`;
+    debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}`;
     adaptResolution(fps);
     fpsFrames = 0;
     fpsTime = 0;
@@ -768,22 +777,26 @@ function kartSound(kart, ev) {
   } else if (ev === 'blocked') play('shield_pop', { volume: vol });
 }
 
-// Dinamik çözünürlük: FPS düşükse piksel oranını azalt, yüksekse ön ayara kadar geri artır
+// Dinamik çözünürlük: FPS düşükse piksel oranını azalt, yüksekse geri artır.
+// Yavaş kalınan seviyenin üstüne bir daha çıkılmaz (tavan) → sürekli gidip gelme olmaz.
 let slowTime = 0;
 let fastTime = 0;
+let ratioCeiling = basePixelRatio;
 function adaptResolution(fps) {
   if (!race || paused || document.hidden) return;
   slowTime = fps < 48 ? slowTime + 0.5 : 0;
   fastTime = fps > 58 ? fastTime + 0.5 : 0;
   let next = pixelRatio;
-  if (slowTime >= 2 && pixelRatio > 0.6) next = Math.max(0.6, pixelRatio - 0.15);
-  else if (fastTime >= 6 && pixelRatio < basePixelRatio) next = Math.min(basePixelRatio, pixelRatio + 0.1);
-  if (next !== pixelRatio) {
+  if (slowTime >= 2 && pixelRatio > 0.6) {
+    ratioCeiling = Math.min(ratioCeiling, pixelRatio - 0.05);
+    next = Math.max(0.6, pixelRatio - 0.15);
+  } else if (fastTime >= 8 && pixelRatio < ratioCeiling) next = Math.min(ratioCeiling, pixelRatio + 0.1);
+  if (Math.abs(next - pixelRatio) > 1e-3) {
     pixelRatio = next;
     slowTime = fastTime = 0;
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    postfx.setSize(window.innerWidth, window.innerHeight);
+    postfx.setPixelRatio(pixelRatio);
   }
 }
 
@@ -811,6 +824,7 @@ requestAnimationFrame(frame);
 if (import.meta.env.DEV) {
   window.__tt.autopilot = (on) => (autopilot = on);
   window.__tt.readInput = readInput;
+  window.__tt.postfx = postfx;
   window.__tt.freeze = (on) => (paused = on); // menü açmadan dondur (ekran görüntüsü için)
   window.__tt.simulate = (seconds) => {
     setPaused(false);

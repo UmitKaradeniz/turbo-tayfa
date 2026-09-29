@@ -18,7 +18,12 @@ function pick() {
   return touch ? 'low' : 'high';
 }
 
-export const QUALITY = PRESETS[pick()];
+// Tanı için tek tek özellik kapatma: ?msaa=0  ?bloom=0  ?shadows=0
+const params = new URLSearchParams(location.search);
+export const QUALITY = { ...PRESETS[pick()] };
+if (params.get('msaa') === '0') QUALITY.msaa = 0;
+if (params.get('bloom') === '0') QUALITY.bloom = false;
+if (params.get('shadows') === '0') QUALITY.shadows = false;
 
 export function saveQuality(name) {
   try {

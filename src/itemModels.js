@@ -165,7 +165,8 @@ export function createBubble() {
         uniform vec3 color;
         varying vec3 vNormal; varying vec3 vView;
         void main() {
-          float f = pow(1.0 - abs(dot(vNormal, vView)), 2.5);
+          // clamp şart: abs(dot) hassasiyetten 1'i aşarsa negatif tabanın üssü bazı GPU'larda NaN verir
+          float f = pow(clamp(1.0 - abs(dot(vNormal, vView)), 0.0, 1.0), 2.5);
           gl_FragColor = vec4(color * (0.5 + f * 1.5), 0.12 + f * 0.75);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
