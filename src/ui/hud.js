@@ -80,6 +80,10 @@ export function createHud({ portraits, minimap, itemIcons }) {
     show(visible) {
       root.classList.toggle('show', visible);
     },
+    // Zamana Karşı: sıra ve item yuvası gizli
+    setTimeTrial(on) {
+      root.classList.toggle('tt-mode', on);
+    },
     setPosition(p, total) {
       if (p !== lastPos) {
         posNum.textContent = p;
@@ -154,10 +158,11 @@ export function createHud({ portraits, minimap, itemIcons }) {
     finish(place) {
       banner(place === 1 ? 'BİRİNCİ!' : 'BİTİŞ!', 'finish');
     },
-    lapToast(lap, time, best) {
+    // best: bu yarışın en iyi turu · record: kişisel tur rekoru
+    lapToast(lap, time, best, record = false) {
       const el = document.createElement('div');
-      el.className = `toast${best ? ' best' : ''}`;
-      el.textContent = `Tur ${lap}  ${formatTime(time)}${best ? '  ★' : ''}`;
+      el.className = `toast${best || record ? ' best' : ''}${record ? ' record' : ''}`;
+      el.textContent = `Tur ${lap}  ${formatTime(time)}${record ? '  🏆 REKOR' : best ? '  ★' : ''}`;
       toasts.appendChild(el);
       el.addEventListener('animationend', () => el.remove());
     },
@@ -196,7 +201,30 @@ export function createHud({ portraits, minimap, itemIcons }) {
         .join('');
       results.classList.add('show');
     },
+    // Zamana Karşı sonucu: toplam süre, tur süreleri, rekor rozetleri
+    showTimeTrialResults({ track, laps, total, bestTotal, bestLap, newTotal, newLap }) {
+      results.querySelector('h2').textContent = 'Zamana Karşı';
+      results.querySelector('.subtitle').textContent = `${track} · ${laps.length} tur`;
+      results.querySelector('.podium').innerHTML = `
+        <div class="tt-total${newTotal ? ' record' : ''}">
+          <div class="big">${formatTime(total)}</div>
+          <div class="badge">${newTotal ? '🏆 YENİ REKOR!' : `Rekor: ${formatTime(bestTotal)}`}</div>
+        </div>`;
+      const fastest = Math.min(...laps);
+      results.querySelector('ol').innerHTML = laps
+        .map(
+          (t, i) => `
+          <li class="${t === fastest ? 'me' : ''}" style="animation-delay:${0.3 + i * 0.08}s">
+            <span class="pos">${i + 1}.</span><span></span>
+            <span class="name">Tur ${i + 1}${t === fastest && newLap ? ' · 🏆 tur rekoru' : ''}</span>
+            <span class="time">${formatTime(t)}</span>
+          </li>`,
+        )
+        .join('') + `<li style="animation-delay:${0.3 + laps.length * 0.08}s"><span class="pos">★</span><span></span><span class="name">En iyi tur rekorun</span><span class="time">${formatTime(bestLap)}</span></li>`;
+      results.classList.add('show');
+    },
     hideResults() {
+      results.querySelector('h2').textContent = 'Yarış Bitti!';
       results.classList.remove('show');
     },
     // Çevrimiçi yarışta "Tekrar Yarış" yerine lobiye dönülür

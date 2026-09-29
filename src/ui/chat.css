@@ -1,0 +1,116 @@
+/* Lobi sohbet paneli */
+.chat-card { display: flex; flex-direction: column; gap: 8px; }
+.chat-card h3 { margin: 0 !important; }
+.chat-card .log {
+  height: 150px;
+  overflow-y: auto;
+  background: var(--tt-soft);
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  overscroll-behavior: contain;
+}
+.chat-card .msg { margin: 2px 0; word-wrap: break-word; }
+.chat-card .msg.sys { opacity: 0.55; font-style: italic; font-weight: 700; font-size: 13px; }
+.chat-card .msg b { text-shadow: 0 1px 0 rgba(11, 42, 85, 0.35); }
+.chat-card .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.chat-card .row .tt-input { font-size: 15px; padding: 8px 12px; }
+.chat-card .row .tt-btn { padding: 8px 16px; font-size: 18px; }
+
+/* Masaüstü: lobide ortada, altta (3D karakter önizlemesinin altında) */
+@media (min-width: 821px) {
+  #screen-setup .chat-card {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    width: min(360px, calc(100vw - 2 * min(360px, 32vw) - 72px));
+    box-sizing: border-box;
+  }
+  #screen-setup .chat-card .log { height: 120px; }
+}
+@media (max-width: 820px) {
+  #screen-setup .chat-card { margin: 14px 16px 24px; }
+}
+
+/* Yarış içi mesaj akışı (sol, ortanın biraz üstü) */
+#hud-chat {
+  position: fixed;
+  left: 16px;
+  top: 38%;
+  z-index: 11;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(360px, 60vw);
+  pointer-events: none;
+  font-family: var(--tt-font);
+  font-weight: 800;
+  font-size: 14px;
+  color: #fff;
+}
+#hud-chat.show { display: flex; }
+#hud-chat .msg {
+  background: rgba(11, 42, 85, 0.72);
+  padding: 5px 10px;
+  border-radius: 10px;
+  animation: tt-chat-in 0.25s ease;
+  transition: opacity 0.6s;
+}
+#hud-chat .msg.sys { opacity: 0.8; font-style: italic; }
+#hud-chat .msg.fade { opacity: 0; }
+@keyframes tt-chat-in { from { transform: translateX(-16px); opacity: 0; } }
+
+#race-chat {
+  position: fixed;
+  left: 50%;
+  bottom: 150px;
+  transform: translateX(-50%);
+  width: min(420px, 90vw);
+  z-index: 25;
+  display: none;
+}
+#race-chat.show { display: block; }
+
+/* Emoji çubuğu: masaüstünde alt orta, dokunmatikte sağ kenarda dikey */
+#emote-bar {
+  position: fixed;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 11;
+  display: none;
+  gap: 6px;
+}
+#emote-bar.show { display: flex; }
+#emote-bar button {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(11, 42, 85, 0.5);
+  font-size: 24px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.1s, background 0.1s;
+}
+#emote-bar button:hover { background: rgba(11, 42, 85, 0.75); transform: translateY(-2px); }
+#emote-bar button:active { transform: scale(0.9); }
+#emote-bar small {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-family: var(--tt-font);
+  font-weight: 800;
+  font-size: 10px;
+  color: #fff;
+  opacity: 0.8;
+}
+@media (pointer: coarse) {
+  /* Dokunmatik: item yuvasının hemen altında küçük yatay sıra (alt köşeler kontrol butonlarında) */
+  #emote-bar { top: calc(max(12px, env(safe-area-inset-top)) + 100px); bottom: auto; gap: 5px; }
+  #emote-bar button { width: 38px; height: 38px; font-size: 19px; border-radius: 12px; }
+  #emote-bar small { display: none; }
+}

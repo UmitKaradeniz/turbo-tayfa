@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 //   start {trackCount}                state {s: {...}, bots: [{id, s}]}
 //   finish {id, time}                 backToLobby
 //   item {kind, id, owner, p, v}      hit {id, target}      box {i}
+//   chat {text}                       emote {e, id?}
 //   leave                             ping {t}
 // Sunucu → istemci:
 //   welcome {id, token, code}         room {...}           error {msg}
@@ -101,6 +102,35 @@ function addPlayer(room, ws, name, character) {
   return p;
 }
 
+// --- Sohbet ---
+const CHAT_HISTORY = 30;
+const EMOTE_COUNT = 6;
+const cleanText = (s) =>
+  String(s ?? '')
+    .replace(/[\u0000-\u001f]/g, '')
+    .trim()
+    .slice(0, 120);
+
+function pushChat(room, entry) {
+  room.chat ??= [];
+  room.chat.push(entry);
+  if (room.chat.length > CHAT_HISTORY) room.chat.shift();
+  broadcast(room, { type: 'chat', ...entry });
+}
+
+function systemChat(room, text) {
+  pushChat(room, { id: null, name: null, text, sys: true, t: now() });
+}
+
+// Kısa sürede çok mesaj atmayı engelle (5 mesaj / 5 saniye)
+function chatAllowed(p) {
+  const t = now();
+  p.chatTimes = (p.chatTimes ?? []).filter((x) => t - x < 5000);
+  if (p.chatTimes.length >= 5) return false;
+  p.chatTimes.push(t);
+  return true;
+}
+
 function pickHost(room) {
   const next = [...room.players.values()].find((p) => p.ws);
   room.hostId = next?.id ?? null;
@@ -108,6 +138,7 @@ function pickHost(room) {
 
 function removePlayer(room, p) {
   room.players.delete(p.id);
+  if (room.players.size > 0) systemChat(room, `${p.name} odadan ayrıldı`);
   if (room.hostId === p.id) pickHost(room);
   if (room.players.size === 0) {
     rooms.delete(room.code);
@@ -226,8 +257,10 @@ export function handleMessage(ws, raw) {
       if (!r) return send(ws, { type: 'error', code: 'no-room', msg: 'Bu kodla bir oda bulunamadı.' });
       if (r.phase !== 'lobby') return send(ws, { type: 'error', code: 'in-race', msg: 'Bu odada yarış sürüyor. Bitince tekrar dene.' });
       if (r.players.size >= MAX_PLAYERS) return send(ws, { type: 'error', code: 'full', msg: 'Oda dolu (en fazla 8 oyuncu).' });
-      addPlayer(r, ws, msg.name, msg.character);
+      const joined = addPlayer(r, ws, msg.name, msg.character);
       if (!r.hostId) pickHost(r);
+      send(ws, { type: 'chatHistory', list: r.chat ?? [] });
+      systemChat(r, `${joined.name} odaya katıldı`);
       syncRoom(r);
       return;
     }
@@ -244,6 +277,7 @@ export function handleMessage(ws, raw) {
       ws.room = r;
       if (!r.hostId) pickHost(r);
       send(ws, { type: 'welcome', id: old.id, token: old.token, code: r.code, resumed: true });
+      send(ws, { type: 'chatHistory', list: r.chat ?? [] });
       syncRoom(r); // önce oda (kim sahip), sonra yarış bilgisi
       if (r.phase === 'racing') {
         send(ws, {
@@ -347,6 +381,27 @@ export function handleMessage(ws, raw) {
     case 'box':
       if (room.phase === 'racing' && Number.isInteger(msg.i) && msg.i >= 0 && msg.i < 64) broadcast(room, { type: 'box', i: msg.i }, p.id);
       return;
+
+    // --- Sohbet ve hızlı tepkiler ---
+    case 'chat': {
+      const text = cleanText(msg.text);
+      if (!text) return;
+      if (!chatAllowed(p)) return send(ws, { type: 'error', code: 'chat-rate', msg: 'Biraz yavaş, mesajlar çok hızlı gidiyor.' });
+      pushChat(room, { id: p.id, name: p.name, character: p.character, text, t: now() });
+      return;
+    }
+
+    case 'emote': {
+      // Oyuncunun kendisi ya da oda sahibiyse botlar adına
+      const id = String(msg.id ?? p.id);
+      if (!Number.isInteger(msg.e) || msg.e < 0 || msg.e >= EMOTE_COUNT || !controls(room, p, id)) return;
+      room.lastEmoteAt ??= new Map();
+      const t = now();
+      if (t - (room.lastEmoteAt.get(id) ?? 0) < 700) return;
+      room.lastEmoteAt.set(id, t);
+      broadcast(room, { type: 'emote', id, e: msg.e }, p.id);
+      return;
+    }
 
     case 'finish': {
       if (room.phase !== 'racing') return;

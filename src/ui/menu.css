@@ -233,3 +233,6 @@
 /* Tam ekran butonu sadece dokunmatikte */
 .fs-btn { display: none !important; }
 @media (pointer: coarse) { .fs-btn { display: inline-flex !important; } }
+.tt-tracks .tt-track .rec { font-weight: 800; font-size: 12px; color: var(--tt-blue); margin-top: 2px; }
+.tt-tracks .tt-track .rec:empty { display: none; }
+.tt-tracks .tt-track.on .rec { color: var(--tt-navy); }

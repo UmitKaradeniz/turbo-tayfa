@@ -9,6 +9,9 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 💨 Drift + 3 kademeli mini-turbo, roket kalkış
 - 🎁 Itemler: Turbo Şişesi, Balon Kalkan, Hindistan Cevizi, Yağ Lekesi
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
+- 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
+- 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
+- 🤖 Kişilikli botlar: agresif, temiz, kurnaz, dengeli, uykucu, geveze
 - 📱 Klavye ve dokunmatik kontroller, düşük/orta/yüksek grafik kalitesi
 
 ---
@@ -78,6 +81,27 @@ Bundan sonra `main` dalına her push'ta Render otomatik yeniden deploy eder.
   açık odalar kapanır (yeni oda kurmak yeterli).
 - Aylık 750 saat ücretsiz çalışma süresi var; birkaç arkadaşın oynaması için fazlasıyla yeterli.
 
+## Sürümler ve geri alma
+
+Her yeni özellik GitHub'da ayrı bir **sürüm** (etiket + Release) olarak saklanır:
+[Releases](https://github.com/UmitKaradeniz/turbo-tayfa/releases). Yeni bir sürüm sorun
+çıkarırsa eski, çalışan sürüme şöyle dönebilirsin:
+
+**Render'dan (en hızlısı, kod değişmez):**
+1. Render panelinde servisi aç → **Manual Deploy → Deploy a specific commit**.
+2. Releases sayfasında dönmek istediğin sürümün commit'ini seç (örn. `v1.0.2`) ve deploy et.
+3. Not: `main`'e yeni bir push gelirse Render yine en son sürümü deploy eder.
+
+**Kodu da geri almak istersen:**
+
+```bash
+git fetch --tags
+git revert --no-edit v1.0.2..HEAD   # v1.0.2'den sonraki değişiklikleri geri alan yeni commit'ler
+git push
+```
+
+(Sadece yerelde eski sürümü denemek için: `git checkout v1.0.2`, dönmek için `git checkout main`.)
+
 ## Arkadaşlarla paylaşma
 
 1. Oyunun adresini aç, takma adını yaz, **Oda Kur**'a bas.
@@ -102,6 +126,11 @@ yarışa kaldığı yerden devam eder.
 | Item kullan | E (S basılıyken geriye atar) | ITEM |
 | Son checkpoint'e dön | R | — |
 | Duraklat | Esc / P | ❚❚ |
+| Emoji tepkisi | 1 – 6 | üstteki emoji çubuğu |
+| Sohbet mesajı (çevrimiçi) | Enter | lobideki sohbet paneli |
+
+- **Zamana Karşı:** Hızlı Yarış → Mod: *Zamana Karşı*. Bot ve item yok; en iyi turun
+  yarı saydam bir hayalet olarak seninle yarışır. Rekorlar bu tarayıcıda saklanır.
 
 - **Drift:** Virajda direksiyonu kırıp drift'e bas. Kıvılcımlar mavi → turuncu → mor
   oldukça bırakınca aldığın turbo uzar.

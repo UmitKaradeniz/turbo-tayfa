@@ -17,27 +17,129 @@
         background: rgba(10, 20, 40, 0.45); color: #fff; font-size: 12px; pointer-events: none; font-variant-numeric: tabular-nums;
       }
 
-      /* Geçici yükleme ekranı (Aşama 4'te gerçek arayüz gelecek) */
+      /* ---------- Açılış / yükleme ekranı ---------- */
       #loading {
-        position: fixed; inset: 0; display: grid; place-content: center; gap: 18px; text-align: center;
-        background: linear-gradient(160deg, #1fb6ff, #0a6fd6 60%, #0a3d91); color: #fff;
-        transition: opacity 0.5s; z-index: 100;
+        position: fixed; inset: 0; z-index: 100; overflow: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+        text-align: center; color: #fff; font-family: 'Nunito', system-ui, sans-serif;
+        background: radial-gradient(circle at 50% 42%, #3cc8ff 0%, #0a6fd6 55%, #0a3d91 100%);
+        transition: opacity 0.6s;
       }
       #loading.done { opacity: 0; pointer-events: none; }
-      #loading h1 { margin: 0; font-family: 'Lilita One', system-ui, sans-serif; font-weight: 400; font-size: clamp(40px, 9vw, 72px); letter-spacing: 1px; text-shadow: 0 4px 0 #083b80; }
-      #loading .bar { width: min(320px, 70vw); height: 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.25); overflow: hidden; }
-      #loading .tip { font-weight: 700; opacity: 0.85; max-width: 80vw; }
-      #loading .bar > div { width: 0; height: 100%; background: #ffd23f; border-radius: 99px; transition: width 0.2s; }
+      /* Arkada kayan hız çizgileri */
+      #loading::before {
+        content: ''; position: absolute; inset: -20% -50%;
+        background: repeating-linear-gradient(100deg, transparent 0 60px, rgba(255, 255, 255, 0.07) 60px 64px, transparent 64px 140px);
+        animation: tt-speed 1.1s linear infinite; pointer-events: none;
+      }
+      @keyframes tt-speed { to { transform: translateX(-140px); } }
+
+      /* Logo: harfler sırayla zıplayarak düşer, sonra dalgalanır */
+      .intro-logo {
+        position: relative; margin: 0; font-family: 'Lilita One', 'Arial Black', system-ui, sans-serif; font-weight: 400;
+        line-height: 0.9; transform: rotate(-5deg); user-select: none;
+      }
+      .intro-logo .row { display: block; white-space: nowrap; }
+      .intro-logo .r1 { font-size: clamp(56px, 12vw, 116px); color: #ffd23f; }
+      .intro-logo .r2 { font-size: clamp(64px, 13.5vw, 132px); color: #fff; margin-left: 0.35em; }
+      .intro-logo span span {
+        display: inline-block;
+        -webkit-text-stroke: 4px #0b2a55; paint-order: stroke fill;
+        text-shadow: 0 7px 0 #0b2a55, 0 14px 22px rgba(3, 20, 50, 0.35);
+        opacity: 0; transform: translateY(-120px) scale(0.6);
+        animation: tt-drop 0.7s cubic-bezier(0.25, 1.6, 0.45, 1) forwards, tt-wave 2.6s ease-in-out 1.4s infinite;
+      }
+      @keyframes tt-drop { to { opacity: 1; transform: none; } }
+      @keyframes tt-wave {
+        0%, 60%, 100% { transform: none; }
+        70% { transform: translateY(-12px) rotate(-4deg); }
+        80% { transform: translateY(3px) rotate(2deg); }
+      }
+      /* Logonun yanında parıltı */
+      .intro-logo .spark {
+        position: absolute; right: -0.35em; top: -0.15em; font-size: 0.4em; color: #fff;
+        animation: tt-spark 1.8s ease-in-out 1.2s infinite; opacity: 0;
+      }
+      @keyframes tt-spark { 0%, 100% { opacity: 0; transform: scale(0.4) rotate(0); } 40% { opacity: 1; transform: scale(1.1) rotate(30deg); } }
+
+      /* Yükleme yolu: dolan şerit + üstünde giden minik kart + sonda dama bayrağı */
+      #loading .road { position: relative; width: min(360px, 76vw); padding-top: 30px; }
+      #loading .bar { height: 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.22); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.15); }
+      #loading .bar > div {
+        position: relative; width: 0; height: 100%; border-radius: 99px; transition: width 0.25s ease-out;
+        background: repeating-linear-gradient(135deg, #ffd23f 0 12px, #ffbe1a 12px 24px); background-size: 34px 100%;
+        animation: tt-stripes 0.6s linear infinite;
+      }
+      @keyframes tt-stripes { to { background-position: 34px 0; } }
+      #loading .kart { position: absolute; right: -22px; bottom: 8px; width: 46px; animation: tt-bump 0.28s ease-in-out infinite alternate; }
+      @keyframes tt-bump { to { transform: translateY(-3px) rotate(-3deg); } }
+      #loading .flag { position: absolute; right: -14px; bottom: 6px; width: 22px; }
+      #loading .tip { font-weight: 800; font-size: 16px; opacity: 0.9; max-width: 80vw; min-height: 1.4em; transition: opacity 0.3s; }
+      #loading .maker {
+        position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom));
+        font-weight: 800; font-size: 15px; letter-spacing: 0.3px; opacity: 0; animation: tt-fade 0.8s ease 0.6s forwards;
+        text-shadow: 0 2px 0 rgba(11, 42, 85, 0.5);
+      }
+      #loading .maker b { font-family: 'Lilita One', system-ui, sans-serif; font-weight: 400; font-size: 20px; color: #ffd23f; margin-left: 4px; }
+      @keyframes tt-fade { to { opacity: 0.95; } }
     </style>
   </head>
   <body>
     <div id="app"></div>
     <div id="debug"></div>
     <div id="loading">
-      <h1>Turbo Tayfa</h1>
-      <div class="bar"><div></div></div>
+      <h1 class="intro-logo" aria-label="Turbo Tayfa">
+        <span class="row r1"><span>T</span><span>U</span><span>R</span><span>B</span><span>O</span></span>
+        <span class="row r2"><span>T</span><span>A</span><span>Y</span><span>F</span><span>A</span></span>
+        <span class="spark">✦</span>
+      </h1>
+      <div class="road">
+        <svg class="flag" viewBox="0 0 22 30" aria-hidden="true">
+          <rect x="1" y="0" width="2.5" height="30" rx="1" fill="#fff" />
+          <g fill="#111"><rect x="3.5" y="1" width="6" height="5" /><rect x="15.5" y="1" width="6" height="5" /><rect x="9.5" y="6" width="6" height="5" /><rect x="3.5" y="11" width="6" height="5" /><rect x="15.5" y="11" width="6" height="5" /></g>
+          <g fill="#fff"><rect x="9.5" y="1" width="6" height="5" /><rect x="3.5" y="6" width="6" height="5" /><rect x="15.5" y="6" width="6" height="5" /><rect x="9.5" y="11" width="6" height="5" /></g>
+        </svg>
+        <div class="bar"><div>
+          <svg class="kart" viewBox="0 0 46 30" aria-hidden="true">
+            <path d="M4 20 L8 12 L30 12 L40 17 L42 22 L4 22 Z" fill="#ff7a1a" stroke="#0b2a55" stroke-width="2" stroke-linejoin="round" />
+            <circle cx="20" cy="8" r="6" fill="#ff9a3c" stroke="#0b2a55" stroke-width="2" />
+            <path d="M15 4 L16 0 L19 3 M22 3 L25 0 L25.5 4" fill="#ff9a3c" stroke="#0b2a55" stroke-width="1.6" stroke-linejoin="round" />
+            <circle cx="11" cy="23" r="5" fill="#23262e" stroke="#0b2a55" stroke-width="1.5" />
+            <circle cx="35" cy="23" r="5" fill="#23262e" stroke="#0b2a55" stroke-width="1.5" />
+            <circle cx="11" cy="23" r="2" fill="#ffd23f" /><circle cx="35" cy="23" r="2" fill="#ffd23f" />
+          </svg>
+        </div></div>
+      </div>
       <div class="tip">İpucu: Virajlarda Space ile drift yap, kıvılcımlar renk değiştirsin!</div>
+      <div class="maker">Yapımcı<b>cafunify</b></div>
     </div>
+    <script>
+      // Harflere sırayla gecikme ver + ipuçlarını değiştir
+      document.querySelectorAll('.intro-logo .row span').forEach((s, i) => {
+        s.style.animationDelay = `${i * 0.07}s, ${1.4 + i * 0.09}s`;
+      });
+      (() => {
+        const tips = [
+          'İpucu: Virajlarda Space ile drift yap, kıvılcımlar renk değiştirsin!',
+          'İpucu: "BAŞLA!" yazısından hemen önce gaza bas, roket gibi fırla!',
+          'İpucu: Hindistan cevizini S basılıyken geriye de atabilirsin.',
+          'İpucu: Balon kalkan bir isabeti tamamen emer.',
+          'İpucu: Kum yavaşlatır ama turbo varken kuma aldırmazsın.',
+          'İpucu: Yarışta 1-6 tuşlarıyla arkadaşlarına emoji at!',
+        ];
+        const el = document.querySelector('#loading .tip');
+        let i = Math.floor(Math.random() * tips.length);
+        el.textContent = tips[i];
+        const timer = setInterval(() => {
+          if (document.getElementById('loading').classList.contains('done')) return clearInterval(timer);
+          el.style.opacity = 0;
+          setTimeout(() => {
+            el.textContent = tips[(i = (i + 1) % tips.length)];
+            el.style.opacity = 0.9;
+          }, 300);
+        }, 2800);
+      })();
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

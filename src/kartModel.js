@@ -2,15 +2,16 @@ import * as THREE from 'three';
 import { cloneModel } from './assets.js';
 
 // Turbo Tayfa karakterleri: her biri bir Cube Pets hayvanı + bir Car Kit kartı.
+// personality: bot olarak sürerken davranışı (ai.js → PERSONALITIES)
 export const CHARACTERS = [
-  { id: 'fox', color: '#ff8a2a', name: 'Fındık', desc: 'Kurnaz ve hızlı, virajların ustası', pet: 'pets/animal-fox', kart: 'karts/kart-oopi' },
-  { id: 'penguin', color: '#3b4a6b', name: 'Buzi', desc: 'Buz gibi sakin, drift yaparken hiç şaşmaz', pet: 'pets/animal-penguin', kart: 'karts/kart-oobi' },
-  { id: 'panda', color: '#e9e9e9', name: 'Pofuduk', desc: 'Pofuduk ama pistte acımasız', pet: 'pets/animal-panda', kart: 'karts/kart-oodi' },
-  { id: 'tiger', color: '#ffb020', name: 'Şimşek', desc: 'Düzlüklerin tartışmasız kralı', pet: 'pets/animal-tiger', kart: 'karts/kart-oozi' },
-  { id: 'bunny', color: '#ffa6cf', name: 'Zıpzıp', desc: 'Enerjisi hiç bitmez, hep zıplar', pet: 'pets/animal-bunny', kart: 'karts/kart-ooli' },
-  { id: 'monkey', color: '#9b6a43', name: 'Cambaz', desc: 'Her yola bir kısayol arar', pet: 'pets/animal-monkey', kart: 'karts/kart-oopi' },
-  { id: 'koala', color: '#9aa3ad', name: 'Uykucu', desc: 'Yavaş görünür, son turda uyanır', pet: 'pets/animal-koala', kart: 'karts/kart-oobi' },
-  { id: 'parrot', color: '#2ecc71', name: 'Geveze', desc: 'Çenesi de motoru da hiç durmaz', pet: 'pets/animal-parrot', kart: 'karts/kart-oozi' },
+  { id: 'fox', personality: 'sneaky', color: '#ff8a2a', name: 'Fındık', desc: 'Kurnaz ve hızlı, virajların ustası', pet: 'pets/animal-fox', kart: 'karts/kart-oopi' },
+  { id: 'penguin', personality: 'clean', color: '#3b4a6b', name: 'Buzi', desc: 'Buz gibi sakin, drift yaparken hiç şaşmaz', pet: 'pets/animal-penguin', kart: 'karts/kart-oobi' },
+  { id: 'panda', personality: 'aggressive', color: '#e9e9e9', name: 'Pofuduk', desc: 'Pofuduk ama pistte acımasız', pet: 'pets/animal-panda', kart: 'karts/kart-oodi' },
+  { id: 'tiger', personality: 'balanced', color: '#ffb020', name: 'Şimşek', desc: 'Düzlüklerin tartışmasız kralı', pet: 'pets/animal-tiger', kart: 'karts/kart-oozi' },
+  { id: 'bunny', personality: 'aggressive', color: '#ffa6cf', name: 'Zıpzıp', desc: 'Enerjisi hiç bitmez, hep zıplar', pet: 'pets/animal-bunny', kart: 'karts/kart-ooli' },
+  { id: 'monkey', personality: 'sneaky', color: '#9b6a43', name: 'Cambaz', desc: 'Her yola bir kısayol arar', pet: 'pets/animal-monkey', kart: 'karts/kart-oopi' },
+  { id: 'koala', personality: 'sleepy', color: '#9aa3ad', name: 'Uykucu', desc: 'Yavaş görünür, son turda uyanır', pet: 'pets/animal-koala', kart: 'karts/kart-oobi' },
+  { id: 'parrot', personality: 'chatty', color: '#2ecc71', name: 'Geveze', desc: 'Çenesi de motoru da hiç durmaz', pet: 'pets/animal-parrot', kart: 'karts/kart-oozi' },
 ];
 
 export const KART_MODELS = [...new Set(CHARACTERS.flatMap((c) => [c.pet, c.kart]))];

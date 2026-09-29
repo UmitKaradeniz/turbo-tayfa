@@ -1,6 +1,8 @@
 import './base.css';
 import './menu.css';
 import { settings, saveSettings, DIFFICULTY } from '../settings.js';
+import { PERSONALITIES } from '../ai.js';
+import { formatTime } from './hud.js';
 import { QUALITY, saveQuality } from '../quality.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
@@ -22,7 +24,8 @@ const KEYS_HELP = `
     <kbd>Esc / P</kbd><span>Duraklat</span>
   </div>`;
 
-export function createMenu({ characters, portraits, tracks, handlers }) {
+export function createMenu({ characters, portraits, tracks, handlers, records, chatPanel }) {
+  const botTag = (c) => `Bot · ${PERSONALITIES[c.personality]?.label ?? ''}`;
   const byId = Object.fromEntries(characters.map((c) => [c.id, c]));
   const toastWrap = h('<div class="tt-toast-wrap"></div>');
   document.body.appendChild(toastWrap);
@@ -94,16 +97,19 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
         </div>
         <div class="tt-card enter">
           <h3>Pist</h3>
-          <div class="tt-tracks">${tracks.map((t) => `<button class="tt-track" data-track="${t.id}"><img src="${t.thumb}" alt="" /><div><div class="t">${t.name}</div><div class="m">${t.meta}</div></div></button>`).join('')}</div>
+          <div class="tt-tracks">${tracks.map((t) => `<button class="tt-track" data-track="${t.id}"><img src="${t.thumb}" alt="" /><div><div class="t">${t.name}</div><div class="m">${t.meta}</div><div class="rec"></div></div></button>`).join('')}</div>
+          <div class="offline-only"><div class="tt-label">Mod</div>
+          <div class="tt-seg" data-seg="mode"><button data-v="race">Yarış</button><button data-v="timeTrial">Zamana Karşı</button></div></div>
           <div class="tt-label">Tur sayısı</div>
           <div class="tt-seg" data-seg="laps">${[1, 3, 5].map((n) => `<button data-v="${n}">${n} tur</button>`).join('')}</div>
-          <div class="tt-label">Bot zorluğu</div>
-          <div class="tt-seg" data-seg="difficulty">${Object.entries(DIFFICULTY).map(([k, v]) => `<button data-v="${k}">${v.label}</button>`).join('')}</div>
+          <div class="race-only"><div class="tt-label">Bot zorluğu</div>
+          <div class="tt-seg" data-seg="difficulty">${Object.entries(DIFFICULTY).map(([k, v]) => `<button data-v="${k}">${v.label}</button>`).join('')}</div></div>
         </div>
         <div class="start-wrap enter"><button class="tt-btn primary big block" data-go="start">YARIŞA BAŞLA ▶</button></div>
       </div>
     </section>`);
   document.body.appendChild(setup);
+  if (chatPanel) setup.appendChild(chatPanel);
 
   // Çevrimiçi oda durumu (null = tek oyunculu)
   let online = null; // { room, myId }
@@ -118,8 +124,8 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
     if (!online) {
       const mine = byId[settings.character];
       const name = settings.name ? `${escapeHtml(settings.name)} · ${mine.name}` : mine.name;
-      list.innerHTML = [slotHtml(mine, name, 'Sen', 'me'), ...characters.filter((c) => c !== mine).map((c) => slotHtml(c, c.name, 'Bot'))].join('');
-      setup.querySelector('.count').textContent = '8/8';
+      list.innerHTML = [slotHtml(mine, name, 'Sen', 'me'), ...(settings.mode === 'timeTrial' ? [] : characters.filter((c) => c !== mine).map((c) => slotHtml(c, c.name, botTag(c))))].join('');
+      setup.querySelector('.count').textContent = settings.mode === 'timeTrial' ? 'Sen + rekor hayaletin' : '8/8';
       return;
     }
     const { room, myId } = online;
@@ -129,7 +135,7 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
       const cls = [p.id === myId && 'me', p.ready && 'ready', !p.connected && 'off'].filter(Boolean).join(' ');
       return slotHtml(byId[p.character] ?? characters[0], escapeHtml(p.name), tag, cls);
     });
-    const bots = characters.filter((c) => !taken.has(c.id)).map((c) => slotHtml(c, c.name, 'Bot', 'bot'));
+    const bots = characters.filter((c) => !taken.has(c.id)).map((c) => slotHtml(c, c.name, botTag(c), 'bot'));
     list.innerHTML = [...rows, ...bots].join('');
     setup.querySelector('.count').textContent = `${room.players.length} oyuncu + ${bots.length} bot`;
   };
@@ -176,10 +182,17 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
   };
   bindSeg(setup, 'laps', Number);
   bindSeg(setup, 'difficulty');
+  bindSeg(setup, 'mode');
+  // Mod değişince: zorluk ve pilot listesi güncellensin
+  setup.querySelector('[data-seg="mode"]').addEventListener('click', () => renderOnline());
 
   // Pist seçimi (çevrimiçide sadece oda sahibi)
   const trackValue = () => (online ? online.room.settings.track : settings.track);
   const renderTracks = () => {
+    setup.querySelectorAll('.tt-track').forEach((b) => {
+      const r = records?.(b.dataset.track);
+      b.querySelector('.rec').textContent = r?.bestLap ? `🏆 En iyi tur ${formatTime(r.bestLap)}` : '';
+    });
     setup.querySelectorAll('.tt-track').forEach((b) => b.classList.toggle('on', b.dataset.track === trackValue()));
     setup.querySelector('.tt-tracks').classList.toggle('locked', !!online && !isHost());
   };
@@ -242,6 +255,8 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
       renderCharacter(settings.character);
     }
     segSyncs.forEach((f) => f());
+    setup.querySelectorAll('.offline-only').forEach((el) => (el.hidden = !!online));
+    setup.querySelectorAll('.race-only').forEach((el) => (el.hidden = !online && settings.mode === 'timeTrial'));
     renderSlots();
     renderStartButton();
     pause.querySelector('[data-go="restart"]').hidden = !!online;
@@ -357,7 +372,7 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
           break;
         }
         show(null);
-        handlers.start({ character: settings.character, laps: settings.laps, difficulty: settings.difficulty });
+        handlers.start({ character: settings.character, laps: settings.laps, difficulty: settings.difficulty, mode: settings.mode });
         break;
       case 'host':
         handlers.host();
@@ -461,6 +476,9 @@ export function createMenu({ characters, portraits, tracks, handlers }) {
     },
     showMain() {
       show(main);
+    },
+    refreshRecords() {
+      renderOnline();
     },
     showSetup() {
       show(setup);

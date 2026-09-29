@@ -14,7 +14,10 @@ import { createKartEffects } from './effects.js';
 import { createPostFX } from './postfx.js';
 import { createStartLights } from './startLights.js';
 import { Race } from './race.js';
-import { createDriver, driveInput } from './ai.js';
+import { createDriver, driveInput, botEmote } from './ai.js';
+import { createEmoteBubbles } from './emotes.js';
+import { recordOf, submitTotal, createGhostRecorder, createGhost } from './records.js';
+import { createChat } from './ui/chat.js';
 import { Net } from './net.js';
 import { RemoteBuffer, encodeState, applyRemoteState, INTERP_DELAY } from './remote.js';
 import { createHud } from './ui/hud.js';
@@ -87,7 +90,16 @@ const trackCards = TRACK_IDS.map((id) => {
   return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL() };
 });
 
+const chat = createChat({
+  colorOf: (id) => CHARACTERS.find((c) => c.id === id)?.color ?? '#ffffff',
+  onSend: (text) => online && net.send({ type: 'chat', text }),
+  onEmote: (e) => sendEmote(player, e),
+});
+const emotes = createEmoteBubbles(scene);
+
 const menu = createMenu({
+  records: recordOf,
+  chatPanel: chat.panel,
   characters: CHARACTERS,
   portraits,
   tracks: trackCards,
@@ -187,6 +199,12 @@ function loadTrack(id) {
       play('item_box');
       hud.itemRoulette(item, 1.1, () => play('roulette', { volume: 0.35 }), () => play('item_land'));
     },
+    // İsabet: vuran bot sevinir, vurulan bot kızar (kişiliğe göre)
+    onHit: (victim, owner, result) => {
+      if (result !== 'hit') return;
+      if (owner && owner !== victim) botReact(owner, 'hitOther', 300);
+      botReact(victim, 'gotHit', 500);
+    },
     onUse: (kart, item) => {
       if (kart === player) hud.setItem(null);
       const vol = kart === player ? 1 : nearVolume(kart);
@@ -211,6 +229,11 @@ let race = null;
 let player = null;
 let focus = kartOf(settings.character);
 let drivers = new Map();
+let timeTrial = false; // Zamana Karşı modu (tek oyunculu, botsuz, itemsiz)
+let ghost = null; // rekor turun hayaleti
+let lastTotalRecord = false;
+const recorder = createGhostRecorder();
+const emoteCooldown = new Map(); // kart → son tepki zamanı
 let lastConfig = null;
 let paused = false; // sadece tek oyunculuda oyunu dondurur
 let pauseOpen = false;
@@ -284,6 +307,14 @@ function endRaceLocal() {
   startLights.off();
   nameplates.clear();
   items.reset();
+  items.setEnabled(true);
+  emotes.clear();
+  chat.setRacing(false);
+  ghost?.dispose();
+  ghost = null;
+  timeTrial = false;
+  hud.setTimeTrial(false);
+  menu.refreshRecords();
   touch.show(false);
   playMusic('menu');
   placeOnGrid(karts);
@@ -307,7 +338,12 @@ function setupRace(order, laps) {
   hud.setOnline(!!online);
   startLights.off();
   items.reset();
+  items.setEnabled(!timeTrial);
+  hud.setTimeTrial(timeTrial);
+  emotes.clear();
+  chat.setRacing(true);
   startPress = null;
+  lastTotalRecord = false;
   race = new Race(track, order, { laps, isOwned });
   playMusic('race');
   touch.show(isTouchDevice);
@@ -334,12 +370,16 @@ function setupRace(order, laps) {
     }
     for (const kart of order) {
       if (kart !== player && isOwned(kart) && Math.random() < (drivers.get(kart)?.skill ?? 0.9) - 0.45) kart.boost(KART.startBoost);
+      botReact(kart, 'go', Math.random() * 1500);
     }
+    recorder.startLap();
   });
   race.on('lap', (e, time) => {
     if (e.kart !== player) return;
     const best = e.lapTimes.length > 1 && Math.min(...e.lapTimes) === time;
-    hud.lapToast(e.lapsDone, time, best);
+    // Kişisel tur rekoru mu? (rekorsa hayalet olarak saklanır)
+    const record = recorder.finishLap(trackDef.id, player.character.id, time);
+    hud.lapToast(e.lapsDone, time, best, record);
     if (e.lapsDone < race.laps) play('lap');
   });
   race.on('finalLap', (e) => {
@@ -355,9 +395,11 @@ function setupRace(order, laps) {
       const id = online.idByKart.get(e.kart);
       net.send({ type: 'finish', id, time: e.finishTime });
     }
+    if (place === 1) botReact(e.kart, 'win', 600);
     if (e.kart === player) {
       if (resultsTimer === 0) {
-        hud.finish(place);
+        lastTotalRecord = submitTotal(trackDef.id, race.laps, e.finishTime);
+        hud.finish(timeTrial ? (lastTotalRecord ? 1 : 2) : place);
         playMusic(null);
         play(place <= 3 ? 'finish_win' : 'finish');
         hud.wrongWay(false);
@@ -375,22 +417,44 @@ function setupRace(order, laps) {
 function startOfflineRace(config) {
   lastConfig = config;
   player = kartOf(config.character);
+  timeTrial = config.mode === 'timeTrial';
   const bots = karts.filter((k) => k !== player);
-  // Oyuncu ortalarda (5.) başlar; önünde geçilecek rakipler olsun
-  const order = [...bots.slice(0, 4), player, ...bots.slice(4)];
+  // Oyuncu ortalarda (5.) başlar; önünde geçilecek rakipler olsun. Zamana Karşı: tek başına
+  const order = timeTrial ? [player] : [...bots.slice(0, 4), player, ...bots.slice(4)];
+  placeOnGrid(karts);
   placeOnGrid(order);
+  if (timeTrial) for (const k of bots) k.active = false;
   const skill = DIFFICULTY[config.difficulty]?.skill ?? DIFFICULTY.normal.skill;
-  drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + Math.random() * 100, k === player ? [0.97, 0.97] : skill)]));
+  drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + Math.random() * 100, k === player ? [0.97, 0.97] : skill, k.character.personality)]));
   displayNames = new Map(karts.map((k) => [k, k === player && settings.name ? settings.name : k.character.name]));
+  ghost?.dispose();
+  ghost = null;
+  const rec = recordOf(trackDef.id);
+  if (timeTrial && rec?.ghost) ghost = createGhost(scene, CHARACTERS.find((c) => c.id === rec.ghost.char) ?? player.character, rec.ghost);
   setupRace(order, config.laps);
+  if (timeTrial && !rec?.ghost) menu.toast('İlk turunu at: en iyi turun hayalet olarak kaydedilecek 👻');
 }
 
 function showResults() {
+  if (timeTrial) {
+    const e = race.entryOf(player);
+    const rec = recordOf(trackDef.id);
+    hud.showTimeTrialResults({
+      track: trackDef.name,
+      laps: e.lapTimes,
+      total: e.finishTime,
+      bestTotal: rec?.totals?.[race.laps] ?? e.finishTime,
+      bestLap: rec?.bestLap ?? Math.min(...e.lapTimes),
+      newTotal: lastTotalRecord,
+      newLap: rec?.bestLap != null && e.lapTimes.includes(rec.bestLap),
+    });
+    return;
+  }
   const standings = race.standings();
   const me = standings.findIndex((e) => e.kart === player) + 1;
   hud.showResults(
     standings.map((e) => ({ id: e.kart.character.id, name: displayNames.get(e.kart) ?? e.kart.character.name, time: e.finishTime, me: e.kart === player })),
-    `${trackDef.name} · ${race.laps} tur · ${me}. oldun`,
+    `${trackDef.name} · ${race.laps} tur · ${me}. oldun${lastTotalRecord ? ' · 🏆 yeni rekor' : ''}`,
   );
 }
 
@@ -418,6 +482,8 @@ function leaveRoom() {
   net.leave();
   online = null;
   menu.setOnline(null);
+  chat.setOnline(false);
+  chat.clear();
   if (race) endRaceLocal();
   menu.showMain();
   setMenuView('main');
@@ -459,7 +525,7 @@ function startOnlineRace(msg) {
 
   placeOnGrid(order);
   const skill = DIFFICULTY[msg.difficulty]?.skill ?? DIFFICULTY.normal.skill;
-  drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + (msg.goAt % 1000), skill)]));
+  drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + (msg.goAt % 1000), skill, k.character.personality)]));
   displayNames = new Map();
   nameplates.clear();
   for (const e of msg.entrants) {
@@ -501,6 +567,7 @@ net.on('room', (msg) => {
   if (!online) online = newOnline();
   online.room = msg;
   menu.setOnline(msg, net.id);
+  chat.setOnline(true);
   // Oda sahibi pisti değiştirdiyse lobide hazırla (yarış başlarken beklemesin)
   if (!race && msg.settings?.track) loadTrack(msg.settings.track);
   // Sunucu karakterimizi değiştirdiyse (başkası almıştı) önizlemeyi güncelle
@@ -544,6 +611,16 @@ net.on('hit', (msg) => {
   items.receive(msg);
   const kart = online.kartById.get(msg.target);
   if (kart) fx.event(kart, 'hit');
+  // Bizim sürdüğümüz bot başkasını vurduysa sevinsin
+  const owner = online.kartById.get(String(msg.id).split(':')[0]);
+  if (owner && owner !== kart) botReact(owner, 'hitOther', 300);
+});
+
+net.on('chat', (msg) => chat.add(msg));
+net.on('chatHistory', (msg) => chat.setHistory(msg.list));
+net.on('emote', (msg) => {
+  const kart = online?.kartById.get(msg.id);
+  if (race && kart) emotes.show(kart, msg.e);
 });
 
 net.on('finish', (msg) => {
@@ -627,7 +704,8 @@ if (import.meta.env.DEV) {
 
 // Tüm shader'ları önceden derle, ilk karede takılma olmasın
 renderer.compile(scene, camera);
-document.getElementById('loading').classList.add('done');
+// Açılış ekranı en az 2.4 s görünsün (logo animasyonu ve yapımcı yazısı için)
+setTimeout(() => document.getElementById('loading').classList.add('done'), Math.max(0, 2400 - performance.now()));
 menu.showMain();
 
 // Sayfa yenilendiyse ve bir odadaysak geri bağlan; davet linkiyle geldiyse katılma penceresini aç
@@ -654,10 +732,11 @@ let fpsTime = 0;
 
 let autopilot = false; // geliştirme: oyuncu kartını otopilot sürsün
 const positionOf = (kart) => race.positionOf(kart);
+const progressOf = (kart) => (race.entryOf(kart)?.progress ?? 0) / (track.count * race.laps);
 function kartInput(kart, playerInput, activeKarts) {
   if (!race.started) return NO_INPUT;
   if (kart === player && race.entryOf(kart).finishTime === null && !autopilot) return pauseOpen ? NO_INPUT : playerInput;
-  const input = driveInput(drivers.get(kart), kart, track, STEP, { items, karts: activeKarts, positionOf });
+  const input = driveInput(drivers.get(kart), kart, track, STEP, { items, karts: activeKarts, positionOf, progressOf });
   if (input.useItem) items.use(kart, input.backward);
   return input;
 }
@@ -665,7 +744,7 @@ function kartInput(kart, playerInput, activeKarts) {
 function raceStep(input) {
   const activeKarts = karts.filter((k) => k.active);
   for (const kart of karts) {
-    if (!isOwned(kart)) continue;
+    if (!isOwned(kart) || !kart.active) continue; // pasif: Zamana Karşı'da yarışta olmayan kartlar
     const impact = kart.step(STEP, kartInput(kart, input, activeKarts), track);
     if (kart === player && impact > 3) {
       rig.shake(Math.min(0.8, impact / 20));
@@ -684,6 +763,7 @@ function raceStep(input) {
     isOwned,
   );
   if (race.started) items.update(STEP, activeKarts, positionOf);
+  if (race.started && race.entryOf(player)?.finishTime === null) recorder.sample(player, STEP);
   race.update(STEP);
 }
 
@@ -734,6 +814,11 @@ function frame(now) {
     kart.events.length = 0;
   }
   if (race) items.animate(dt, karts);
+  emotes.update(paused ? 0 : dt);
+  if (ghost && race) {
+    const e = race.entryOf(player);
+    ghost.update(race.started && e.finishTime === null ? race.clock - e.lapStart : -1, paused ? 0 : dt);
+  }
   const target = race ? player : focus;
   applyViewOffset(dt);
   rig.update(paused ? 0 : dt, target);
@@ -764,6 +849,28 @@ function frame(now) {
     fpsTime = 0;
   }
   requestAnimationFrame(frame);
+}
+
+// Hızlı tepki: kartın üstünde baloncuk, çevrimiçide diğerlerine de gider
+function sendEmote(kart, e) {
+  if (!race || !kart) return;
+  const now = performance.now();
+  if (now - (emoteCooldown.get(kart) ?? 0) < 800) return;
+  emoteCooldown.set(kart, now);
+  emotes.show(kart, e);
+  if (kart === player) play('ui_select', { volume: 0.5 });
+  if (online) net.send({ type: 'emote', e, id: kart === player ? undefined : online.idByKart.get(kart) });
+}
+
+// Botlar kişiliklerine göre olaylara emojiyle tepki verir (sadece bizim sürdüğümüz botlar)
+function botReact(kart, event, delay = 0) {
+  if (!kart || kart === player || !isOwned(kart) || timeTrial) return;
+  const driver = drivers.get(kart);
+  if (!driver) return;
+  const e = botEmote(driver, event);
+  if (e < 0) return;
+  const r = race;
+  setTimeout(() => r === race && sendEmote(kart, e), delay);
 }
 
 // Kart olay sesleri (oyuncu ya da yakındaki kartlar)
@@ -825,6 +932,8 @@ if (import.meta.env.DEV) {
   window.__tt.autopilot = (on) => (autopilot = on);
   window.__tt.readInput = readInput;
   window.__tt.postfx = postfx;
+  Object.assign(window.__tt, { emotes, chat, recordOf });
+  Object.defineProperties(window.__tt, { ghost: { get: () => ghost }, drivers: { get: () => drivers } });
   window.__tt.freeze = (on) => (paused = on); // menü açmadan dondur (ekran görüntüsü için)
   window.__tt.simulate = (seconds) => {
     setPaused(false);

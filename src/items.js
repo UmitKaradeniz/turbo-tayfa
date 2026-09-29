@@ -48,7 +48,8 @@ const OWNER_IMMUNE = 0.5;
 
 const UP = new THREE.Vector3(0, 1, 0);
 
-export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, onRoll, onUse }) {
+export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, onRoll, onUse, onHit }) {
+  let enabled = true; // Zamana Karşı modunda kutular kapalı
   // --- Kutular: pist boyunca 3 sıra, her sırada 5 kutu ---
   const boxes = [];
   const rows = [0.16, 0.47, 0.77].map((f) => Math.round(f * track.count));
@@ -112,7 +113,8 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
   // Bizim kartımız (ya da sürdüğümüz bot) bir şeye çarptı
   function hit(kart, thing) {
     removeThing(thing.id);
-    kart.spinOut();
+    const result = kart.spinOut();
+    onHit?.(kart, thing.owner, result);
     send({ type: 'hit', id: thing.id, target: idOf(kart) });
   }
 
@@ -128,6 +130,9 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
     },
     isRolling(kart) {
       return (held.get(kart)?.rolling ?? 0) > 0;
+    },
+    setEnabled(v) {
+      enabled = v;
     },
     // Test/geliştirme: karta doğrudan item ver
     give(kart, item) {
@@ -191,6 +196,7 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
       time += dt;
       // Kutular: yeniden doğma + bizim kartlarımızın toplaması
       for (const [i, b] of boxes.entries()) {
+        if (!enabled) break;
         if (!b.active) {
           b.respawn -= dt;
           if (b.respawn <= 0) b.active = true;
@@ -262,7 +268,7 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
     animate(dt, karts) {
       const hue = (performance.now() * 0.0001) % 1;
       for (const [i, b] of boxes.entries()) {
-        const target = b.active ? 1 : 0;
+        const target = b.active && enabled ? 1 : 0;
         const s = b.mesh.scale.x + (target - b.mesh.scale.x) * Math.min(1, dt * 8);
         b.mesh.scale.setScalar(Math.max(0.001, s));
         b.mesh.visible = s > 0.02;

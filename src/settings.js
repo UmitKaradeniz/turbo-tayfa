@@ -13,6 +13,7 @@ const DEFAULTS = {
   sfxVolume: 0.9,
   autoGas: true, // dokunmatikte otomatik gaz
   track: 'palmCove',
+  mode: 'race', // race | timeTrial (tek oyunculu)
 };
 
 function load() {
