@@ -54,7 +54,6 @@
   padding: 4px 10px;
   border-radius: 10px;
   display: inline-block;
-  backdrop-filter: blur(4px);
   -webkit-text-stroke: 0;
   text-shadow: none;
 }
@@ -75,7 +74,6 @@
   font-size: 16px;
   letter-spacing: -2px;
   cursor: pointer;
-  backdrop-filter: blur(4px);
   transition: background 0.15s;
 }
 #hud-pause:hover { background: rgba(11, 42, 85, 0.7); }
@@ -87,8 +85,7 @@
   bottom: max(14px, env(safe-area-inset-bottom));
   padding: 6px;
   border-radius: 20px;
-  background: rgba(11, 42, 85, 0.28);
-  backdrop-filter: blur(3px);
+  background: rgba(11, 42, 85, 0.4);
 }
 #hud-map canvas { display: block; }
 
@@ -300,7 +297,6 @@
   box-shadow: 0 5px 0 rgba(11, 42, 85, 0.5), inset 0 0 18px rgba(255, 255, 255, 0.15);
   display: grid;
   place-items: center;
-  backdrop-filter: blur(4px);
 }
 #hud-item img { width: 62px; height: 62px; opacity: 0; transition: opacity 0.1s; }
 #hud-item.has img { opacity: 1; }

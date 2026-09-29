@@ -30,7 +30,6 @@
   color: #fff;
   font-family: var(--tt-font-display);
   font-size: 30px;
-  backdrop-filter: blur(4px);
   box-shadow: 0 5px 0 rgba(11, 42, 85, 0.35);
   transition: transform 0.06s, background 0.06s;
   -webkit-tap-highlight-color: transparent;

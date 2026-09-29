@@ -52,7 +52,7 @@
 .tt-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .tt-btn.primary { --bg: var(--tt-yellow); --edge: var(--tt-yellow-dark); --fg: var(--tt-navy); }
 .tt-btn.light { --bg: #fff; --edge: #c5d8f2; --fg: var(--tt-navy); }
-.tt-btn.ghost { --bg: rgba(255, 255, 255, 0.18); --edge: rgba(0, 0, 0, 0.18); --fg: #fff; backdrop-filter: blur(6px); }
+.tt-btn.ghost { --bg: rgba(11, 42, 85, 0.35); --edge: rgba(0, 0, 0, 0.18); --fg: #fff; }
 .tt-btn.big { font-size: 28px; padding: 16px 30px; border-radius: 20px; }
 .tt-btn.block { width: 100%; }
 .tt-btn.icon { padding: 10px; width: 50px; height: 50px; font-size: 22px; border-radius: 14px; }
@@ -126,8 +126,7 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(5, 20, 50, 0.55);
-  backdrop-filter: blur(4px);
+  background: rgba(5, 20, 50, 0.68);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s;
