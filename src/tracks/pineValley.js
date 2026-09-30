@@ -1,3 +1,5 @@
+import { placePieces, cottagePieces } from '../props.js';
+
 // "Çam Vadisi" — dağlarla çevrili bir vadide çam ormanı, göl kenarı ve kamp alanı.
 // Tepeye tırmanan uzun bir yokuş, oradan inen virajlı bir iniş ve göl kıyısında şikan.
 // Kontrol noktaları: [x, z, yükseklik].
@@ -65,6 +67,9 @@ export default {
     'nature/mushroom_red', 'nature/mushroom_redGroup', 'nature/plant_bush', 'nature/plant_bushLarge', 'nature/grass_large',
     'nature/grass', 'nature/flower_purpleA', 'nature/flower_yellowA', 'nature/tent_detailedOpen', 'nature/tent_smallOpen',
     'nature/campfire_stones', 'nature/canoe', 'nature/platform_beach', 'nature/statue_obelisk',
+    ...['fountain-round', 'stall-red', 'stall-green', 'cart', 'lantern', 'banner-red', 'banner-green', 'tree', 'tree-high', 'tree-high-round', 'tree-crooked',
+      'rock-large', 'rock-wide', 'wall-wood', 'wall-wood-door', 'wall-wood-window-shutters', 'wall-wood-window-small', 'roof-gable',
+    ].map((k) => `fantasy/${k}`),
   ],
 
   decorate(ctx) {
@@ -135,6 +140,41 @@ export default {
       }
     }
 
+    // --- Köy meydanı: çeşme, tezgâhlar, kır evleri, fenerler (Fantasy Town Kit) ---
+    {
+      const terrain = track.terrain;
+      const vi = Math.round(track.count * 0.1);
+      const vc = ctx.along(vi, outerSide * (edge + 46));
+      if (terrain.landAt(vc.x, vc.z) > 12) {
+        ctx.place('fantasy/fountain-round', vc.x, vc.z, 0, 6);
+        ctx.reserve(vc.x, vc.z, 34);
+        const facing = (x, z) => Math.atan2(vc.x - x, vc.z - z); // yerel +Z merkeze baksın
+        for (let k = 0; k < 6; k++) {
+          const a = k * ((Math.PI * 2) / 6) + 0.35;
+          const x = vc.x + Math.cos(a) * 25;
+          const z = vc.z + Math.sin(a) * 25;
+          if (terrain.landAt(x, z) < 8) continue;
+          placePieces(ctx, cottagePieces(1 + (k % 2)), x, z, terrain.heightAt(x, z), facing(x, z), 6.5);
+        }
+        for (let k = 0; k < 4; k++) {
+          const a = k * (Math.PI / 2) + 0.8;
+          const x = vc.x + Math.cos(a) * 12;
+          const z = vc.z + Math.sin(a) * 12;
+          ctx.place(k % 2 ? 'fantasy/stall-green' : 'fantasy/stall-red', x, z, facing(x, z), 5.5);
+          const lx = vc.x + Math.cos(a + 0.8) * 10;
+          const lz = vc.z + Math.sin(a + 0.8) * 10;
+          ctx.place('fantasy/lantern', lx, lz, 0, 5);
+        }
+        ctx.place('fantasy/cart', vc.x + 15, vc.z - 4, 0.6, 5);
+        ctx.place('fantasy/cart', vc.x - 14, vc.z + 6, 2.2, 5);
+      }
+      // Yol boyunca köy bayrakları
+      for (let k = -1; k <= 1; k += 2) {
+        const b = ctx.along(vi + k * 6, outerSide * (edge + 2.2));
+        ctx.place(k < 0 ? 'fantasy/banner-red' : 'fantasy/banner-green', b.x, b.z, b.acrossY + (outerSide > 0 ? 0 : Math.PI), 6);
+      }
+    }
+
     // --- Orman ---
     ctx.noShadow('nature/grass', 'nature/grass_large', 'nature/flower_purpleA', 'nature/flower_yellowA', 'nature/mushroom_red');
     const off = (d, m) => d > edge + m;
@@ -144,6 +184,7 @@ export default {
       scale: [7, 12],
       where: (s, d) => s > -40 && off(d, 5),
     });
+    ctx.scatter({ keys: ['fantasy/tree', 'fantasy/tree-high', 'fantasy/tree-high-round', 'fantasy/tree-crooked'], count: 110, scale: [4.2, 6], where: (s, d) => s > -30 && d > edge + 4 });
     ctx.scatter({ keys: ['nature/tree_detailed'], count: 40, scale: [7, 10], where: (s, d) => s > 5 && off(d, 7) });
     ctx.scatter({ keys: ['nature/rock_tallA', 'nature/rock_tallB'], count: 70, scale: [8, 16], where: (s, d) => s < -5 && off(d, 12) });
     ctx.scatter({ keys: ['nature/rock_largeA', 'nature/rock_largeB'], count: 60, scale: [4, 9], where: (s, d) => off(d, 4) });

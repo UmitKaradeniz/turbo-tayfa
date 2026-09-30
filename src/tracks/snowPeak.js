@@ -1,4 +1,4 @@
-import { createSnowman } from '../props.js';
+import { placePieces, cabinPieces } from '../props.js';
 
 // "Kar Zirvesi" — karla kaplı bir dağ. Uzun bir tırmanış, zirvede geniş bir viraj,
 // aşağı inen S virajları ve donmuş gölün kıyısında bitiş düzlüğü. Kar yağıyor.
@@ -66,11 +66,15 @@ export default {
 
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
-    'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',
-    'nature/tree_pineTallA', 'nature/tree_pineTallB', 'nature/tree_pineRoundA', 'nature/tree_pineRoundC',
-    'nature/tree_pineDefaultA', 'nature/tree_cone', 'nature/rock_tallA', 'nature/rock_tallB',
-    'nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC', 'nature/stump_round', 'nature/log_stack', 'nature/log',
-    'nature/tent_detailedOpen', 'nature/tent_smallOpen', 'nature/campfire_stones', 'nature/statue_obelisk',
+    'racing/bannerTowerRed', 'racing/bannerTowerGreen',
+    'nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC',
+    'nature/log_stack', 'nature/log', 'nature/campfire_stones', 'nature/statue_obelisk',
+    ...['tree-snow-a', 'tree-snow-b', 'tree-snow-c', 'tree', 'tree-decorated-snow', 'tree-decorated', 'snowman', 'snowman-hat',
+      'present-a-cube', 'present-a-rectangle', 'present-a-round', 'present-b-cube', 'present-b-rectangle', 'present-b-round',
+      'candy-cane-red', 'candy-cane-green', 'lantern', 'reindeer', 'sled', 'sled-long', 'snow-pile', 'snow-flat', 'snow-flat-large',
+      'rocks-large', 'rocks-medium', 'rocks-small', 'bench', 'bench-short',
+      'cabin-wall', 'cabin-corner', 'cabin-doorway', 'cabin-window-a', 'cabin-window-b', 'cabin-roof-snow', 'cabin-roof-snow-point',
+    ].map((k) => `holiday/${k}`),
   ],
 
   decorate(ctx) {
@@ -100,35 +104,69 @@ export default {
       ctx.place(k % 16 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
     }
 
-    // --- Göl kıyısı: kamp ateşi, çadırlar ---
+    // --- Göl kıyısı: kulübeler, kamp ateşi, kızaklar ---
     const lake = this.ponds[0];
     for (let k = 0; k < 3; k++) {
-      const a = -0.6 + k * 0.5;
-      const x = lake.x + Math.cos(a) * (lake.r + 9);
-      const z = lake.z + Math.sin(a) * (lake.r + 9);
-      ctx.place(k === 1 ? 'nature/tent_detailedOpen' : 'nature/tent_smallOpen', x, z, -a + Math.PI / 2, 6);
-      ctx.reserve(x, z, 8);
+      const a = -0.5 + k * 0.6;
+      const x = lake.x + Math.cos(a) * (lake.r + 15);
+      const z = lake.z + Math.sin(a) * (lake.r + 15);
+      placePieces(ctx, cabinPieces(1 + (k % 2)), x, z, terrain.heightAt(x, z), -a + Math.PI / 2 + Math.PI, 6.5);
+      ctx.reserve(x, z, 9);
     }
-    const cf = { x: lake.x + Math.cos(-0.1) * (lake.r + 17), z: lake.z + Math.sin(-0.1) * (lake.r + 17) };
+    const cf = { x: lake.x + Math.cos(0.9) * (lake.r + 10), z: lake.z + Math.sin(0.9) * (lake.r + 10) };
     ctx.place('nature/campfire_stones', cf.x, cf.z, 0, 6);
-    ctx.place('nature/log', cf.x + 4, cf.z + 3, 1.1, 6);
-    ctx.reserve(cf.x, cf.z, 8);
+    ctx.place('holiday/bench', cf.x + 6, cf.z + 2, 0.4, 5);
+    ctx.place('holiday/sled', cf.x - 5, cf.z + 4, 1.2, 5);
+    ctx.place('holiday/sled-long', cf.x - 4, cf.z - 4, 0.3, 5);
+    ctx.reserve(cf.x, cf.z, 10);
 
-    // Zirvede dikilitaş
+    // Zirvede dikilitaş ve süslü çamlar
     const top = Math.round(track.count * 0.36);
     const o = ctx.along(top, track.innerSide[top] * (edge + 14));
     ctx.place('nature/statue_obelisk', o.x, o.z, 0, 9);
     ctx.reserve(o.x, o.z, 8);
+    for (let k = -1; k <= 1; k++) {
+      const t = ctx.along(top + k * 5, track.innerSide[top] * (edge + 24 + Math.abs(k) * 3));
+      ctx.place(k % 2 ? 'holiday/tree-decorated-snow' : 'holiday/tree-decorated', t.x, t.z, rng() * 6, 8);
+      ctx.reserve(t.x, t.z, 5);
+    }
 
-    // Kardan adamlar: yolun kenarında, piste dönük
+    // Başlangıç düzlüğü: şeker kamışı sırası, hediye yığınları, süslü çamlar
+    for (let k = -30; k <= 30; k += 3) {
+      if (Math.abs(k) < 4) continue;
+      const c = ctx.along(k, innerSide * (edge + 1.6));
+      ctx.place(k % 6 ? 'holiday/candy-cane-green' : 'holiday/candy-cane-red', c.x, c.z, c.faceTrackY, 8);
+    }
+    for (let k = 0; k < 5; k++) {
+      const g = ctx.along(-8 + k * 4, outerSide * (edge + 16 + (k % 2) * 3));
+      const key = ['present-a-cube', 'present-b-rectangle', 'present-a-round', 'present-b-cube', 'present-a-rectangle'][k];
+      ctx.place(`holiday/${key}`, g.x, g.z, rng() * 6, 5);
+      ctx.reserve(g.x, g.z, 3);
+    }
+    for (const k of [-38, 38]) {
+      const t = ctx.along(k, innerSide * (edge + 7));
+      ctx.place('holiday/tree-decorated-snow', t.x, t.z, 0, 9);
+      ctx.reserve(t.x, t.z, 5);
+    }
+
+    // Kardan adamlar ve fener direkleri yolun kenarında
     for (const f of [0.03, 0.1, 0.19, 0.28, 0.45, 0.58, 0.7, 0.83, 0.93]) {
       const i = Math.round(track.count * f);
       const side = rng() < 0.5 ? -1 : 1;
       const p = ctx.along(i, side * (edge + 3 + rng() * 3));
-      const m = createSnowman(1.4 + rng() * 0.5);
-      m.position.set(p.x, terrain.heightAt(p.x, p.z), p.z);
-      m.rotation.y = p.faceTrackY + (rng() - 0.5) * 0.6;
-      ctx.addObject(m);
+      ctx.place(rng() < 0.5 ? 'holiday/snowman' : 'holiday/snowman-hat', p.x, p.z, p.faceTrackY + (rng() - 0.5) * 0.6, 4 + rng() * 1.2);
+      ctx.reserve(p.x, p.z, 4);
+    }
+    for (let i = 20; i < track.count; i += 30) {
+      const side = (i / 30) % 2 ? 1 : -1;
+      const p = ctx.along(i, side * (edge + 1.5));
+      if (track.shortcutClearance(p.x, p.z) < 4) continue;
+      ctx.place('holiday/lantern', p.x, p.z, 0, 4.5);
+    }
+    for (const f of [0.12, 0.39, 0.6, 0.86]) {
+      const i = Math.round(track.count * f);
+      const p = ctx.along(i, -track.innerSide[i] * (edge + 12 + rng() * 8));
+      ctx.place('holiday/reindeer', p.x, p.z, rng() * 6, 4.5);
       ctx.reserve(p.x, p.z, 4);
     }
 
@@ -142,15 +180,16 @@ export default {
       }
     }
 
-    // --- Doğa: karlı çamlar ve kayalar ---
-    ctx.noShadow('nature/stump_round');
-    const pines = ['nature/tree_pineTallA', 'nature/tree_pineTallB', 'nature/tree_pineRoundA', 'nature/tree_pineRoundC', 'nature/tree_pineDefaultA', 'nature/tree_cone'];
-    ctx.frost(...pines, 'nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC', 'nature/log_stack', 'nature/stump_round', 'nature/log');
+    // --- Doğa: kar kaplı çamlar, kayalar, kar yığınları ---
+    ctx.frost('nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC', 'nature/log_stack', 'nature/log');
+    ctx.noShadow('holiday/snow-pile', 'holiday/snow-flat', 'holiday/snow-flat-large');
+    const pines = ['holiday/tree-snow-a', 'holiday/tree-snow-b', 'holiday/tree-snow-c', 'holiday/tree-snow-a', 'holiday/tree-snow-b', 'holiday/tree'];
     const off = (d, m) => d > edge + m;
-    ctx.scatter({ keys: pines, count: 380, scale: [7, 12], where: (s, d) => s > -45 && off(d, 5) });
-    ctx.scatter({ keys: pines, count: 260, scale: [8, 13], where: (s, d) => s > -30 && off(d, 4) && d < 55 });
+    ctx.scatter({ keys: pines, count: 380, scale: [6.5, 10], where: (s, d) => s > -45 && off(d, 5) });
+    ctx.scatter({ keys: pines, count: 260, scale: [7, 10.5], where: (s, d) => s > -30 && off(d, 4) && d < 55 });
     ctx.scatter({ keys: ['nature/rock_tallA', 'nature/rock_tallB'], count: 90, scale: [8, 16], where: (s, d) => s < -5 && off(d, 12) });
-    ctx.scatter({ keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC'], count: 80, scale: [4, 9], where: (s, d) => off(d, 4) });
-    ctx.scatter({ keys: ['nature/stump_round', 'nature/log_stack', 'nature/log'], count: 40, scale: [5, 7], where: (s, d) => s > 0 && off(d, 4) });
+    ctx.scatter({ keys: ['holiday/rocks-large', 'holiday/rocks-medium', 'holiday/rocks-small'], count: 90, scale: [4, 8], where: (s, d) => off(d, 4) });
+    ctx.scatter({ keys: ['nature/log_stack', 'nature/log'], count: 24, scale: [5, 7], where: (s, d) => s > 0 && off(d, 4) });
+    ctx.scatter({ keys: ['holiday/snow-pile', 'holiday/snow-flat', 'holiday/snow-flat-large'], count: 120, scale: [5, 9], where: (s, d) => s > 0 && off(d, 3) && d < 60 });
   },
 };

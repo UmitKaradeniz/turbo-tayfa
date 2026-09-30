@@ -1,4 +1,4 @@
-import { buildBuildings, buildStreetLamps } from '../city.js';
+import { buildModelBuildings, buildStreetLamps, CITY_MODELS } from '../city.js';
 
 // "Neon Şehir" — gece vakti ışıl ışıl bir liman kenti. Geniş caddeler, bina sıraları, neon tabelalar,
 // şehrin ortasındaki liman ve sahil yolunda hızlı virajlar. Kontrol noktaları: [x, z, yükseklik].
@@ -65,6 +65,7 @@ export default {
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',
     'nature/tree_detailed', 'nature/tree_cone', 'nature/plant_bushLarge', 'nature/plant_bush', 'nature/platform_beach', 'nature/canoe',
+    ...CITY_MODELS,
   ],
 
   decorate(ctx) {
@@ -123,7 +124,7 @@ export default {
 
     // --- Şehir: binalar, neon tabelalar, lambalar ---
     const nearStart = (i) => i < 16 || i > n - 16;
-    buildBuildings(ctx, { max: 120, skip: (p, i) => nearStart(i) });
+    buildModelBuildings(ctx, { max: 130, skip: (p, i) => nearStart(i) });
     buildStreetLamps(ctx, { every: 8 });
 
     // Birkaç park ağacı ve çalı (yola yakın, bina olmayan yerlerde)

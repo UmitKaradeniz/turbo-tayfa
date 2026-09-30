@@ -159,8 +159,8 @@ src/
   kart.js          Arcade kart fiziği (drift, turbo, savrulma, kalkan)
   track.js         Orta çizgiden pist, zemin ve sınır üretimi
   shortcut.js      Kısayollar: kendi yolu, kum/toprak, rampa + dere, hız tahtası
-  city.js          Neon Şehir: yordamsal binalar, neon tabelalar, sokak lambaları
-  props.js         Yordamsal küçük dekorlar (kardan adam)
+  city.js          Neon Şehir: bina yerleşimi, neon tabelalar, sokak lambaları
+  props.js         Modül parçalarından kulübe / kır evi kuran yardımcılar
   tracks/          Pist tanımları (kontrol noktaları + tema + dekor)
   race.js          Tur, sıralama, checkpoint, bitiş
   items.js         Item kutuları ve itemler
@@ -168,7 +168,7 @@ src/
   net.js remote.js Sunucu bağlantısı, durum senkronu ve interpolasyon
   audio.js         Müzik, efektler, kodla üretilen motor sesi
   ui/              Menü, HUD, dokunmatik kontroller, mini harita
-public/models      Kenney 3D modelleri (CC0)
+public/models      Kenney 3D modelleri (CC0); pist başına yüklenir: nature, racing, city, holiday, pirate, fantasy
 public/audio       Ses ve müzikler (CC0)
 tools/             Test aracı (sahte oyuncu)
 ```

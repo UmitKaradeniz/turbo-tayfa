@@ -66,6 +66,10 @@ export default {
     'nature/rock_tallA', 'nature/plant_bushLarge', 'nature/plant_bush', 'nature/grass_large', 'nature/grass',
     'nature/flower_redA', 'nature/flower_yellowA', 'nature/platform_beach', 'nature/canoe',
     'nature/tent_detailedOpen', 'nature/campfire_stones', 'nature/log', 'nature/statue_head',
+    ...['ship-pirate-large', 'ship-pirate-medium', 'ship-small', 'ship-wreck', 'boat-row-small', 'boat-row-large', 'structure-platform-dock',
+      'tower-complete-large', 'castle-wall', 'barrel', 'crate', 'crate-bottles', 'chest', 'cannon', 'flag-pirate-high',
+      'palm-bend', 'palm-straight', 'palm-detailed-bend', 'palm-detailed-straight', 'rocks-sand-a', 'rocks-sand-b', 'rocks-sand-c',
+    ].map((k) => `pirate/${k}`),
   ],
 
   decorate(ctx) {
@@ -158,6 +162,59 @@ export default {
       }
     }
 
+    // --- Korsan dokusu: limanda gemiler, batık, tekneler, iskele, kale kulesi, fıçılar ---
+    const terrain = track.terrain;
+    const ships = ['pirate/ship-pirate-large', 'pirate/ship-pirate-medium', 'pirate/ship-small', 'pirate/ship-wreck'];
+    let shipN = 0;
+    for (const f of [0.02, 0.08, 0.14, 0.9, 0.96]) {
+      const i = Math.round(track.count * f);
+      const s = shore(i, seaSide);
+      if (!s) continue;
+      for (const extra of [26, 44]) {
+        const p = ctx.along(i, seaSide * (s.d + extra + (shipN % 3) * 6));
+        if (terrain.landAt(p.x, p.z) > -7) continue; // yeterince derin su değil
+        const key = ships[shipN++ % ships.length];
+        ctx.place(key, p.x, p.z, rng() * Math.PI * 2, key.includes('wreck') ? 2.6 : 2.3, key.includes('wreck') ? -1.2 : -0.5);
+        ctx.reserve(p.x, p.z, 16);
+        break;
+      }
+    }
+    for (const i of [Math.round(track.count * 0.03), Math.round(track.count * 0.93)]) {
+      const s = shore(i, seaSide);
+      if (!s) continue;
+      for (let k = 0; k < 3; k++) {
+        const d = ctx.along(i + 6, seaSide * (s.d + 4 + k * 5));
+        ctx.place('pirate/boat-row-small', d.x + 4, d.z + k * 2, rng() * 6, 3.2, 0.05);
+      }
+      const camp = ctx.along(i + 3, seaSide * (s.d - 8));
+      ctx.place('pirate/barrel', camp.x, camp.z, 0, 3.2);
+      ctx.place('pirate/crate', camp.x + 3, camp.z + 1.5, 0.5, 3.2);
+      ctx.place('pirate/crate-bottles', camp.x + 5, camp.z - 2, 1.2, 3.2);
+      ctx.place('pirate/chest', camp.x - 3, camp.z + 2.5, -0.4, 3.2);
+      ctx.reserve(camp.x, camp.z, 8);
+    }
+    // Kale kulesi ve toplar: pistin iç tarafında yüksek bir noktada
+    {
+      const i = Math.round(track.count * 0.62);
+      const tower = ctx.along(i, track.innerSide[i] * (edge + 34));
+      ctx.place('pirate/tower-complete-large', tower.x, tower.z, tower.faceTrackY, 3.4);
+      for (let k = 0; k < 3; k++) {
+        const w = ctx.along(i + (k - 1) * 8, track.innerSide[i] * (edge + 26));
+        ctx.place('pirate/castle-wall', w.x, w.z, w.acrossY, 3);
+        ctx.reserve(w.x, w.z, 6);
+      }
+      const c = ctx.along(i + 12, track.innerSide[i] * (edge + 21));
+      ctx.place('pirate/cannon', c.x, c.z, c.faceTrackY + Math.PI, 3.6);
+      ctx.reserve(tower.x, tower.z, 12);
+    }
+    // Kısayol girişinde korsan bayrakları
+    for (const sc of track.shortcuts) {
+      for (const side of [-1, 1]) {
+        const f = ctx.shortcutAt(sc, 8, side * (sc.halfAt(8) + 5));
+        ctx.place('pirate/flag-pirate-high', f.x, f.z, f.faceTrackY, 3.2);
+      }
+    }
+
     // --- Doğa ---
     ctx.noShadow('nature/grass', 'nature/grass_large', 'nature/flower_redA', 'nature/flower_yellowA');
     const off = (d, m) => d > edge + m;
@@ -167,6 +224,7 @@ export default {
       scale: [7, 11],
       where: (s, d) => s > 1.5 && s < 45 && off(d, 5),
     });
+    ctx.scatter({ keys: ['pirate/palm-bend', 'pirate/palm-detailed-straight', 'pirate/palm-straight', 'pirate/palm-detailed-bend'], count: 90, scale: [2.3, 3.3], where: (s, d) => s > 2.5 && s < 45 && off(d, 5) });
     ctx.scatter({ keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC'], count: 120, scale: [4, 10], where: (s, d) => s > -5 && s < 2 && off(d, 4) });
     ctx.scatter({ keys: ['nature/rock_tallA'], count: 25, scale: [6, 10], where: (s, d) => s > 20 && off(d, 10) });
     ctx.scatter({ keys: ['nature/plant_bushLarge', 'nature/plant_bush'], count: 260, scale: [6, 9], where: (s, d) => s > 12 && off(d, 3) });

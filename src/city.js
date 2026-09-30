@@ -1,57 +1,7 @@
 import * as THREE from 'three';
+import { normalizedModel } from './assets.js';
 
-// Gece şehri dekoru: yordamsal binalar (yanan pencereler), neon tabelalar ve sokak lambaları.
-// Hiç model dosyası gerekmez; tüm dokular canvas ile üretilir.
-
-const CELL = 32; // bir pencere dokusu karesi = 32 m (8×8 pencere, pencere başına 4 m)
-const UP = new THREE.Vector3(0, 1, 0);
-
-function windowTextures() {
-  const size = 256;
-  const make = (emissiveOnly) => {
-    const c = document.createElement('canvas');
-    c.width = c.height = size;
-    const g = c.getContext('2d');
-    g.fillStyle = emissiveOnly ? '#000' : '#2b3048';
-    g.fillRect(0, 0, size, size);
-    let seed = 42; // iki doku aynı rastgele düzeni kullansın
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let y = 0; y < 8; y++) {
-      for (let x = 0; x < 8; x++) {
-        const r = rnd();
-        const lit = r < 0.5;
-        const cyan = r > 0.5 && r < 0.6;
-        const col = lit ? '#ffd98a' : cyan ? '#8fe3ff' : null;
-        if (emissiveOnly && !col) continue;
-        g.fillStyle = emissiveOnly ? col : col ?? '#161a2b';
-        g.fillRect(x * 32 + 7, y * 32 + 6, 18, 20);
-      }
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = 4;
-    return tex;
-  };
-  return { map: make(false), emissive: make(true) };
-}
-
-// Yan yüzleri pencere karesine, üst/alt yüzü düz cepheye eşleyen kutu
-function buildingGeometry(w, h, d) {
-  const g = new THREE.BoxGeometry(w, h, d);
-  const uv = g.attributes.uv;
-  // BoxGeometry yüz sırası: +x, -x, +y, -y, +z, -z (yüz başına 4 köşe)
-  const scale = [[d, h], [d, h], null, null, [w, h], [w, h]];
-  for (let f = 0; f < 6; f++) {
-    for (let k = 0; k < 4; k++) {
-      const i = f * 4 + k;
-      if (!scale[f]) uv.setXY(i, 0.02, 0.02);
-      else uv.setXY(i, (uv.getX(i) * scale[f][0]) / CELL, (uv.getY(i) * scale[f][1]) / CELL);
-    }
-  }
-  g.translate(0, h / 2, 0);
-  return g;
-}
+// Gece şehri dekoru: Kenney City Kit binaları (gece pencereleri ışıldar), neon tabelalar ve sokak lambaları.
 
 const WORDS = [
   ['TURBO', '#ff3fa4'], ['KAHVE', '#ffd23f'], ['PİZZA', '#ff7a2f'], ['OTEL', '#3fe0ff'],
@@ -94,88 +44,6 @@ function radialTexture(stops) {
   g.fillRect(0, 0, 64, 64);
   return new THREE.CanvasTexture(c);
 }
-
-// Binalar: yolun iki yanında sıralar halinde, yola paralel; uzaktakiler daha yüksek
-export function buildBuildings(ctx, { max = 130, rowsDepth = [10, 36, 62], skip = () => false } = {}) {
-  const { track, rng } = ctx;
-  const terrain = track.terrain;
-  const tex = windowTextures();
-  const mat = new THREE.MeshStandardMaterial({ map: tex.map, emissive: 0xffffff, emissiveMap: tex.emissive, emissiveIntensity: 1.15, roughness: 0.85 });
-
-  const sizes = [[12, 12], [16, 16], [20, 15], [14, 22]];
-  const heights = [[18, 30], [30, 46], [44, 66]];
-  const variants = new Map(); // "wi|hi" → { geo, list: [{ matrix, color }] }
-  const placed = [];
-  const tints = [0xb8c0e0, 0x9aa6d6, 0xc9b8e6, 0xa4c9d9, 0xe0c0b8, 0xffffff];
-  const n = track.count;
-  const total = Math.round(max * ctx.density);
-
-  const consider = (i, side, row) => {
-    const [w, d] = sizes[Math.floor(rng() * sizes.length)];
-    const [h0, h1] = heights[row];
-    const h = h0 + Math.round(rng() * (h1 - h0));
-    const lateral = side * (track.edge + rowsDepth[row] + w / 2 + rng() * 5); // genişlik (w) yola dik
-    const p = ctx.along(i, lateral);
-    const half = Math.hypot(w, d) / 2;
-    if (terrain.landAt(p.x, p.z) < 8) return;
-    if (terrain.roadDistAt(p.x, p.z) < track.edge + half * 0.85) return;
-    if (track.shortcutClearance(p.x, p.z) < half + 6) return;
-    if (skip(p, i)) return;
-    for (const q of placed) if ((q.x - p.x) ** 2 + (q.z - p.z) ** 2 < (q.r + half + 2.5) ** 2) return;
-    placed.push({ x: p.x, z: p.z, r: half });
-    ctx.reserve(p.x, p.z, half + 3);
-    const key = `${w}x${d}x${h}`;
-    if (!variants.has(key)) variants.set(key, { geo: buildingGeometry(w, h, d), list: [] });
-    // Yol yönüne paralel: modelin genişliği yolun yönünde
-    const rotY = p.forwardY;
-    const y = Math.min(terrain.heightAt(p.x, p.z), track.centerline[i % n].y) - 0.4;
-    variants.get(key).list.push({ m: new THREE.Matrix4().compose(new THREE.Vector3(p.x, y, p.z), new THREE.Quaternion().setFromAxisAngle(UP, rotY), new THREE.Vector3(1, 1, 1)), c: new THREE.Color(tints[Math.floor(rng() * tints.length)]) });
-    return { p, w, d, h, side, rotY };
-  };
-
-  const rows = [];
-  for (let row = 0; row < rowsDepth.length; row++) {
-    for (let i = 0; i < n; i += 4) {
-      for (const side of [-1, 1]) {
-        if (placed.length >= total) break;
-        const r = consider((i + row * 2) % n, side, row);
-        if (r && row === 0) rows.push(r);
-      }
-    }
-  }
-
-  const group = new THREE.Group();
-  for (const { geo, list } of variants.values()) {
-    const im = new THREE.InstancedMesh(geo, mat, list.length);
-    list.forEach((b, k) => {
-      im.setMatrixAt(k, b.m);
-      im.setColorAt(k, b.c);
-    });
-    im.castShadow = true;
-    im.receiveShadow = true;
-    im.computeBoundingSphere();
-    group.add(im);
-  }
-  ctx.addObject(group);
-
-  // Neon tabelalar: ön sıradaki bazı binaların yola bakan yüzünde
-  const signGeo = new THREE.PlaneGeometry(11, 4.1);
-  const step = Math.max(1, Math.floor(rows.length / 14));
-  rows.forEach((b, k) => {
-    if (k % step) return;
-    const [word, color] = WORDS[(k / step) % WORDS.length | 0];
-    const mesh = new THREE.Mesh(signGeo, new THREE.MeshBasicMaterial({ map: neonTexture(word, color), transparent: true, toneMapped: false, color: new THREE.Color(1.4, 1.4, 1.4) }));
-    // yola bakan yön: modelin yerel +X ekseni pistin solu; bina sağdaysa (side=1) yol onun +X yanındadır
-    const dir = new THREE.Vector3(Math.cos(b.rotY), 0, -Math.sin(b.rotY)).multiplyScalar(b.side);
-    const faceOffset = b.w / 2 + 0.25;
-    mesh.position.set(b.p.x + dir.x * faceOffset, terrainY(terrain, b.p, track) + 9 + (k % 3) * 2.5, b.p.z + dir.z * faceOffset);
-    mesh.rotation.y = Math.atan2(dir.x, dir.z);
-    ctx.addObject(mesh);
-  });
-  return placed.length;
-}
-
-const terrainY = (terrain, p, track) => terrain.heightAt(p.x, p.z);
 
 // Sokak lambaları: direk + parlak başlık + ışık halkası (yola sürülen yumuşak ışık lekesi)
 export function buildStreetLamps(ctx, { every = 8, skip = () => false } = {}) {
@@ -223,4 +91,82 @@ export function buildStreetLamps(ctx, { every = 8, skip = () => false } = {}) {
 
   ctx.addObject(group);
   return poles.length;
+}
+
+// --- Kenney City Kit (Commercial) modelleriyle şehir ---
+const abc = 'abcdefghijklmn'.split('');
+export const CITY_NEAR = abc.map((c) => `city/building-${c}`);
+export const CITY_TALL = 'abcde'.split('').map((c) => `city/building-skyscraper-${c}`);
+export const CITY_FAR = [...abc.map((c) => `city/low-detail-building-${c}`), 'city/low-detail-building-wide-a', 'city/low-detail-building-wide-b'];
+export const CITY_MODELS = [...CITY_NEAR, ...CITY_TALL, ...CITY_FAR];
+
+const sizeCache = new Map();
+const sizeOf = (key) => {
+  if (!sizeCache.has(key)) sizeCache.set(key, normalizedModel(key).userData.size.clone());
+  return sizeCache.get(key);
+};
+
+// Binalar yolun iki yanında üç sıra: yakın orta boy, ortada gökdelenler karışık, arkada silüet.
+// Ön yüz (+Z) yola bakar. Gece için pencereler ışıldar (ctx.glow).
+export function buildModelBuildings(ctx, { max = 130, skip = () => false } = {}) {
+  const { track, rng } = ctx;
+  const terrain = track.terrain;
+  ctx.glow(2.2, ...CITY_MODELS);
+  const rows = [
+    { depth: 9, pools: [CITY_NEAR], scale: [11, 13.5] },
+    { depth: 34, pools: [CITY_NEAR, CITY_TALL], scale: [12, 15] },
+    { depth: 62, pools: [CITY_TALL, CITY_FAR, CITY_FAR], scale: [15, 20] },
+  ];
+  const placed = [];
+  const fronts = [];
+  const total = Math.round(max * ctx.density);
+  const n = track.count;
+
+  const consider = (i, side, row) => {
+    const R = rows[row];
+    const pool = R.pools[Math.floor(rng() * R.pools.length)];
+    const key = pool[Math.floor(rng() * pool.length)];
+    const sz = sizeOf(key);
+    const far = pool === CITY_FAR;
+    const s = R.scale[0] + rng() * (R.scale[1] - R.scale[0]) * (far ? 1.25 : 1);
+    const w = sz.x * s;
+    const d = sz.z * s;
+    const p = ctx.along(i, side * (track.edge + R.depth + d / 2 + rng() * 4));
+    const half = Math.hypot(w, d) / 2;
+    if (terrain.landAt(p.x, p.z) < 8) return;
+    if (terrain.roadDistAt(p.x, p.z) < track.edge + half * 0.85) return;
+    if (track.shortcutClearance(p.x, p.z) < half + 6) return;
+    if (skip(p, i)) return;
+    for (const q of placed) if ((q.x - p.x) ** 2 + (q.z - p.z) ** 2 < (q.r + half + 2.5) ** 2) return;
+    placed.push({ x: p.x, z: p.z, r: half });
+    ctx.reserve(p.x, p.z, half + 3);
+    const y = Math.min(terrain.heightAt(p.x, p.z), track.centerline[i % n].y) - 0.3;
+    ctx.place(key, p.x, p.z, p.faceTrackY, s, y);
+    if (row === 0) fronts.push({ x: p.x, z: p.z, y, w, d, h: sz.y * s, ry: p.faceTrackY });
+  };
+
+  for (let row = 0; row < rows.length; row++) {
+    for (let i = 0; i < n; i += 3) {
+      for (const side of [-1, 1]) {
+        if (placed.length >= total) break;
+        consider((i + row * 2) % n, side, row);
+      }
+    }
+  }
+
+  // Neon tabelalar: ön sıradaki bazı binaların yola bakan yüzünde
+  const signGeo = new THREE.PlaneGeometry(9, 3.4);
+  const step = Math.max(1, Math.floor(fronts.length / 14));
+  fronts.forEach((b, k) => {
+    if (k % step) return;
+    const [word, color] = WORDS[((k / step) | 0) % WORDS.length];
+    const mesh = new THREE.Mesh(signGeo, new THREE.MeshBasicMaterial({ map: neonTexture(word, color), transparent: true, toneMapped: false, color: new THREE.Color(1.4, 1.4, 1.4) }));
+    const dx = Math.sin(b.ry);
+    const dz = Math.cos(b.ry);
+    const off = b.d / 2 + 0.5;
+    mesh.position.set(b.x + dx * off, b.y + Math.min(b.h * 0.55, 8) + (k % 3) * 1.2, b.z + dz * off);
+    mesh.rotation.y = b.ry;
+    ctx.addObject(mesh);
+  });
+  return placed.length;
 }

@@ -17,6 +17,14 @@
         background: rgba(10, 20, 40, 0.45); color: #fff; font-size: 12px; pointer-events: none; font-variant-numeric: tabular-nums;
       }
 
+      /* Pist modelleri inerken üstte beliren küçük etiket */
+      #busy {
+        position: fixed; top: 18px; left: 50%; transform: translate(-50%, -80px); z-index: 60; padding: 10px 20px; border-radius: 14px;
+        background: rgba(11, 42, 85, 0.85); color: #fff; font: 800 15px 'Nunito', system-ui, sans-serif; pointer-events: none;
+        transition: transform 0.25s;
+      }
+      #busy.show { transform: translate(-50%, 0); }
+
       /* ---------- Açılış / yükleme ekranı ---------- */
       #loading {
         position: fixed; inset: 0; z-index: 100; overflow: hidden;
@@ -87,6 +95,7 @@
   <body>
     <div id="app"></div>
     <div id="debug"></div>
+    <div id="busy">Pist yükleniyor…</div>
     <div id="loading">
       <h1 class="intro-logo" aria-label="Turbo Tayfa">
         <span class="row r1"><span>T</span><span>U</span><span>R</span><span>B</span><span>O</span></span>

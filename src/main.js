@@ -3,7 +3,7 @@ import { PHYSICS_HZ, KART } from './config.js';
 import { QUALITY } from './quality.js';
 import { settings, DIFFICULTY } from './settings.js';
 import { readInput } from './input.js';
-import { loadModels } from './assets.js';
+import { loadModels, hasModels } from './assets.js';
 import { initErrorReports, setReportContext, reportIssue } from './report.js';
 import { Kart, resolveKartCollisions } from './kart.js';
 import { CHARACTERS, KART_MODELS } from './kartModel.js';
@@ -63,10 +63,10 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 1500);
 const postfx = createPostFX(renderer, scene, camera, QUALITY);
 
-// --- Yükleme: tüm karakterler ve tüm pistlerin modelleri ---
+// --- Yükleme: karakterler + seçili pistin modelleri (diğer pistler seçilince yüklenir) ---
 const loadingBar = document.querySelector('#loading .bar > div');
-const allModels = [...new Set([...KART_MODELS, ...Object.values(TRACKS).flatMap((t) => t.models)])];
-await loadModels(allModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
+const firstModels = [...new Set([...KART_MODELS, ...(TRACKS[settings.track] ?? TRACKS.palmCove).models])];
+await loadModels(firstModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
 
 const env = createEnvironment(scene, QUALITY);
 const fx = createKartEffects(scene, QUALITY);
@@ -168,8 +168,42 @@ let startLights = null;
 let items = null;
 let minimap = null;
 
+// Pisti kurar; modelleri henüz inmediyse önce indirir (üstte küçük bir "yükleniyor" etiketi).
+// Dönen söz, pist kurulunca çözülür; yarış başlatan kodlar bunu bekler.
+let wantedDef = null;
+let trackReady = Promise.resolve();
+let pendingLoads = 0;
 function loadTrack(id) {
   const def = TRACKS[id] ?? TRACKS.palmCove;
+  wantedDef = def;
+  // Modeller hazırsa ve bekleyen yükleme yoksa hemen (eşzamanlı) kur
+  if (!pendingLoads && hasModels(def.models)) {
+    buildTrackNow(def);
+    return trackReady;
+  }
+  pendingLoads++;
+  trackReady = trackReady.then(buildWanted).finally(() => pendingLoads--);
+  return trackReady;
+}
+
+async function buildWanted() {
+  const def = wantedDef;
+  if (!def || trackDef === def) return;
+  if (!hasModels(def.models)) {
+    const busy = document.getElementById('busy');
+    busy?.classList.add('show');
+    try {
+      await loadModels(def.models);
+    } catch (err) {
+      reportIssue('models', `${def.id}: ${err?.message ?? err}`);
+    }
+    busy?.classList.remove('show');
+    if (wantedDef !== def) return; // bu arada başka pist seçildi
+  }
+  buildTrackNow(def);
+}
+
+function buildTrackNow(def) {
   if (trackDef === def) return;
   if (track) {
     scene.remove(track.group, decor);
@@ -421,7 +455,8 @@ function setupRace(order, laps) {
   });
 }
 
-function startOfflineRace(config) {
+async function startOfflineRace(config) {
+  await loadTrack(settings.track); // pist modelleri inmediyse bekle
   lastConfig = config;
   player = kartOf(config.character);
   timeTrial = config.mode === 'timeTrial';
@@ -503,7 +538,8 @@ function backToLobby() {
   menu.showLobby();
 }
 
-function startOnlineRace(msg) {
+async function startOnlineRace(msg) {
+  if (!race && online?.goAt === msg.goAt) return; // aynı başlangıç zaten kuruluyor
   // Yeniden bağlanınca sunucu aynı yarışı tekrar gönderir: zaten içindeysek yok say
   if (race && online.goAt === msg.goAt) {
     for (const [i, f] of (msg.finishes ?? []).entries()) {
@@ -512,8 +548,9 @@ function startOnlineRace(msg) {
     }
     return;
   }
-  loadTrack(msg.track);
-  online.goAt = msg.goAt;
+  online.goAt = msg.goAt; // ikinci 'start' gelirse tekrar başlamasın (aşağıdaki bekleme sırasında)
+  await loadTrack(msg.track);
+  if (!online || online.goAt !== msg.goAt) return;
   online.raceOver = false;
   online.kartById.clear();
   online.idByKart.clear();

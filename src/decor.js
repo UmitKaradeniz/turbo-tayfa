@@ -10,6 +10,7 @@ export function buildDecor(track, decorate, density = 1) {
   const placements = new Map();
   const noShadow = new Set();
   const frost = new Set();
+  const glow = new Map(); // model → ışıma şiddeti (gece pencereleri)
   const extras = [];
   const reserved = [];
   const { terrain } = track;
@@ -42,6 +43,11 @@ export function buildDecor(track, decorate, density = 1) {
     // Bu modeller karlı görünür (kış pistleri)
     frost(...keys) {
       keys.forEach((k) => frost.add(k));
+    },
+
+    // Bu modellerin dokusu ışır (gece binalarının pencereleri)
+    glow(intensity, ...keys) {
+      keys.forEach((k) => glow.set(k, intensity));
     },
 
     // Hazır bir 3B nesneyi (bina, tabela vb.) dekora ekle
@@ -100,7 +106,7 @@ export function buildDecor(track, decorate, density = 1) {
   const group = new THREE.Group();
   group.userData.byKey = new Map();
   for (const [key, matrices] of placements) {
-    const g = instancedModel(key, matrices, { castShadow: !noShadow.has(key), frost: frost.has(key) });
+    const g = instancedModel(key, matrices, { castShadow: !noShadow.has(key), frost: frost.has(key), glow: glow.get(key) ?? 0 });
     group.userData.byKey.set(key, g);
     group.add(g);
   }
