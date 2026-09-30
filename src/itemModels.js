@@ -1,48 +1,110 @@
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 // Item görselleri. Kenney paketlerinde karşılığı olmadığı için kodla, düşük
 // poligonlu stile uygun şekilde üretiliyor (döndürülmüş profil, köşeli yüzeyler).
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0, ...extra });
 
-// "?" item kutusu: yarı saydam, gökkuşağı tonlarında dönen küp
-export function createItemBox() {
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  const g = ctx.createLinearGradient(0, 0, 128, 128);
-  g.addColorStop(0, '#4fd8ff');
-  g.addColorStop(0.5, '#8f7bff');
-  g.addColorStop(1, '#ff6fc8');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 128);
-  // İç kısım daha açık (cam gibi)
-  const inner = ctx.createRadialGradient(64, 64, 10, 64, 64, 60);
-  inner.addColorStop(0, 'rgba(255,255,255,0.75)');
-  inner.addColorStop(1, 'rgba(255,255,255,0.15)');
-  ctx.fillStyle = inner;
-  ctx.fillRect(12, 12, 104, 104);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(9, 9, 110, 110);
-  ctx.font = '900 92px "Lilita One", "Arial Black", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = '#0b2a55';
-  ctx.strokeText('?', 64, 70);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText('?', 64, 70);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
+// "?" item kutusu: içten ışıyan, renk değiştiren kristal. İçinde "?" süzülür, çevresinde minik parıltılar
+// döner, altında yumuşak bir ışık halkası vardır. Şekil/doku paylaşılır; renkler kutu başına animasyonlanır.
+let boxAssets = null;
+function getBoxAssets() {
+  if (boxAssets) return boxAssets;
+  const radial = (stops) => {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(32, 32, 1, 32, 32, 31);
+    for (const [o, col] of stops) grad.addColorStop(o, col);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  };
+  // "?" işareti
+  const q = document.createElement('canvas');
+  q.width = q.height = 128;
+  const g = q.getContext('2d');
+  g.font = '900 104px "Lilita One", "Arial Black", sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineWidth = 14;
+  g.strokeStyle = '#0b2a55';
+  g.strokeText('?', 64, 70);
+  g.fillStyle = '#ffffff';
+  g.fillText('?', 64, 70);
+  const qTex = new THREE.CanvasTexture(q);
+  qTex.colorSpace = THREE.SRGBColorSpace;
+  const geo = new THREE.IcosahedronGeometry(0.95, 0).scale(1, 1.3, 1);
+  boxAssets = {
+    geo,
+    edges: new THREE.EdgesGeometry(geo),
+    halo: new THREE.PlaneGeometry(4.2, 4.2).rotateX(-Math.PI / 2),
+    haloTex: radial([[0, 'rgba(255,255,255,0.85)'], [0.35, 'rgba(255,255,255,0.35)'], [1, 'rgba(255,255,255,0)']]),
+    sparkTex: radial([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,255,255,0.6)'], [1, 'rgba(255,255,255,0)']]),
+    qTex,
+  };
+  return boxAssets;
+}
 
-  const box = new THREE.Mesh(
-    new RoundedBoxGeometry(1.5, 1.5, 1.5, 3, 0.28),
-    new THREE.MeshStandardMaterial({ map: tex, color: 0xffffff, transparent: true, opacity: 0.92, roughness: 0.2, emissive: 0x3aa8ff, emissiveIntensity: 0.18 }),
+const SPARKS = 5;
+const WHITE = new THREE.Color(0xffffff);
+export function createItemBox() {
+  const A = getBoxAssets();
+  const root = new THREE.Group();
+  const crystal = new THREE.Group();
+  const gem = new THREE.Mesh(
+    A.geo,
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x4f8cff, emissiveIntensity: 0.6, transparent: true, opacity: 0.8, roughness: 0.1, metalness: 0.3, flatShading: true, side: THREE.DoubleSide, depthWrite: false }),
   );
-  box.castShadow = true;
-  return box;
+  gem.castShadow = false;
+  const edges = new THREE.LineSegments(A.edges, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, toneMapped: false }));
+  crystal.add(gem, edges);
+
+  const mark = new THREE.Sprite(new THREE.SpriteMaterial({ map: A.qTex, toneMapped: false, transparent: true, depthWrite: false }));
+  mark.scale.set(1.3, 1.3, 1);
+  mark.renderOrder = 3;
+
+  const halo = new THREE.Mesh(
+    A.halo,
+    new THREE.MeshBasicMaterial({ map: A.haloTex, color: 0x4f8cff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -3, toneMapped: false }),
+  );
+  halo.position.y = -1.22;
+
+  // Çevrede dönen parıltılar (tek Points nesnesi)
+  const sparkPos = new Float32Array(SPARKS * 3);
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
+  const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ map: A.sparkTex, size: 0.6, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+  sparks.frustumCulled = false;
+
+  root.add(crystal, mark, halo, sparks);
+
+  const tint = new THREE.Color();
+  // dt: saniye, time: toplam süre, hue: 0..1 döngü, i: kutu sırası (renk/faz farkı)
+  root.userData.animate = (dt, time, hue, i) => {
+    crystal.rotation.y += dt * 1.6;
+    crystal.rotation.x = Math.sin(time * 1.5 + i) * 0.18;
+    tint.setHSL(0.52 + ((hue + i * 0.07) % 1) * 0.42, 0.95, 0.55); // turkuaz → mor → pembe
+    gem.material.emissive.copy(tint);
+    gem.material.color.copy(tint).lerp(WHITE, 0.45);
+    halo.material.color.copy(tint).multiplyScalar(0.6);
+    sparks.material.color.setHSL(0.52 + ((hue + i * 0.07 + 0.25) % 1) * 0.42, 1, 0.82);
+    mark.position.y = Math.sin(time * 2.4 + i) * 0.06;
+    const pulse = 1 + Math.sin(time * 3 + i * 1.3) * 0.05;
+    mark.scale.set(1.3 * pulse, 1.3 * pulse, 1);
+    halo.scale.setScalar(0.92 + Math.sin(time * 2 + i) * 0.08);
+    for (let k = 0; k < SPARKS; k++) {
+      const a = time * (0.9 + k * 0.13) + (k * Math.PI * 2) / SPARKS + i;
+      const r = 1.35 + Math.sin(time * 1.7 + k * 2) * 0.18;
+      sparkPos[k * 3] = Math.cos(a) * r;
+      sparkPos[k * 3 + 1] = Math.sin(time * 1.3 + k * 1.7) * 0.95;
+      sparkPos[k * 3 + 2] = Math.sin(a) * r;
+    }
+    sparkGeo.attributes.position.needsUpdate = true;
+  };
+  root.userData.animate(0, 0, 0, 0);
+  return root;
 }
 
 // Turbo şişesi: turuncu gövde, beyaz etiket, gri kapak

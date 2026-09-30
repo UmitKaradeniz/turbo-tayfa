@@ -287,10 +287,8 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
         const s = b.mesh.scale.x + (target - b.mesh.scale.x) * Math.min(1, dt * 8);
         b.mesh.scale.setScalar(Math.max(0.001, s));
         b.mesh.visible = s > 0.02;
-        b.mesh.rotation.y += dt * 1.2;
-        b.mesh.rotation.x = Math.sin(time * 1.5 + i) * 0.25;
         b.mesh.position.y = b.pos.y + Math.sin(time * 2 + i * 0.7) * 0.15;
-        b.mesh.material.emissive.setHSL(0.55 + ((hue + i * 0.07) % 1) * 0.35, 0.9, 0.5); // mavi → mor → pembe
+        if (b.mesh.visible) b.mesh.userData.animate(dt, time, hue, i);
       }
       for (const kart of karts) {
         let bubble = bubbles.get(kart);
