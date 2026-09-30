@@ -72,7 +72,8 @@ if (isTouchDevice) {
 
 // Yarış sırasında (kontroller açıkken) yazı alanı/menü dışındaki her dokunuşu sahiplen:
 // iOS'un uzun basma → metin seçme / büyüteç davranışı hiç başlamasın.
-const nativeTouch = 'input, textarea, form, a, .tt-modal, .tt-screen';
+// (#hud-pause: tıklaması touchstart'tan türer; engellenirse duraklat tuşu hiç çalışmaz)
+const nativeTouch = 'input, textarea, form, a, .tt-modal, .tt-screen, #hud-pause';
 const guardTouch = (e) => {
   if (touchState.active && !(e.target instanceof Element && e.target.closest(nativeTouch))) e.preventDefault();
 };

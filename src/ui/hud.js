@@ -16,7 +16,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
   root.innerHTML = `
     <div id="hud-position" class="hud-outline"><span class="num">1</span><span class="suffix">.</span><span class="total">/8</span></div>
     <div id="hud-lap" class="hud-outline"><div class="lap"><small>TUR</small><span class="cur">1</span>/<span class="max">3</span></div><div class="time">0:00.000</div></div>
-    <button id="hud-pause" data-go="pause" aria-label="Duraklat">❚❚</button>
+    <button id="hud-pause" data-go="pause" aria-label="Duraklat"><i></i><i></i></button>
     <div id="hud-item"><div class="slot"><img alt="" /></div><div class="key">E</div></div>
     <div id="hud-toast"></div>
     <div id="hud-center"></div>
