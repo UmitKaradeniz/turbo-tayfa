@@ -88,13 +88,16 @@ const hud = createHud({ portraits, minimap: null, itemIcons });
 const touch = createTouchControls();
 const net = new Net();
 
+// Pist önizlemesi: oyundan alınmış kare (public/previews/<kimlik>.jpg)
+const previewOf = (id) => `/previews/${id}.jpg`;
+
 // Menüdeki pist küçük resimleri (sadece orta çizgiden)
 const trackCards = TRACK_IDS.map((id) => {
   const def = TRACKS[id];
   const outline = trackOutline(def);
   const thumb = createMinimap(outline, 72);
   thumb.draw([]);
-  return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL() };
+  return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL(), preview: previewOf(id) };
 });
 
 const chat = createChat({
@@ -483,6 +486,7 @@ function showResults() {
     const rec = recordOf(trackDef.id);
     hud.showTimeTrialResults({
       track: trackDef.name,
+      preview: previewOf(trackDef.id),
       laps: e.lapTimes,
       total: e.finishTime,
       bestTotal: rec?.totals?.[race.laps] ?? e.finishTime,
@@ -497,6 +501,7 @@ function showResults() {
   hud.showResults(
     standings.map((e) => ({ id: e.kart.character.id, name: displayNames.get(e.kart) ?? e.kart.character.name, time: e.finishTime, me: e.kart === player })),
     `${trackDef.name} · ${race.laps} tur · ${me}. oldun${lastTotalRecord ? ' · 🏆 yeni rekor' : ''}`,
+    previewOf(trackDef.id),
   );
 }
 
@@ -1007,6 +1012,20 @@ if (import.meta.env.DEV) {
   Object.assign(window.__tt, { emotes, chat, recordOf });
   Object.defineProperties(window.__tt, { ghost: { get: () => ghost }, drivers: { get: () => drivers } });
   window.__tt.freeze = (on) => (paused = on); // menü açmadan dondur (ekran görüntüsü için)
+  // Pist önizleme görüntüsü üretmek için (public/previews): sahneyi şu anki kamerayla çizip w×h JPEG döner
+  window.__tt.snapshot = (w = 640, h = 360, q = 0.82) => {
+    postfx.render();
+    const src = renderer.domElement;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    let sw = src.width;
+    let sh = src.height;
+    if (sw / sh > w / h) sw = sh * (w / h);
+    else sh = sw / (w / h);
+    c.getContext('2d').drawImage(src, (src.width - sw) / 2, (src.height - sh) / 2, sw, sh, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', q);
+  };
   window.__tt.simulate = (seconds) => {
     setPaused(false);
     for (let t = 0; t < seconds; t += STEP) {

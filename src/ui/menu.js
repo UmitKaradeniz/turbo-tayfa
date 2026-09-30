@@ -110,7 +110,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         </div>
         <div class="tt-card enter">
           <h3>Pist</h3>
-          <div class="tt-tracks">${tracks.map((t) => `<button class="tt-track" data-track="${t.id}"><img src="${t.thumb}" alt="" /><div><div class="t">${t.name}</div><div class="m">${t.meta}</div><div class="rec"></div></div></button>`).join('')}</div>
+          <div class="tt-tracks">${tracks.map((t) => `<button class="tt-track" data-track="${t.id}"><span class="th"><img class="pv" src="${t.preview}" alt="" loading="lazy" /><img class="mm" src="${t.thumb}" alt="" /></span><div><div class="t">${t.name}</div><div class="m">${t.meta}</div><div class="rec"></div></div></button>`).join('')}</div>
           <div class="offline-only"><div class="tt-label">Mod</div>
           <div class="tt-seg" data-seg="mode"><button data-v="race">Yarış</button><button data-v="timeTrial">Zamana Karşı</button></div></div>
           <div class="tt-label">Tur sayısı</div>

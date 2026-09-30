@@ -180,7 +180,8 @@ tools/             Test aracı (sahte oyuncu)
 2. `src/tracks/index.js`'e ekle.
 3. `server/rooms.js` içindeki `TRACKS` listesine kimliğini yaz.
 4. Gece / kış için tanımda `night: true`, `snow: true` ve `light: {...}` alanları var (bkz. `nightCity.js`, `snowPeak.js`).
-5. İsteğe bağlı kısayol: pist tanımına `shortcuts: [...]` ekle (bkz. `palmCove.js` / `pineValley.js`).
+5. Menü ve sonuç ekranı `public/previews/<kimlik>.jpg` görselini gösterir. Yeni pist için: `npm run dev`, tarayıcı konsolunda kamerayı ayarla (`__tt.camera`, `__tt.rig.update = () => {}`) ve `__tt.snapshot()` ile 640×360 JPEG al (`data:` ön eki hariç base64'ü dosyaya yaz). Dört pistin görseli start çizgisinin arkasından alındı.
+6. İsteğe bağlı kısayol: pist tanımına `shortcuts: [...]` ekle (bkz. `palmCove.js` / `pineValley.js`).
 
 Mimari bilinçli olarak basit: framework yok, veritabanı yok, hesap yok.
 

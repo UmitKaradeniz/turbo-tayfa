@@ -208,7 +208,7 @@
 .tt-tracks.locked { pointer-events: none; }
 .tt-tracks .tt-track {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 124px 1fr;
   gap: 12px;
   align-items: center;
   text-align: left;
@@ -221,7 +221,10 @@
   color: var(--tt-navy);
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.tt-tracks .tt-track img { width: 72px; height: 72px; border-radius: 12px; }
+.tt-tracks .tt-track .th { position: relative; display: block; width: 124px; height: 72px; border-radius: 12px; overflow: hidden; background: linear-gradient(160deg, #6fe0ff, #1583d6); }
+.tt-tracks .tt-track .pv { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Pistin kuşbakışı çizimi: önizlemenin köşesinde küçük rozet */
+.tt-tracks .tt-track .mm { position: absolute; right: 3px; bottom: 3px; width: 28px; height: 28px; border-radius: 8px; background: rgba(11, 42, 85, 0.6); padding: 2px; box-sizing: border-box; }
 .tt-tracks .tt-track .t { font-size: 20px; }
 .tt-tracks .tt-track.on { background: var(--tt-yellow); box-shadow: 0 4px 0 var(--tt-yellow-dark); }
 .tt-tracks.locked .tt-track:not(.on) { opacity: 0.55; }

@@ -331,3 +331,10 @@
 #hud-toast .toast.record { background: linear-gradient(90deg, #f0a800, #ff6a1a); }
 
 #hud-toast .toast.warn { background: linear-gradient(90deg, #f0a800, #ff6a1a); }
+
+/* Sonuç paneli: pist önizleme şeridi */
+#results .hero { position: relative; height: 104px; margin: -6px -6px 8px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 0 rgba(11, 42, 85, 0.12); }
+#results .hero[hidden] { display: none; }
+#results .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#results .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(255, 255, 255, 0.92)); }
+@media (max-height: 560px) { #results .hero { height: 64px; } }

@@ -39,6 +39,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
   results.className = 'tt-screen';
   results.innerHTML = `
     <div class="panel">
+      <div class="hero"><img alt="" /></div>
       <h2>Yarış Bitti!</h2>
       <p class="subtitle"></p>
       <div class="podium"></div>
@@ -49,6 +50,13 @@ export function createHud({ portraits, minimap, itemIcons }) {
       </div>
     </div>`;
   document.body.appendChild(results);
+
+  // Pist önizlemesi (sonuç panelinin üst şeridi)
+  const setHero = (url) => {
+    const hero = results.querySelector('.hero');
+    hero.hidden = !url;
+    if (url) hero.querySelector('img').src = url;
+  };
 
   const $ = (s) => root.querySelector(s);
   const pos = $('#hud-position');
@@ -179,7 +187,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
     },
 
     // rows: [{ id, name, color, time|null, best|null, me }]
-    showResults(rows, subtitle) {
+    showResults(rows, subtitle, preview = null) {
+      setHero(preview);
       results.querySelector('.subtitle').textContent = subtitle;
       // İlk üç podyumda (2 - 1 - 3 dizilimi)
       const podium = [rows[1], rows[0], rows[2]]
@@ -210,7 +219,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
       results.classList.add('show');
     },
     // Zamana Karşı sonucu: toplam süre, tur süreleri, rekor rozetleri
-    showTimeTrialResults({ track, laps, total, bestTotal, bestLap, newTotal, newLap }) {
+    showTimeTrialResults({ track, preview = null, laps, total, bestTotal, bestLap, newTotal, newLap }) {
+      setHero(preview);
       results.querySelector('h2').textContent = 'Zamana Karşı';
       results.querySelector('.subtitle').textContent = `${track} · ${laps.length} tur`;
       results.querySelector('.podium').innerHTML = `
