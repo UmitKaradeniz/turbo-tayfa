@@ -56,14 +56,14 @@ export function normalizedModel(key) {
 // Aynı modelden çok sayıda kopyayı tek çizim çağrısıyla göstermek için:
 // modeldeki her mesh için bir InstancedMesh üretir.
 const _m = new THREE.Matrix4();
-export function instancedModel(key, matrices, { castShadow = true } = {}) {
+export function instancedModel(key, matrices, { castShadow = true, frost = false } = {}) {
   const group = new THREE.Group();
   if (!matrices.length) return group;
   const model = normalizedModel(key);
   model.updateMatrixWorld(true);
   model.traverse((child) => {
     if (!child.isMesh) return;
-    const im = new THREE.InstancedMesh(child.geometry, child.material, matrices.length);
+    const im = new THREE.InstancedMesh(child.geometry, frost ? frosted(child.material) : child.material, matrices.length);
     matrices.forEach((m, i) => im.setMatrixAt(i, _m.multiplyMatrices(m, child.matrixWorld)));
     im.castShadow = castShadow;
     im.receiveShadow = true;
@@ -71,4 +71,15 @@ export function instancedModel(key, matrices, { castShadow = true } = {}) {
     group.add(im);
   });
   return group;
+}
+
+// Karla kaplanmış görünüm: malzeme kopyası + açık mavimsi beyaz ışıma
+function frosted(mat) {
+  const out = (Array.isArray(mat) ? mat : [mat]).map((m) => {
+    const c = m.clone();
+    c.emissive = new THREE.Color(0xd4e4f8);
+    c.emissiveIntensity = 0.5;
+    return c;
+  });
+  return Array.isArray(mat) ? out : out[0];
 }

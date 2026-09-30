@@ -9,6 +9,8 @@ const UP = new THREE.Vector3(0, 1, 0);
 export function buildDecor(track, decorate, density = 1) {
   const placements = new Map();
   const noShadow = new Set();
+  const frost = new Set();
+  const extras = [];
   const reserved = [];
   const { terrain } = track;
   let seed = 20260929;
@@ -35,6 +37,16 @@ export function buildDecor(track, decorate, density = 1) {
 
     noShadow(...keys) {
       keys.forEach((k) => noShadow.add(k));
+    },
+
+    // Bu modeller karlı görünür (kış pistleri)
+    frost(...keys) {
+      keys.forEach((k) => frost.add(k));
+    },
+
+    // Hazır bir 3B nesneyi (bina, tabela vb.) dekora ekle
+    addObject(obj) {
+      extras.push(obj);
     },
 
     // Bu çemberin içine rastgele dekor koyma
@@ -88,10 +100,11 @@ export function buildDecor(track, decorate, density = 1) {
   const group = new THREE.Group();
   group.userData.byKey = new Map();
   for (const [key, matrices] of placements) {
-    const g = instancedModel(key, matrices, { castShadow: !noShadow.has(key) });
+    const g = instancedModel(key, matrices, { castShadow: !noShadow.has(key), frost: frost.has(key) });
     group.userData.byKey.set(key, g);
     group.add(g);
   }
+  for (const o of extras) group.add(o);
   return group;
 }
 
@@ -147,7 +160,9 @@ function placeShortcutEdges(ctx, track) {
         if (sc.jump && s > sc.jump.pitA - 1 && s < sc.jump.pitB + 1) continue;
         const key = e.keys[(k++ + (side > 0 ? 1 : 0)) % e.keys.length];
         const [a, b] = e.scale ?? [4, 6];
-        ctx.place(key, p.x, p.z, ctx.rng() * Math.PI * 2, a + ctx.rng() * (b - a));
+        // aligned: model yolun yönüne hizalı (bariyer gibi uzun parçalar)
+        const rot = e.aligned ? Math.atan2(-p.fz, p.fx) : ctx.rng() * Math.PI * 2;
+        ctx.place(key, p.x, p.z, rot, a + ctx.rng() * (b - a));
       }
     }
   }

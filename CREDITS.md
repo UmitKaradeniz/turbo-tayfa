@@ -59,3 +59,8 @@ Google Fonts üzerinden yükleniyor; ikisi de **SIL Open Font License 1.1** (tic
 | [Express](https://expressjs.com) | MIT |
 | [ws](https://github.com/websockets/ws) | MIT |
 | [Vite](https://vitejs.dev) | MIT |
+
+
+## Yordamsal (kendi ürettiğimiz) içerik
+
+Kar Zirvesi ve Neon Şehir pistlerindeki binalar, pencere/neon dokuları, sokak lambaları, kardan adamlar, kar yağışı ve yıldızlı gökyüzü kod ile üretilir (src/city.js, src/props.js, src/environment.js); harici dosya kullanılmaz. Ağaç ve kaya modelleri mevcut Kenney Nature Kit paketindendir (CC0).

@@ -18,7 +18,7 @@ import crypto from 'node:crypto';
 
 const MAX_PLAYERS = 8;
 const CHARACTERS = ['fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot'];
-const TRACKS = ['palmCove', 'pineValley'];
+const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity'];
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // karışan 0/O, 1/I yok
 const COUNTDOWN_MS = 3600 + 1500; // istemci geri sayımı + kamera geçişi payı
 const RECONNECT_GRACE_MS = 60_000;

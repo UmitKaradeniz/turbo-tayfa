@@ -5,6 +5,7 @@ import * as THREE from 'three';
 const SKY_TOP = new THREE.Color(0x3d9df2);
 const SKY_HORIZON = new THREE.Color(0xcdeeff);
 export const SUN_DIR = new THREE.Vector3(-0.5, 0.62, 0.5).normalize();
+const SUN_GLOW = new THREE.Color(1.0, 0.92, 0.75);
 
 export function createEnvironment(scene, quality) {
   scene.background = SKY_HORIZON.clone();
@@ -21,6 +22,7 @@ export function createEnvironment(scene, quality) {
         top: { value: SKY_TOP },
         horizon: { value: SKY_HORIZON },
         sunDir: { value: SUN_DIR },
+        glow: { value: SUN_GLOW },
       },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
@@ -29,13 +31,13 @@ export function createEnvironment(scene, quality) {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }`,
       fragmentShader: /* glsl */ `
-        uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir;
+        uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform vec3 glow;
         varying vec3 vDir;
         void main() {
           float h = max(vDir.y, 0.0);
           vec3 col = mix(horizon, top, pow(h, 0.55));
           float sun = max(dot(vDir, sunDir), 0.0);
-          col += vec3(1.0, 0.92, 0.75) * (pow(sun, 350.0) * 3.0 + pow(sun, 12.0) * 0.18);
+          col += glow * (pow(sun, 350.0) * 3.0 + pow(sun, 12.0) * 0.18);
           gl_FragColor = vec4(col, 1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -49,6 +51,10 @@ export function createEnvironment(scene, quality) {
   // Basit bulutlar: yumuşak beyaz kümeler (düşük poligon küreler yerine düz billboard'lar)
   const clouds = createClouds();
   scene.add(clouds);
+  const stars = createStars();
+  scene.add(stars);
+  const snow = createSnow(Math.max(0.3, quality.particles ?? 1));
+  scene.add(snow.points);
 
   // --- Işıklar ---
   const hemi = new THREE.HemisphereLight(0xd6efff, 0xe9cf9c, 0.95);
@@ -87,9 +93,26 @@ export function createEnvironment(scene, quality) {
       }
       water = createWater(terrain, def.water);
       scene.add(water);
+
+      // Işık ve atmosfer (gece / kış pistleri için); tanımda yoksa gündüz varsayılanları
+      const L = def.light ?? {};
+      hemi.color.set(L.hemiSky ?? 0xd6efff);
+      hemi.groundColor.set(L.hemiGround ?? 0xe9cf9c);
+      hemi.intensity = L.hemi ?? 0.95;
+      sun.color.set(L.sun ?? 0xfff0d8);
+      sun.intensity = L.sunI ?? 3.1;
+      SUN_DIR.set(...(L.sunDir ?? [-0.5, 0.62, 0.5])).normalize();
+      SUN_GLOW.set(L.glow ?? 0xffebbf);
+      scene.fog.near = L.fogNear ?? 160;
+      scene.fog.far = L.fogFar ?? 620;
+      clouds.visible = !def.night;
+      stars.visible = !!def.night;
+      snow.points.visible = !!def.snow;
     },
     update(dt, focus, camera) {
       if (water) water.material.uniforms.time.value += dt;
+      if (snow.points.visible) snow.update(dt, camera);
+      if (stars.visible) stars.position.copy(camera.position);
       // Gölge kamerası odağı takip etsin (texel'e hizalı, titreme olmasın)
       const step = (42 * 2) / (quality.shadowSize || 1024);
       const fx = Math.round(focus.x / step) * step;
@@ -207,4 +230,74 @@ function createClouds() {
     group.add(s);
   }
   return group;
+}
+
+// Gece gökyüzü: küçük sabit yıldızlar
+function createStars() {
+  const n = 420;
+  const pos = new Float32Array(n * 3);
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2;
+    const y = 0.08 + rnd() * 0.92;
+    const r = Math.sqrt(1 - y * y);
+    pos.set([Math.cos(a) * r * 850, y * 850, Math.sin(a) * r * 850], i * 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const stars = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xdfe8ff, size: 2.2, sizeAttenuation: false, fog: false, depthWrite: false, transparent: true, opacity: 0.9 }));
+  stars.frustumCulled = false;
+  stars.renderOrder = -1;
+  stars.visible = false;
+  return stars;
+}
+
+// Kar yağışı: kameranın etrafında dönen küçük bir küp hacimde süzülen parçacıklar
+function createSnow(scale) {
+  const n = Math.round(650 * scale);
+  const SIZE = 56;
+  const pos = new Float32Array(n * 3);
+  const speed = new Float32Array(n);
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < n; i++) {
+    pos.set([(rnd() - 0.5) * SIZE, rnd() * SIZE * 0.6 - 8, (rnd() - 0.5) * SIZE], i * 3);
+    speed[i] = 1.6 + rnd() * 2.2;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const points = new THREE.Points(geo, new THREE.PointsMaterial({ map: flakeTexture(), color: 0xffffff, size: 0.3, sizeAttenuation: true, depthWrite: false, transparent: true, opacity: 0.9, alphaTest: 0.05 }));
+  points.frustumCulled = false;
+  points.visible = false;
+  let t = 0;
+  return {
+    points,
+    update(dt, camera) {
+      t += dt;
+      const a = geo.attributes.position;
+      for (let i = 0; i < n; i++) {
+        let y = a.getY(i) - speed[i] * dt;
+        if (y < -8) y += SIZE * 0.6;
+        a.setY(i, y);
+        a.setX(i, a.getX(i) + Math.sin(t * 0.7 + i) * 0.35 * dt);
+      }
+      a.needsUpdate = true;
+      points.position.copy(camera.position);
+    },
+  };
+}
+
+// Yuvarlak, yumuşak kenarlı kar tanesi dokusu
+function flakeTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(16, 16, 1, 16, 16, 15);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.55, 'rgba(255,255,255,0.8)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 32, 32);
+  return new THREE.CanvasTexture(c);
 }
