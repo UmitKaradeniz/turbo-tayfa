@@ -10,6 +10,8 @@ const SOUNDS = [
   'finish_win', 'finish',
 ];
 const MUSIC = { menu: 'music_menu', race: 'music_race' };
+// Pist başına yarış müziği (dosya: music_<pist>); listede olmayan pist genel yarış müziğini çalar
+const TRACK_MUSIC = new Set(['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon']);
 
 const ext = (() => {
   const a = document.createElement('audio');
@@ -24,6 +26,7 @@ const buffers = new Map();
 const loading = new Map();
 let music = { name: null, source: null, gain: null };
 let wantedMusic = null;
+let wantedTrack = null;
 let engine = null;
 
 function load(name) {
@@ -59,7 +62,7 @@ function unlock() {
   applyVolumes();
   // Kısa efektleri önceden yükle, müziği gerektiğinde
   SOUNDS.forEach(load);
-  if (wantedMusic) playMusic(wantedMusic);
+  if (wantedMusic) playMusic(wantedMusic, wantedTrack);
 }
 for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, unlock, { passive: true });
 document.addEventListener('visibilitychange', () => {
@@ -92,11 +95,12 @@ export function play(name, { volume = 1, rate = 1 } = {}) {
   src.start();
 }
 
-// Müzik: 'menu' | 'race' | null. Eskisi yavaşça kısılır, yenisi açılır.
-export function playMusic(which) {
+// Müzik: 'menu' | 'race' | null (race için pist kimliği verilirse o pistin müziği). Eskisi yavaşça kısılır, yenisi açılır.
+export function playMusic(which, trackId = null) {
   wantedMusic = which;
+  wantedTrack = trackId;
   if (!ctx) return;
-  const name = which ? MUSIC[which] : null;
+  const name = which === 'race' && TRACK_MUSIC.has(trackId) ? `music_${trackId}` : which ? MUSIC[which] : null;
   if (music.name === name) return;
   const old = music;
   if (old.source) {

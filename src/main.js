@@ -429,7 +429,7 @@ function setupRace(order, laps) {
   lastTotalRecord = false;
   hazards.reset();
   race = new Race(track, order, { laps, isOwned });
-  playMusic('race');
+  playMusic('race', trackDef.id);
   touch.show(isTouchDevice);
   if (isTouchDevice && innerHeight > innerWidth) menu.toast('Daha geniş görüş için telefonu yatay çevir ↻');
   updateViewOffset();

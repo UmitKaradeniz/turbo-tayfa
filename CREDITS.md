@@ -30,7 +30,13 @@ eski iOS Safari için ffmpeg ile üretilmiş MP3 kopyasıyla birlikte duruyor.
 
 | Ses | Yazar | Kaynak | Lisans | Oyunda |
 |---|---|---|---|---|
-| Joyfully (loop) | MintoDog | https://opengameart.org/content/joyfully | CC0 1.0 | Yarış müziği (`music_race`) |
+| Joyfully (loop) | MintoDog | https://opengameart.org/content/joyfully | CC0 1.0 | Genel yarış müziği (`music_race`; müziği olmayan pistler için yedek) |
+| Enchanted Tiki 86 | Tozan | https://opengameart.org/content/enchanted-tiki-86 | CC0 1.0 | Palmiye Koyu yarış müziği (`music_palmCove`) |
+| Green Hills | looneybits | https://opengameart.org/content/green-hills | CC0 1.0 | Çam Vadisi yarış müziği (`music_pineValley`) |
+| Wintery loop | tw | https://opengameart.org/content/wintery-loop | CC0 1.0 | Kar Zirvesi yarış müziği (`music_snowPeak`) |
+| Robotic City V2 | Teh_Bucket | https://opengameart.org/content/robotic-city-v2 | CC0 1.0 | Neon Şehir yarış müziği (`music_nightCity`) |
+| Determined Pursuit (epic orchestra loop) | Tozan | https://opengameart.org/content/determined-pursuit-epic-orchestra-loop | CC0 1.0 | Volkan Adası yarış müziği (`music_volcano`) |
+| Fast Space Tune type | qubodup | https://opengameart.org/content/fast-space-tune-type | CC0 1.0 | Ay Yolu yarış müziği (`music_moon`) |
 | Feel Good Island Loop | AntumDeluge (Brandon Morris'in eserinden) | https://opengameart.org/content/feel-good-island-loop | CC0 1.0 (sayfada OGA-BY 3.0 ile çift lisans; CC0 seçildi) | Menü/lobi müziği (`music_menu`) |
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | Arayüz tıklama/seçim, item kutusu, rulet, tur, kalkan patlaması |
 | Impact Sounds | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | Duvar/kart çarpması, isabet, yağ lekesi |

@@ -15,6 +15,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
 - 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 6 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
+- 🎵 Her pistin kendi müziği var (Palmiye, Çam, Kar, Neon, Volkan, Ay); müzik yalnızca girilen pist için yüklenir
 - 🐾 24 sürücü: yarış sahası 8 kişidir (sen + 7 rakip), rakipleri menüdeki 🔀 düğmesiyle değiştirirsin
 - 🤖 Kişilikli botlar: agresif, temiz, kurnaz, dengeli, uykucu, geveze
 - 📱 Klavye ve dokunmatik kontroller, düşük/orta/yüksek grafik kalitesi
