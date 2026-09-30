@@ -198,3 +198,8 @@ textarea,
 }
 .room-code { -webkit-user-select: all; user-select: all; }
 button { touch-action: manipulation; }
+#emote-bar, #emote-bar *, #hud-chat, #hud-chat *, #touch, #touch * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

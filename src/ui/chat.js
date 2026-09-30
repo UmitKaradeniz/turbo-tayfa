@@ -42,9 +42,11 @@ export function createChat({ colorOf, onSend, onEmote }) {
   const bar = document.createElement('div');
   bar.id = 'emote-bar';
   bar.innerHTML = EMOTES.map((e, i) => `<button data-emote="${i}" aria-label="Tepki ${e}">${e}<small>${i + 1}</small></button>`).join('');
-  bar.addEventListener('click', (e) => {
+  bar.addEventListener('pointerdown', (e) => {
     const b = e.target.closest('[data-emote]');
-    if (b) onEmote(Number(b.dataset.emote));
+    if (!b) return;
+    e.preventDefault(); // iOS: basılı tutunca emoji metin gibi seçilmesin
+    onEmote(Number(b.dataset.emote));
   });
 
   document.body.append(feed, raceForm, bar);

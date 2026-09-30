@@ -69,3 +69,12 @@ if (isTouchDevice) {
     if (s && !s.isCollapsed) s.removeAllRanges();
   });
 }
+
+// Yarış sırasında (kontroller açıkken) yazı alanı/menü dışındaki her dokunuşu sahiplen:
+// iOS'un uzun basma → metin seçme / büyüteç davranışı hiç başlamasın.
+const nativeTouch = 'input, textarea, form, a, .tt-modal, .tt-screen';
+const guardTouch = (e) => {
+  if (touchState.active && !(e.target instanceof Element && e.target.closest(nativeTouch))) e.preventDefault();
+};
+document.addEventListener('touchstart', guardTouch, { passive: false });
+document.addEventListener('touchmove', guardTouch, { passive: false });
