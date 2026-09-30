@@ -92,9 +92,11 @@ const net = new Net();
 const previewOf = (id) => `/previews/${id}.jpg`;
 
 // Menüdeki pist küçük resimleri (sadece orta çizgiden)
+const trackCounts = {}; // pist → orta çizgi örnek sayısı (kupada sunucu ilerleme doğrulaması için)
 const trackCards = TRACK_IDS.map((id) => {
   const def = TRACKS[id];
   const outline = trackOutline(def);
+  trackCounts[id] = outline.centerline.length;
   const thumb = createMinimap(outline, 72);
   thumb.draw([]);
   return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL(), preview: previewOf(id) };
@@ -123,7 +125,11 @@ const menu = createMenu({
       if (online) net.send({ type: 'character', character: id });
     },
     track: (id) => loadTrack(id),
-    start: (config) => startOfflineRace(config),
+    start: (config) => {
+      cup = null; // yeni başlatma her zaman yeni kupa
+      return startOfflineRace(config);
+    },
+    nextRace: () => nextRace(),
     pause: () => setPaused(true),
     resume: () => setPaused(false),
     restart: () => startOfflineRace(lastConfig),
@@ -140,7 +146,7 @@ const menu = createMenu({
     },
     leaveRoom: () => leaveRoom(),
     lobbyButton: (action) => {
-      if (action === 'start') net.send({ type: 'start', trackCount: track.count });
+      if (action === 'start') net.send({ type: 'start', trackCount: track.count, trackCounts });
       else net.send({ type: 'ready', ready: action === 'ready' });
     },
     roomSettings: (patch) => net.send({ type: 'settings', ...patch }),
@@ -282,6 +288,8 @@ let lastConfig = null;
 let paused = false; // sadece tek oyunculuda oyunu dondurur
 let pauseOpen = false;
 let resultsTimer = 0;
+let cup = null; // tek oyunculu kupa: { round, tracks, points: Map(karakter → puan), done }
+const CUP_POINTS = [15, 12, 10, 8, 6, 4, 2, 1]; // sunucudakiyle aynı
 let menuView = 'main';
 let displayNames = new Map(); // kart → sonuç ekranında görünen ad
 const NO_INPUT = { throttle: 0, brake: 0, steer: 0, drift: false };
@@ -367,6 +375,7 @@ function endRaceLocal() {
 }
 
 function toMenu() {
+  cup = null;
   endRaceLocal();
   menu.showMain();
   setMenuView('main');
@@ -459,7 +468,11 @@ function setupRace(order, laps) {
 }
 
 async function startOfflineRace(config) {
-  await loadTrack(settings.track); // pist modelleri inmediyse bekle
+  // Kupa: 4 pist sabit sırayla; biten kupadan sonra "tekrar" yeni kupa başlatır
+  if (config.mode === 'cup') {
+    if (!cup || cup.done) cup = { round: 0, tracks: [...TRACK_IDS], points: new Map(), done: false };
+  } else cup = null;
+  await loadTrack(cup ? cup.tracks[cup.round] : settings.track); // pist modelleri inmediyse bekle
   lastConfig = config;
   player = kartOf(config.character);
   timeTrial = config.mode === 'timeTrial';
@@ -498,11 +511,69 @@ function showResults() {
   }
   const standings = race.standings();
   const me = standings.findIndex((e) => e.kart === player) + 1;
+  const cupView = online ? onlineCupView(standings, me) : cup ? offlineCupView(standings, me) : null;
+  if (cupView) return hud.showResults(cupView.rows, cupView.subtitle, previewOf(trackDef.id), cupView.opts);
   hud.showResults(
     standings.map((e) => ({ id: e.kart.character.id, name: displayNames.get(e.kart) ?? e.kart.character.name, time: e.finishTime, me: e.kart === player })),
     `${trackDef.name} · ${race.laps} tur · ${me}. oldun${lastTotalRecord ? ' · 🏆 yeni rekor' : ''}`,
     previewOf(trackDef.id),
   );
+}
+
+// --- Kupa ---
+const characterName = (id) => CHARACTERS.find((c) => c.id === id)?.name ?? id;
+const cupRow = (id, name, me, total, pts) => ({ id, name, me, right: `${total} puan`, sub: pts ? `+${pts}` : '' });
+
+// Tek oyunculu: kupa puan tablosu (bitmemiş yarışçılar anlık sıraya göre geçici puan alır)
+function offlineCupView(standings, me) {
+  const final = cup.round >= cup.tracks.length - 1;
+  const rows = standings
+    .map((e, i) => {
+      const id = e.kart.character.id;
+      const pts = CUP_POINTS[i] ?? 0;
+      return { e, i, pts, total: (cup.points.get(id) ?? 0) + pts };
+    })
+    .sort((a, b) => b.total - a.total || a.i - b.i)
+    .map((r) => cupRow(r.e.kart.character.id, displayNames.get(r.e.kart) ?? r.e.kart.character.name, r.e.kart === player, r.total, r.pts));
+  if (final) cup.done = true;
+  const running = standings.filter((e) => e.finishTime === null).length;
+  const place = `${trackDef.name} · ${me}. oldun${running ? ' · diğerleri hâlâ yarışıyor' : ''}`;
+  return {
+    rows,
+    subtitle: final ? (rows[0].me ? '🏆 Kupayı sen kazandın!' : `🏆 Kupanın sahibi: ${rows[0].name}`) + (running ? ' (puanlar güncelleniyor)' : '') : place,
+    opts: { title: final ? 'Kupa Bitti!' : `Pist ${cup.round + 1}/${cup.tracks.length} bitti`, next: final ? null : 'go', restartLabel: '🏆 Yeni Kupa' },
+  };
+}
+
+// Çevrimiçi: sunucu yarış bitince puanları gönderir; o zamana kadar bekleme durumu
+function onlineCupView(standings, me) {
+  const info = online.room?.cup;
+  if (!info) return null;
+  const c = online.cup;
+  if (!c) {
+    const rows = standings.map((e) => ({ id: e.kart.character.id, name: displayNames.get(e.kart) ?? e.kart.character.name, time: e.finishTime, me: e.kart === player }));
+    return { rows, subtitle: `${trackDef.name} · ${me}. oldun`, opts: { title: `Pist ${info.round + 1}/${info.total}`, next: 'wait', waitText: 'Diğerleri bitiriyor…' } };
+  }
+  const rows = c.standings.map((s) => cupRow(s.character, s.name ?? characterName(s.character), s.character === player.character.id, s.total, s.pts));
+  const place = `${trackDef.name} · ${me}. oldun`;
+  return {
+    rows,
+    subtitle: c.final ? (rows[0].me ? '🏆 Kupayı sen kazandın!' : `🏆 Kupanın sahibi: ${rows[0].name}`) : place,
+    opts: {
+      title: c.final ? 'Kupa Bitti!' : `Pist ${c.round + 1}/${c.total} bitti`,
+      next: c.final ? null : online.isHost ? 'go' : 'wait',
+      waitText: 'Oda sahibi sonraki pisti başlatacak…',
+    },
+  };
+}
+
+function nextRace() {
+  if (online) return net.send({ type: 'nextRace' });
+  if (!cup || !race) return;
+  race.standings().forEach((e, i) => cup.points.set(e.kart.character.id, (cup.points.get(e.kart.character.id) ?? 0) + (CUP_POINTS[i] ?? 0)));
+  cup.round++;
+  endRaceLocal(); // eski pistin yarışını bırak; yeni pist yüklenirken eski fizik çalışmasın
+  startOfflineRace(lastConfig);
 }
 
 // Duraklatma: tek oyunculuda oyunu dondurur; çevrimiçide sadece menüyü açar
@@ -554,9 +625,11 @@ async function startOnlineRace(msg) {
     return;
   }
   online.goAt = msg.goAt; // ikinci 'start' gelirse tekrar başlamasın (aşağıdaki bekleme sırasında)
+  if (race) endRaceLocal(); // kupada sonuç ekranından sıradaki pist: eski yarışı bırak
   await loadTrack(msg.track);
   if (!online || online.goAt !== msg.goAt) return;
   online.raceOver = false;
+  online.cup = null;
   online.kartById.clear();
   online.idByKart.clear();
   online.buffers.clear();
@@ -678,14 +751,15 @@ net.on('finish', (msg) => {
   if (kart) race.applyFinish(kart, msg.time, msg.place);
 });
 
-net.on('raceOver', () => {
+net.on('raceOver', (msg) => {
   if (!online || !race) return;
   online.raceOver = true;
+  online.cup = msg.cup ?? null; // kupa puanları
   race.finish();
   if (!hud.resultsOpen) {
     resultsTimer = -1;
     showResults();
-  }
+  } else if (online.cup) showResults(); // açık tabloyu kupa puanlarıyla yenile
 });
 
 net.on('error', (msg) => {

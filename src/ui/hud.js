@@ -47,6 +47,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
       <div class="actions">
         <button class="tt-btn light" data-go="menu">⌂ Ana Menü</button>
         <button class="tt-btn primary" data-go="restart">↻ Tekrar Yarış</button>
+        <button class="tt-btn primary" data-go="next" hidden>Sonraki Pist ▶</button>
       </div>
     </div>`;
   document.body.appendChild(results);
@@ -186,10 +187,21 @@ export function createHud({ portraits, minimap, itemIcons }) {
       wrongWay.classList.toggle('show', show);
     },
 
-    // rows: [{ id, name, color, time|null, best|null, me }]
-    showResults(rows, subtitle, preview = null) {
+    // rows: [{ id, name, time|null, me, right?, sub? }]  (right: sağdaki metin, yoksa süre; sub: altındaki küçük yazı)
+    // cup: kupa sonucu { title, next: 'go' | 'wait' | null, waitText }
+    showResults(rows, subtitle, preview = null, cup = null) {
       setHero(preview);
+      results.querySelector('h2').textContent = cup?.title ?? 'Yarış Bitti!';
       results.querySelector('.subtitle').textContent = subtitle;
+      const primary = results.querySelector('.actions .primary:not([data-go="next"])');
+      const next = results.querySelector('[data-go="next"]');
+      next.hidden = !cup?.next;
+      next.disabled = cup?.next === 'wait';
+      next.textContent = cup?.next === 'wait' ? (cup.waitText ?? 'Bekleniyor…') : 'Sonraki Pist ▶';
+      primary.hidden = !!cup?.next;
+      if (cup?.restartLabel) primary.textContent = cup.restartLabel;
+      else primary.textContent = primary.dataset.go === 'lobby' ? '⇠ Lobiye Dön' : '↻ Tekrar Yarış';
+      const cell = (r) => r.right ?? (r.time == null ? '—' : formatTime(r.time));
       // İlk üç podyumda (2 - 1 - 3 dizilimi)
       const podium = [rows[1], rows[0], rows[2]]
         .map((r, k) => {
@@ -199,7 +211,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
             <div class="step s${place}${r.me ? ' me' : ''}" style="animation-delay:${0.1 + [0.25, 0, 0.4][k]}s">
               <img src="${portraits[r.id]}" alt="" />
               <div class="nm">${r.name}${r.me ? ' (Sen)' : ''}</div>
-              <div class="block"><span>${place}</span><small>${r.time == null ? '—' : formatTime(r.time)}</small></div>
+              <div class="block"><span>${place}</span><small>${cell(r)}${r.sub ? ` <em>${r.sub}</em>` : ''}</small></div>
             </div>`;
         })
         .join('');
@@ -212,7 +224,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
             <span class="pos">${i + 4}.</span>
             <img src="${portraits[r.id]}" alt="" />
             <span class="name">${r.name}${r.me ? ' (Sen)' : ''}</span>
-            <span class="time ${r.time == null ? 'pending' : ''}">${r.time == null ? 'yarışıyor…' : formatTime(r.time)}</span>
+            <span class="time ${r.time == null && r.right == null ? 'pending' : ''}">${r.right ?? (r.time == null ? 'yarışıyor…' : formatTime(r.time))}${r.sub ? ` <em>${r.sub}</em>` : ''}</span>
           </li>`,
         )
         .join('');
@@ -243,6 +255,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
     },
     hideResults() {
       results.querySelector('h2').textContent = 'Yarış Bitti!';
+      results.querySelector('[data-go="next"]').hidden = true;
+      results.querySelector('.actions .primary:not([data-go="next"])').hidden = false;
       results.classList.remove('show');
     },
     // Çevrimiçi yarışta "Tekrar Yarış" yerine lobiye dönülür

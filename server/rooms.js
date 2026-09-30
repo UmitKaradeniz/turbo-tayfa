@@ -5,8 +5,8 @@ import crypto from 'node:crypto';
 // Mesajlar JSON: { type, ... }. İstemci → sunucu:
 //   create {name, character}          join {code, name, character}
 //   resume {code, token}              character {character}
-//   settings {laps, difficulty}       ready {ready}
-//   start {trackCount}                state {s: {...}, bots: [{id, s}]}
+//   settings {laps, difficulty, track, mode}   ready {ready}
+//   start {trackCount | trackCounts}  nextRace (kupa)   state {s: {...}, bots: [{id, s}]}
 //   finish {id, time}                 backToLobby
 //   item {kind, id, owner, p, v}      hit {id, target}      box {i}
 //   chat {text}                       emote {e, id?}
@@ -14,7 +14,7 @@ import crypto from 'node:crypto';
 // Sunucu → istemci:
 //   welcome {id, token, code}         room {...}           error {msg}
 //   start {goAt, laps, difficulty, entrants}              states {list}
-//   finish {id, time, place}          raceOver             pong {t, server}
+//   finish {id, time, place}          raceOver {cup}       pong {t, server}
 
 const MAX_PLAYERS = 8;
 const CHARACTERS = ['fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot'];
@@ -62,6 +62,7 @@ function roomView(room) {
     hostId: room.hostId,
     phase: room.phase,
     settings: room.settings,
+    cup: room.cup ? { round: room.cup.round, total: TRACKS.length } : null,
     players: [...room.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
@@ -218,9 +219,36 @@ function checkRaceOver(room) {
   const timedOut = room.firstFinishAt && now() - room.firstFinishAt > RESULTS_TIMEOUT_MS;
   if (humansLeft.length === 0 || timedOut) {
     room.phase = 'results';
-    broadcast(room, { type: 'raceOver' });
+    broadcast(room, { type: 'raceOver', cup: room.cup ? scoreCupRound(room) : null });
     syncRoom(room);
   }
+}
+
+// --- Kupa: 4 pist sırayla, her yarışta sıraya göre puan ---
+const CUP_POINTS = [15, 12, 10, 8, 6, 4, 2, 1];
+
+function progressOfEntrant(room, e) {
+  if (e.bot) return room.botState.get(e.id)?.progress ?? 0;
+  return room.players.get(e.id)?.progress ?? 0;
+}
+
+// Bitirenler bitiş sırasıyla, bitirmeyenler ilerlemeye göre; puanlar karaktere yazılır
+function scoreCupRound(room) {
+  const cup = room.cup;
+  const done = room.finishOrder.map((f) => room.entrants.find((e) => e.id === f.id)).filter(Boolean);
+  const rest = room.entrants.filter((e) => !done.includes(e)).sort((a, b) => progressOfEntrant(room, b) - progressOfEntrant(room, a));
+  const order = [...done, ...rest];
+  order.forEach((e, i) => {
+    const pts = CUP_POINTS[i] ?? 0;
+    cup.points[e.character] = (cup.points[e.character] ?? 0) + pts;
+    cup.lastPlace[e.character] = i + 1;
+    cup.lastPts[e.character] = pts;
+  });
+  cup.final = cup.round >= TRACKS.length - 1;
+  const standings = order
+    .map((e) => ({ character: e.character, name: e.bot ? null : e.name, place: cup.lastPlace[e.character], pts: cup.lastPts[e.character], total: cup.points[e.character] }))
+    .sort((a, b) => b.total - a.total || a.place - b.place);
+  return { round: cup.round, total: TRACKS.length, final: cup.final, standings };
 }
 
 // --- Mesaj işleme ---
@@ -243,7 +271,7 @@ export function handleMessage(ws, raw) {
     case 'create': {
       if (p) return;
       const code = newCode();
-      const r = { code, hostId: null, phase: 'lobby', settings: { laps: 3, difficulty: 'normal', track: 'palmCove' }, players: new Map(), emptySince: 0 };
+      const r = { code, hostId: null, phase: 'lobby', settings: { laps: 3, difficulty: 'normal', track: 'palmCove', mode: 'race' }, players: new Map(), emptySince: 0 };
       rooms.set(code, r);
       const me = addPlayer(r, ws, msg.name, msg.character);
       r.hostId = me.id;
@@ -315,6 +343,7 @@ export function handleMessage(ws, raw) {
       if ([1, 3, 5].includes(msg.laps)) room.settings.laps = msg.laps;
       if (['easy', 'normal', 'hard'].includes(msg.difficulty)) room.settings.difficulty = msg.difficulty;
       if (TRACKS.includes(msg.track)) room.settings.track = msg.track;
+      if (['race', 'cup'].includes(msg.mode)) room.settings.mode = msg.mode;
       syncRoom(room);
       return;
 
@@ -327,9 +356,32 @@ export function handleMessage(ws, raw) {
       if (room.hostId !== p.id || room.phase !== 'lobby') return;
       const others = [...room.players.values()].filter((x) => x.ws && x.id !== p.id);
       if (others.some((x) => !x.ready)) return send(ws, { type: 'error', code: 'not-ready', msg: 'Herkes hazır olmadan başlatılamaz.' });
+      const okCount = (n) => Number.isFinite(n) && n > 50 && n < 5000;
+      if (room.settings.mode === 'cup') {
+        // Kupa: her pistin örnek sayısı baştan gelir (sonraki pistler için ilerleme doğrulaması)
+        const counts = {};
+        for (const id of TRACKS) {
+          counts[id] = Number(msg.trackCounts?.[id]);
+          if (!okCount(counts[id])) return;
+        }
+        room.cup = { round: 0, counts, points: {}, lastPlace: {}, lastPts: {}, final: false };
+        room.settings.track = TRACKS[0];
+        startRace(room, counts[TRACKS[0]]);
+        return;
+      }
       const count = Number(msg.trackCount);
-      if (!(count > 50 && count < 5000)) return;
+      if (!okCount(count)) return;
+      room.cup = null;
       startRace(room, count);
+      return;
+    }
+
+    case 'nextRace': {
+      // Kupa: oda sahibi sonuç ekranından sıradaki pisti başlatır
+      if (room.hostId !== p.id || room.phase !== 'results' || !room.cup || room.cup.final) return;
+      room.cup.round++;
+      room.settings.track = TRACKS[room.cup.round];
+      startRace(room, room.cup.counts[room.settings.track]);
       return;
     }
 
@@ -420,6 +472,7 @@ export function handleMessage(ws, raw) {
     case 'backToLobby':
       if (room.phase === 'results' || (room.phase === 'racing' && room.hostId === p.id)) {
         room.phase = 'lobby';
+        room.cup = null;
         syncRoom(room);
       }
       return;
