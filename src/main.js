@@ -894,7 +894,7 @@ function checkShortcutEvents(kart) {
     kart.reset(p.position, p.heading);
     kart.updateGround(track);
     if (kart === player) {
-      hud.toast(kart.fallShortcut?.def.jump?.lava ? 'Lava düştün! 🔥' : 'Dereye düştün! 💦', 'warn');
+      hud.toast(kart.fallShortcut?.def.jump?.fallText ?? 'Dereye düştün! 💦', 'warn');
       rig.shake(0.5);
       play('hit', { volume: 0.6 });
     }

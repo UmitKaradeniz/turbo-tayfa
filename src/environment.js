@@ -53,6 +53,9 @@ export function createEnvironment(scene, quality) {
   scene.add(clouds);
   const stars = createStars();
   scene.add(stars);
+  // Uzay pistleri: gökyüzünde büyük mavi Dünya
+  const earth = createEarth();
+  scene.add(earth);
   const snow = createSnow(Math.max(0.3, quality.particles ?? 1));
   scene.add(snow.points);
   // Kor parçacıkları: yanardağ pistinde yukarı doğru süzülen kıvılcımlar
@@ -108,7 +111,9 @@ export function createEnvironment(scene, quality) {
       SUN_GLOW.set(L.glow ?? 0xffebbf);
       scene.fog.near = L.fogNear ?? 160;
       scene.fog.far = L.fogFar ?? 620;
-      clouds.visible = !def.night && !def.noClouds;
+      clouds.visible = !def.night && !def.noClouds && !def.space;
+      earth.visible = !!def.space;
+      if (water) water.visible = !def.noWater;
       stars.visible = !!def.night || !!def.space;
       // Kar yağışı (beyaz) ya da kül yağışı (koyu, yavaş)
       snow.points.visible = !!def.snow || !!def.ash;
@@ -120,6 +125,7 @@ export function createEnvironment(scene, quality) {
       if (snow.points.visible) snow.update(dt, camera);
       if (embers.points.visible) embers.update(dt, camera);
       if (stars.visible) stars.position.copy(camera.position);
+      if (earth.visible) earth.position.copy(camera.position);
       // Gölge kamerası odağı takip etsin (texel'e hizalı, titreme olmasın)
       const step = (42 * 2) / (quality.shadowSize || 1024);
       const fx = Math.round(focus.x / step) * step;
@@ -217,6 +223,63 @@ function createWater(terrain, colors = {}) {
   mesh.position.y = 0;
   mesh.renderOrder = 1;
   return mesh;
+}
+
+
+// Dünya: gökyüzünde asılı duran mavi-yeşil küre (canvas dokusu), çevresinde ince hale
+function createEarth() {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#1d5fc2';
+  g.fillRect(0, 0, 512, 256);
+  let seed = 99;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  // Kıtalar: üst üste bindirilmiş yeşil-kahve lekeler
+  for (let i = 0; i < 46; i++) {
+    const x = rnd() * 512;
+    const y = 30 + rnd() * 196;
+    const r = 10 + rnd() * 34;
+    g.fillStyle = rnd() < 0.6 ? 'rgba(74,156,78,0.92)' : 'rgba(160,140,86,0.9)';
+    g.beginPath();
+    g.ellipse(x, y, r * 1.4, r, rnd() * Math.PI, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.fillStyle = 'rgba(245,250,255,0.95)';
+  g.fillRect(0, 0, 512, 16);
+  g.fillRect(0, 240, 512, 16);
+  // Bulutlar
+  for (let i = 0; i < 70; i++) {
+    g.fillStyle = `rgba(255,255,255,${0.2 + rnd() * 0.35})`;
+    g.beginPath();
+    g.ellipse(rnd() * 512, rnd() * 256, 14 + rnd() * 40, 3 + rnd() * 7, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const group = new THREE.Group();
+  const globe = new THREE.Mesh(new THREE.SphereGeometry(110, 40, 24), new THREE.MeshBasicMaterial({ map: tex, fog: false }));
+  globe.rotation.set(0.4, 2.2, 0.35);
+  const halo = document.createElement('canvas');
+  halo.width = halo.height = 128;
+  const hg = halo.getContext('2d');
+  const grad = hg.createRadialGradient(64, 64, 40, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(120,180,255,0.55)');
+  grad.addColorStop(1, 'rgba(120,180,255,0)');
+  hg.fillStyle = grad;
+  hg.fillRect(0, 0, 128, 128);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(halo), transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+  glow.scale.setScalar(300);
+  group.add(glow, globe);
+  group.position.set(0, 0, 0);
+  globe.position.set(0, 0, 0);
+  // Gökyüzünde sabit bir yön
+  group.children.forEach((o) => o.position.set(-150, 150, -560));
+  group.renderOrder = -1;
+  group.traverse((o) => { o.renderOrder = -1; o.frustumCulled = false; });
+  group.visible = false;
+  return group;
 }
 
 // Uzakta süzülen yumuşak bulutlar (canvas dokulu sprite'lar)

@@ -84,7 +84,7 @@ export function instancedModel(key, matrices, { castShadow = true, frost = false
 function tinted(mat, t) {
   const out = (Array.isArray(mat) ? mat : [mat]).map((m) => {
     const c = m.clone();
-    if (t.color != null) c.color.multiply(new THREE.Color(t.color));
+    if (t.color != null) t.mix != null ? c.color.lerp(new THREE.Color(t.color), t.mix) : c.color.multiply(new THREE.Color(t.color));
     if (t.emissive != null) {
       c.emissive = new THREE.Color(t.emissive);
       c.emissiveIntensity = t.intensity ?? 0.5;

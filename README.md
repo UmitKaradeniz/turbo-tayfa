@@ -12,7 +12,8 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
 - 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol
-- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 5 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
+- 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
+- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 6 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
 - 🤖 Kişilikli botlar: agresif, temiz, kurnaz, dengeli, uykucu, geveze
 - 📱 Klavye ve dokunmatik kontroller, düşük/orta/yüksek grafik kalitesi
@@ -142,8 +143,9 @@ yarışa kaldığı yerden devam eder.
 - **Zamana Karşı:** Hızlı Yarış → Mod: *Zamana Karşı*. Bot ve item yok; en iyi turun
   yarı saydam bir hayalet olarak seninle yarışır. Rekorlar bu tarayıcıda saklanır.
 
-- **Turbo Kupası / Büyük Kupa:** Hızlı Yarış / oda lobisi → Mod: *Kupa* (Palmiye Koyu → Çam Vadisi → Kar Zirvesi → Neon Şehir) ya da *Büyük Kupa* (tüm pistler, Volkan Adası dahil). Puanlar 15-12-10-8-6-4-2-1; her yarış sonunda puan tablosu çıkar, çevrimiçide **Sonraki Pist**'i oda sahibi başlatır. En çok puanı toplayan kupayı kazanır.
+- **Turbo Kupası / Büyük Kupa:** Hızlı Yarış / oda lobisi → Mod: *Kupa* (Palmiye Koyu → Çam Vadisi → Kar Zirvesi → Neon Şehir) ya da *Büyük Kupa* (tüm pistler, Volkan Adası ve Ay Yolu dahil). Puanlar 15-12-10-8-6-4-2-1; her yarış sonunda puan tablosu çıkar, çevrimiçide **Sonraki Pist**'i oda sahibi başlatır. En çok puanı toplayan kupayı kazanır.
 - **Volkan Adası:** Yolda zamanlı **gayzerler** var: halka kızarıp yanıp sönünce kor fışkırır, içindeki kart savrulur; halkanın yanından geç. Parlayan **kızgın zemin çatlakları** kartı yavaşlatır (turbo varken yavaşlatmaz). Kısayol lav nehrini rampayla aşar; yetmezse lava düşüp girişe dönersin.
+- **Ay Yolu:** Yerçekimi yaklaşık yarıya iner; kart süzülür, rampalardan uzağa uçar, havadayken direksiyon az etki eder. Zamanlı **meteorlar**: yolda kırmızı uyarı halkası büyür, sonra meteor düşer ve halkadaki kart savrulur. Kısayol krater çukurunu rampayla aşar (yeterli hız gerekir); turbo tahtaları ve item kutuları var.
 - **Drift:** Virajda direksiyonu kırıp drift'e bas. Kıvılcımlar mavi → turuncu → mor
   oldukça bırakınca aldığın turbo uzar.
 - **Kısayollar:** Haritada sarı kesik çizgi olarak görünür. *Palmiye Koyu:* firketeyi kesen kum yolu kartı yavaşlatır (turbo varken yavaşlatmaz); ortadaki sarı **hız tahtasına** girersen turbo alırsın, yolun ortasında item kutuları da var. *Kar Zirvesi:* doğu tırmanışını atlayıp zirveye çıkan sıkışmış kar yolu; buz tahtaları turbo verir. *Neon Şehir:* binaların arasından geçen servis yolu; ortada kanalı aşan rampa var (Çam Vadisi'ndeki gibi yeterli hız gerekir). *Çam Vadisi:* inişteki S virajlarını kesen toprak yolda rampadan yeterli hızla (≈ 75 km/sa üstü) çıkarsan dereyi uçarak geçersin; yetmezse dereye düşüp kısayolun girişine dönersin. Botlar da kişiliklerine göre (kurnaz/agresif sık, temiz/uykucu nadiren) kısayolu kullanır.

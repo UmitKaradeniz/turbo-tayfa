@@ -74,7 +74,7 @@ export default {
       surface: 'dirt',
       speed: 0.9,
       color: 0x3a2b26,
-      jump: { at: [99, -6], ramp: 12, height: 2.4, gap: 12, depth: 5.5, landing: 14, drop: 0.7, rampColor: 0xd9661e, water: 0xff5a10, lava: true },
+      jump: { at: [99, -6], ramp: 12, height: 2.4, gap: 12, depth: 5.5, landing: 14, drop: 0.7, rampColor: 0xd9661e, water: 0xff5a10, lava: true, fallText: 'Lava düştün! 🔥' },
       boxes: { at: 'landing', lateral: [-2, 2] },
       edge: { keys: ['nature/rock_tallC', 'nature/rock_largeD', 'nature/rock_tallD', 'nature/rock_largeE'], step: 5, scale: [4.5, 7] },
       botChance: 0.5,

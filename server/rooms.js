@@ -18,7 +18,7 @@ import crypto from 'node:crypto';
 
 const MAX_PLAYERS = 8;
 const CHARACTERS = ['fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot'];
-const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano'];
+const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon'];
 // Turbo Kupası setleri (istemcideki src/tracks/index.js ile aynı olmalı)
 const CUP_SETS = { cup: ['palmCove', 'pineValley', 'snowPeak', 'nightCity'], bigCup: TRACKS };
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // karışan 0/O, 1/I yok

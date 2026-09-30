@@ -19,6 +19,7 @@ ile yayımlandı: ticari kullanım dahil serbest, atıf zorunlu değil. Yine de 
 | Holiday Kit | 2.0 | https://kenney.nl/assets/holiday-kit | CC0 1.0 | `tree-snow-a/b/c`, `tree`, `tree-decorated(-snow)`, `snowman(-hat)`, `present-*`, `candy-cane-*`, `lantern`, `reindeer`, `sled(-long)`, `snow-pile`, `snow-flat(-large)`, `rocks-*`, `bench(-short)`, `cabin-*` parçaları | Kar Zirvesi: karlı çamlar, kulübeler, kardan adamlar, şeker kamışları, hediyeler, ren geyikleri |
 | Pirate Kit | 2.1 | https://kenney.nl/assets/pirate-kit | CC0 1.0 | `ship-*`, `boat-row-*`, `structure-platform-dock`, `tower-complete-*`, `castle-wall`, `barrel`, `crate(-bottles)`, `chest`, `cannon`, `flag-pirate-high`, `palm-*`, `rocks-sand-*` | Palmiye Koyu: limandaki gemiler, tekneler, kale kulesi, fıçılar, korsan palmiyeleri |
 | Fantasy Town Kit | 2.0 | https://kenney.nl/assets/fantasy-town-kit | CC0 1.0 | `fountain-round`, `stall-red/green`, `cart`, `lantern`, `banner-*`, `tree*`, `rock-*`, `wall-wood*` ve `roof-gable` (kır evi için) | Çam Vadisi: köy meydanı, çeşme, tezgâhlar, kır evleri |
+| Space Kit | 2.0 | https://kenney.nl/assets/space-kit | CC0 1.0 | `rock`, `rock_largeA/B`, `rocks_smallA/B`, `rock_crystals(LargeA/B)`, `crater(Large)`, `meteor(_detailed/_half)`, `hangar_largeA/B`, `hangar_roundA`, `hangar_smallA`, `satelliteDish(_large/_detailed)`, `astronautA/B`, `alien`, `rover`, `craft_*` (speederA–D, racer, cargoA, miner), `rocket_baseA/sidesA/fuelA/topA/finsA`, `machine_generatorLarge/barrel/wireless`, `barrels`, `turret_single` (+ projede duran ama henüz kullanılmayan `rocket_*B`, `gate_*`, `barrel`, `monorail_*`) | Ay Yolu: hangarlar, uydu antenleri, astronot/uzaylı, roket rampası, kayalar, kraterler, meteorlar, kristaller |
 
 Not: Racing Kit reklam panolarındaki "TANKCO" logosu Kenney'in paket içindeki hayali markasıdır.
 
@@ -43,6 +44,7 @@ Motor ve drift kayma sesleri dosya değildir; tarayıcıda WebAudio ile kodla ü
 - Asfalt dokusu, başlangıç çizgisi / grid çıkartması, bordür renkleri: kodla üretilen canvas dokuları (`src/track.js`)
 - Ada zemini, deniz shader'ı, gökyüzü ve bulutlar: kodla üretildi (`src/track.js`, `src/environment.js`)
 - Pist rotaları "Palmiye Koyu" ve "Çam Vadisi": özgün tasarım (`src/tracks/`)
+- Ay Yolu: Dünya (gökyüzündeki küre), Ay kraterleri (arazi), düşük yerçekimi ve meteor yağmuru kodla üretildi (`src/environment.js`, `src/track.js`, `src/hazards.js`)
 - Volkan Adası: yanardağ (koni, lav akıntıları, patlama gösterisi), lav denizi shader'ı, kızgın zemin çatlakları dokusu, gayzerler, kül/kor yağışı: tamamı kodla üretildi (`src/volcano.js`, `src/hazards.js`, `src/environment.js`, `src/track.js`)
 - Item görselleri (Turbo Şişesi, Hindistan Cevizi, "?" item kutusu, Balon Kalkan, Yağ Lekesi): Kenney paketlerinde karşılığı olmadığı için kodla üretilen düşük poligonlu modeller ve canvas dokuları (`src/itemModels.js`)
 - Karakter portreleri ve item ikonları: oyun içinde 3D modellerden çiziliyor (`src/ui/portraits.js`)

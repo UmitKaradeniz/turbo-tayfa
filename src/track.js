@@ -435,6 +435,18 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
       const w = 1 - smoothstep(edge + 1.5, edge + 16, c.dist);
       h = THREE.MathUtils.lerp(h, c.y - 0.15, w);
 
+      // Ay kraterleri: yola yaklaşmadan önce kaybolan çanak + yükselmiş kenar (def.craters: { x, z, r, depth })
+      let craterShade = 0;
+      for (const cr of def.craters ?? []) {
+        const d = Math.hypot(x - cr.x, z - cr.z) / cr.r;
+        if (d > 1.6) continue;
+        const free = 1 - w; // yolun düzleştirdiği şeritte çukur açma
+        const bowl = d < 1 ? (1 - d * d) : 0;
+        const rim = Math.exp(-(((d - 1) / 0.22) ** 2)) * 0.22;
+        h += (-cr.depth * bowl + cr.depth * rim) * free;
+        craterShade = Math.max(craterShade, bowl * free);
+      }
+
       // Kısayol: yatağı düzle, çukur/rampa gibi özellikleri işle
       let pathMix = 0;
       let pathTint = null;
@@ -459,6 +471,7 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
       col.lerp(patchAmount > 0.5 ? C.patchDark : C.patch, patchAmount);
       if (mountains && sOuter < 0) col.lerp(C.cliff, smoothstep(-8, -40, sOuter) * (0.6 + 0.4 * smoothstep(-0.2, 0.6, patch(x * 2, z * 2))));
       col.lerp(C.shoulder, 1 - smoothstep(edge + 1, edge + 5, c.dist));
+      if (craterShade > 0) col.multiplyScalar(1 - 0.28 * craterShade);
       if (pathTint) col.lerp(pathTint, pathMix);
       colors[k * 3] = col.r;
       colors[k * 3 + 1] = col.g;
