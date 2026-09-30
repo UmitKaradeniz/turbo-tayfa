@@ -103,6 +103,13 @@ git push
 
 (Sadece yerelde eski sürümü denemek için: `git checkout v1.0.2`, dönmek için `git checkout main`.)
 
+## Hata raporları
+
+Oyuncunun tarayıcısında oluşan hatalar (yakalanmamış JS hatası, WebGL kaybı, uzun süre düşük FPS) otomatik olarak
+sunucuya gönderilir ve sunucu loguna yazılır. Render'da servis → **Logs** → arama kutusuna `[istemci]` yaz.
+Her satırda hata metni, sürüm, tarayıcı, ekran kartı (GPU), pist, kalite ve FPS bulunur. Kişisel veri (IP, isim,
+oda kodu) kaydedilmez; oturum başına en fazla 8 rapor gider, sunucu IP başına dakikada 12 raporu kabul eder.
+
 ## Arkadaşlarla paylaşma
 
 1. Oyunun adresini aç, takma adını yaz, **Oda Kur**'a bas.

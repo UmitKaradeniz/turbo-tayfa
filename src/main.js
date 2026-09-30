@@ -4,6 +4,7 @@ import { QUALITY } from './quality.js';
 import { settings, DIFFICULTY } from './settings.js';
 import { readInput } from './input.js';
 import { loadModels } from './assets.js';
+import { initErrorReports, setReportContext, reportIssue } from './report.js';
 import { Kart, resolveKartCollisions } from './kart.js';
 import { CHARACTERS, KART_MODELS } from './kartModel.js';
 import { CameraRig } from './cameraRig.js';
@@ -51,6 +52,12 @@ const gpuName = (() => {
   const name = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
   return name.replace(/^ANGLE \(|\)$/g, '').replace(/Direct3D.*$/, '').replace(/\s*\(0x[0-9a-f]+\)/i, '').trim().slice(0, 60);
 })();
+
+// Hata raporları (sunucu loguna): yakalanmamış hatalar, WebGL kaybı, düşük FPS
+let lastFps = 0;
+initErrorReports();
+setReportContext(() => ({ track: trackDef?.id, quality: QUALITY.name, pixelRatio: pixelRatio.toFixed(2), fps: Math.round(lastFps), gpu: gpuName, mode: timeTrial ? 'timeTrial' : race ? 'race' : 'menu', online: !!online }));
+renderer.domElement.addEventListener('webglcontextlost', () => reportIssue('webgl', 'context lost'));
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 1500);
@@ -867,6 +874,7 @@ function frame(now) {
   if (fpsTime >= 0.5) {
     const ping = online && net.connected ? ` · ${Math.round(net.rtt)} ms` : '';
     const fps = fpsFrames / fpsTime;
+    lastFps = fps;
     const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · msaa ${QUALITY.bloom ? QUALITY.msaa : 'yok'}`;
     debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}`;
     adaptResolution(fps);
@@ -921,6 +929,7 @@ function adaptResolution(fps) {
   fastTime = fps > 58 ? fastTime + 0.5 : 0;
   let next = pixelRatio;
   if (slowTime >= 2 && pixelRatio > 0.6) {
+    if (pixelRatio <= 0.9) reportIssue('perf', 'düşük FPS: çözünürlük 0.9 altına indi');
     ratioCeiling = Math.min(ratioCeiling, pixelRatio - 0.05);
     next = Math.max(0.6, pixelRatio - 0.15);
   } else if (fastTime >= 8 && pixelRatio < ratioCeiling) next = Math.min(ratioCeiling, pixelRatio + 0.1);
