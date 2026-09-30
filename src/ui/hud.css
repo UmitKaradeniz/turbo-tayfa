@@ -6,6 +6,7 @@
   pointer-events: none;
   font-family: var(--tt-font);
   color: #fff;
+  -webkit-user-select: none;
   user-select: none;
   opacity: 0;
   transition: opacity 0.4s;

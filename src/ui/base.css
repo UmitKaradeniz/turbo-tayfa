@@ -174,3 +174,27 @@
   10%, 85% { transform: none; opacity: 1; }
   100% { transform: translateY(10px); opacity: 0; }
 }
+
+/* Safari/iOS: çoklu dokunuşta metin seçme ve büyüteç/kopyala menüsü çıkmasın.
+   (Safari'de -webkit- önekli sürüm şart; sadece user-select yetmez.) */
+html,
+body,
+canvas,
+#hud,
+#touch,
+.tt-screen,
+.tt-modal,
+.tt-toast-wrap {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+.room-code {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+.room-code { -webkit-user-select: all; user-select: all; }
+button { touch-action: manipulation; }

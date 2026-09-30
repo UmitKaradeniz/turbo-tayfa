@@ -54,3 +54,18 @@ export function createTouchControls() {
     },
   };
 }
+
+// iOS Safari: birden çok parmakla basınca metin seçimi / kopyala menüsü açılmasın;
+// çift dokunuş ve iki parmakla zoom da oyunu bozmasın. Yazı alanları hariç.
+const isField = (t) => t instanceof Element && !!t.closest('input, textarea, .room-code');
+document.addEventListener('selectstart', (e) => { if (!isField(e.target)) e.preventDefault(); });
+document.addEventListener('contextmenu', (e) => { if (!isField(e.target)) e.preventDefault(); });
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault());
+if (isTouchDevice) {
+  document.addEventListener('selectionchange', () => {
+    const a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
+    const s = getSelection();
+    if (s && !s.isCollapsed) s.removeAllRanges();
+  });
+}
