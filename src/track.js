@@ -174,6 +174,35 @@ export function buildTrack(def) {
   decal.receiveShadow = true;
   group.add(decal);
 
+  // --- Kızgın zemin çatlakları (volkan): yolun bir kısmı kartı yavaşlatır, lav gibi parlar ---
+  // def.hotZones: [{ f: [başlangıç, bitiş] (turun oranı), lateral: [sol, sağ] (metre), speed }]
+  const hotZones = (def.hotZones ?? []).map((z) => ({
+    from: Math.round(z.f[0] * count),
+    to: Math.round(z.f[1] * count),
+    l0: Math.min(...z.lateral),
+    l1: Math.max(...z.lateral),
+    speed: z.speed ?? 0.72,
+  }));
+  const hotAt = (index, lateral) => {
+    for (const z of hotZones) if (index >= z.from && index <= z.to && lateral >= z.l0 && lateral <= z.l1) return z;
+    return null;
+  };
+  const hotMeshes = hotZones.map((z) => {
+    const pts = [];
+    const rts = [];
+    for (let i = z.from; i <= z.to; i++) {
+      pts.push(points[at(i)].clone().add(new THREE.Vector3(0, 0.03, 0)));
+      rts.push(rights[at(i)]);
+    }
+    const tex = crackTexture(z.l1 - z.l0, (z.to - z.from) * segLen);
+    const mesh = new THREE.Mesh(
+      ribbon(pts, rts, pts.length - 1, [[z.l0, 0], [z.l1, 0]], 1 / (pts.length - 1), null, false),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, color: new THREE.Color(1.6, 1.3, 1.1), toneMapped: false }),
+    );
+    group.add(mesh);
+    return mesh;
+  });
+
   // --- Kısayollar (orta çizgiden ayrılıp geri dönen ek yollar) ---
   const shortcuts = (def.shortcuts ?? []).map((sd, k) => buildShortcut(sd, k, { closest, edge, count }));
 
@@ -212,6 +241,8 @@ export function buildTrack(def) {
     closest,
     insideLoop,
     shortcuts,
+    hotZones,
+    hotMeshes,
 
     // Kısayol koridoruna uzaklık - yarım genişlik (negatif: koridorun içinde). Dekor/bariyer için.
     shortcutClearance(x, z) {
@@ -253,7 +284,8 @@ export function buildTrack(def) {
         const r = rights[c.index];
         _n.crossVectors(r, f).normalize();
         const y = a <= hw ? c.y : c.y + (a - hw < curb * 0.35 ? 0.07 : THREE.MathUtils.lerp(0.07, -0.12, (a - hw - curb * 0.35) / (curb * 0.65)));
-        return { y, normal: _n, surface: a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: null };
+        const hz = a <= hw && hotZones.length ? hotAt(c.index, c.lateral) : null;
+        return { y, normal: _n, surface: hz ? 'hot' : a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: null, speed: hz ? hz.speed : null };
       }
       const y = terrain.heightAt(pos.x, pos.z);
       terrain.normalAt(pos.x, pos.z, _n);
@@ -545,5 +577,76 @@ function startDecalTexture(hw, length, lineAt, slotDist) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
   // flipY: kanvasın üstü v=1'e (şeridin ön ucuna) denk gelir; yOf ön uçtan ölçer
+  return tex;
+}
+
+// Kızgın zemin dokusu: koyu kızıl zemin üzerinde parlayan lav çatlakları (kenarlar yumuşakça kaybolur)
+function crackTexture(width, length) {
+  const pxPerM = 12;
+  const w = Math.max(32, Math.round(width * pxPerM));
+  const h = Math.max(64, Math.round(length * pxPerM));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const g = canvas.getContext('2d');
+  let seed = 4242;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  g.fillStyle = 'rgba(40,10,6,0.78)';
+  g.fillRect(0, 0, w, h);
+  // Kızgın lekeler
+  for (let i = 0; i < w * h / 900; i++) {
+    const x = rnd() * w;
+    const y = rnd() * h;
+    const r = 6 + rnd() * 26;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, 'rgba(255,110,20,0.5)');
+    gr.addColorStop(1, 'rgba(255,60,0,0)');
+    g.fillStyle = gr;
+    g.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  // Çatlaklar: dallanan kırık çizgiler
+  g.lineCap = 'round';
+  for (let k = 0; k < Math.round(w * h / 2600); k++) {
+    let x = rnd() * w;
+    let y = rnd() * h;
+    let a = rnd() * Math.PI * 2;
+    const segs = 4 + Math.floor(rnd() * 6);
+    for (const [lw, col] of [[7, 'rgba(255,90,10,0.55)'], [3, 'rgba(255,190,60,0.95)']]) {
+      g.strokeStyle = col;
+      g.lineWidth = lw;
+      g.beginPath();
+      g.moveTo(x, y);
+      let px = x;
+      let py = y;
+      let pa = a;
+      seed = seed * 7 % 2147483647;
+      for (let j = 0; j < segs; j++) {
+        pa += (rnd() - 0.5) * 1.3;
+        px += Math.cos(pa) * (10 + rnd() * 16);
+        py += Math.sin(pa) * (10 + rnd() * 16);
+        g.lineTo(px, py);
+      }
+      g.stroke();
+    }
+  }
+  // Kenarlarda şeffaflaş (yola yumuşak otursun)
+  g.globalCompositeOperation = 'destination-in';
+  const mask = g.createLinearGradient(0, 0, w, 0);
+  mask.addColorStop(0, 'rgba(0,0,0,0)');
+  mask.addColorStop(0.12, 'rgba(0,0,0,1)');
+  mask.addColorStop(0.88, 'rgba(0,0,0,1)');
+  mask.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = mask;
+  g.fillRect(0, 0, w, h);
+  const mask2 = g.createLinearGradient(0, 0, 0, h);
+  mask2.addColorStop(0, 'rgba(0,0,0,0)');
+  mask2.addColorStop(0.06, 'rgba(0,0,0,1)');
+  mask2.addColorStop(0.94, 'rgba(0,0,0,1)');
+  mask2.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = mask2;
+  g.fillRect(0, 0, w, h);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
   return tex;
 }

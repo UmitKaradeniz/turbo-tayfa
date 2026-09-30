@@ -84,6 +84,9 @@ export function driveInput(driver, kart, track, dt, ctx = null) {
     }
   }
 
+  // Yoldaki tehlikelerden (gayzer, meteor, kızgın zemin) kaçın
+  if (ctx?.hazards) lane = ctx.hazards.avoidLane(idx, lane, driver);
+
   const scTarget = shortcutTarget(driver, kart, track, idx, n, speed, look);
   const i = (idx + look) % n;
   const cp = track.centerline[i];

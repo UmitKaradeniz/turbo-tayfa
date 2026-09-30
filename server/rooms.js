@@ -18,7 +18,9 @@ import crypto from 'node:crypto';
 
 const MAX_PLAYERS = 8;
 const CHARACTERS = ['fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot'];
-const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity'];
+const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano'];
+// Turbo Kupası setleri (istemcideki src/tracks/index.js ile aynı olmalı)
+const CUP_SETS = { cup: ['palmCove', 'pineValley', 'snowPeak', 'nightCity'], bigCup: TRACKS };
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // karışan 0/O, 1/I yok
 const COUNTDOWN_MS = 3600 + 1500; // istemci geri sayımı + kamera geçişi payı
 const RECONNECT_GRACE_MS = 60_000;
@@ -62,7 +64,7 @@ function roomView(room) {
     hostId: room.hostId,
     phase: room.phase,
     settings: room.settings,
-    cup: room.cup ? { round: room.cup.round, total: TRACKS.length } : null,
+    cup: room.cup ? { round: room.cup.round, total: room.cup.tracks.length } : null,
     players: [...room.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
@@ -244,11 +246,11 @@ function scoreCupRound(room) {
     cup.lastPlace[e.character] = i + 1;
     cup.lastPts[e.character] = pts;
   });
-  cup.final = cup.round >= TRACKS.length - 1;
+  cup.final = cup.round >= cup.tracks.length - 1;
   const standings = order
     .map((e) => ({ character: e.character, name: e.bot ? null : e.name, place: cup.lastPlace[e.character], pts: cup.lastPts[e.character], total: cup.points[e.character] }))
     .sort((a, b) => b.total - a.total || a.place - b.place);
-  return { round: cup.round, total: TRACKS.length, final: cup.final, standings };
+  return { round: cup.round, total: cup.tracks.length, final: cup.final, standings };
 }
 
 // --- Mesaj işleme ---
@@ -343,7 +345,7 @@ export function handleMessage(ws, raw) {
       if ([1, 3, 5].includes(msg.laps)) room.settings.laps = msg.laps;
       if (['easy', 'normal', 'hard'].includes(msg.difficulty)) room.settings.difficulty = msg.difficulty;
       if (TRACKS.includes(msg.track)) room.settings.track = msg.track;
-      if (['race', 'cup'].includes(msg.mode)) room.settings.mode = msg.mode;
+      if (['race', 'cup', 'bigCup'].includes(msg.mode)) room.settings.mode = msg.mode;
       syncRoom(room);
       return;
 
@@ -357,16 +359,17 @@ export function handleMessage(ws, raw) {
       const others = [...room.players.values()].filter((x) => x.ws && x.id !== p.id);
       if (others.some((x) => !x.ready)) return send(ws, { type: 'error', code: 'not-ready', msg: 'Herkes hazır olmadan başlatılamaz.' });
       const okCount = (n) => Number.isFinite(n) && n > 50 && n < 5000;
-      if (room.settings.mode === 'cup') {
-        // Kupa: her pistin örnek sayısı baştan gelir (sonraki pistler için ilerleme doğrulaması)
+      if (CUP_SETS[room.settings.mode]) {
+        // Kupa: setteki her pistin örnek sayısı baştan gelir (sonraki pistler için ilerleme doğrulaması)
+        const tracks = CUP_SETS[room.settings.mode];
         const counts = {};
-        for (const id of TRACKS) {
+        for (const id of tracks) {
           counts[id] = Number(msg.trackCounts?.[id]);
           if (!okCount(counts[id])) return;
         }
-        room.cup = { round: 0, counts, points: {}, lastPlace: {}, lastPts: {}, final: false };
-        room.settings.track = TRACKS[0];
-        startRace(room, counts[TRACKS[0]]);
+        room.cup = { round: 0, tracks, counts, points: {}, lastPlace: {}, lastPts: {}, final: false };
+        room.settings.track = tracks[0];
+        startRace(room, counts[tracks[0]]);
         return;
       }
       const count = Number(msg.trackCount);
@@ -380,7 +383,7 @@ export function handleMessage(ws, raw) {
       // Kupa: oda sahibi sonuç ekranından sıradaki pisti başlatır
       if (room.hostId !== p.id || room.phase !== 'results' || !room.cup || room.cup.final) return;
       room.cup.round++;
-      room.settings.track = TRACKS[room.cup.round];
+      room.settings.track = room.cup.tracks[room.cup.round];
       startRace(room, room.cup.counts[room.settings.track]);
       return;
     }

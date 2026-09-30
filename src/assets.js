@@ -63,14 +63,14 @@ export function normalizedModel(key) {
 // Aynı modelden çok sayıda kopyayı tek çizim çağrısıyla göstermek için:
 // modeldeki her mesh için bir InstancedMesh üretir.
 const _m = new THREE.Matrix4();
-export function instancedModel(key, matrices, { castShadow = true, frost = false, glow = 0 } = {}) {
+export function instancedModel(key, matrices, { castShadow = true, frost = false, glow = 0, tint = null } = {}) {
   const group = new THREE.Group();
   if (!matrices.length) return group;
   const model = normalizedModel(key);
   model.updateMatrixWorld(true);
   model.traverse((child) => {
     if (!child.isMesh) return;
-    const im = new THREE.InstancedMesh(child.geometry, frost ? frosted(child.material) : glow ? glowing(child.material, glow) : child.material, matrices.length);
+    const im = new THREE.InstancedMesh(child.geometry, frost ? frosted(child.material) : glow ? glowing(child.material, glow) : tint ? tinted(child.material, tint) : child.material, matrices.length);
     matrices.forEach((m, i) => im.setMatrixAt(i, _m.multiplyMatrices(m, child.matrixWorld)));
     im.castShadow = castShadow;
     im.receiveShadow = true;
@@ -78,6 +78,20 @@ export function instancedModel(key, matrices, { castShadow = true, frost = false
     group.add(im);
   });
   return group;
+}
+
+// Renk ve ışıma değiştirilmiş kopya: volkan kayaları koyulaşır, kor gibi içten kızarır
+function tinted(mat, t) {
+  const out = (Array.isArray(mat) ? mat : [mat]).map((m) => {
+    const c = m.clone();
+    if (t.color != null) c.color.multiply(new THREE.Color(t.color));
+    if (t.emissive != null) {
+      c.emissive = new THREE.Color(t.emissive);
+      c.emissiveIntensity = t.intensity ?? 0.5;
+    }
+    return c;
+  });
+  return Array.isArray(mat) ? out : out[0];
 }
 
 // Karla kaplanmış görünüm: malzeme kopyası + açık mavimsi beyaz ışıma

@@ -151,7 +151,7 @@ export class Kart {
 
     // Kumda en yüksek hız düşer
     // Turbo varken kum yavaşlatmaz
-    const offroad = this.surface === 'sand' || this.surface === 'dirt';
+    const offroad = this.surface === 'sand' || this.surface === 'dirt' || this.surface === 'hot';
     const boosting = this.boostTime > 0;
     const maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : KART.maxSpeed;
 
@@ -184,7 +184,7 @@ export class Kart {
       }
     }
 
-    const vy = this.velocity.y - KART.gravity * dt;
+    const vy = this.velocity.y - KART.gravity * (track.def?.gravity ?? 1) * dt; // Ay pistinde daha hafif
     this.velocity.set(_fwd.x * forward + _right.x * lateral, vy, _fwd.z * forward + _right.z * lateral);
     this.position.addScaledVector(this.velocity, dt);
 

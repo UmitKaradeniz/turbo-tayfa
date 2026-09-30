@@ -25,12 +25,14 @@ import { createHud } from './ui/hud.js';
 import { createMenu } from './ui/menu.js';
 import { createMinimap } from './ui/minimap.js';
 import { createNameplates } from './ui/nameplates.js';
+import { createHazards } from './hazards.js';
+import { createVolcanoShow } from './volcano.js';
 import { renderPortraits, renderIcons } from './ui/portraits.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
 import { createItemSystem } from './items.js';
 import { ITEM_ICON_MODELS } from './itemModels.js';
 import { play, playMusic, updateEngine, applyVolumes } from './audio.js';
-import { TRACKS, TRACK_IDS } from './tracks/index.js';
+import { TRACKS, TRACK_IDS, CUP_SETS } from './tracks/index.js';
 
 // --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ antialias: !QUALITY.bloom, powerPreference: 'high-performance' });
@@ -175,6 +177,9 @@ let track = null;
 let decor = null;
 let startLights = null;
 let items = null;
+let hazards = null;
+let volcanoShow = null;
+let volcanoGlow = null;
 let minimap = null;
 
 // Pisti kurar; modelleri henüz inmediyse önce indirir (üstte küçük bir "yükleniyor" etiketi).
@@ -227,6 +232,7 @@ function buildTrackNow(def) {
     });
     decor.traverse((o) => o.isInstancedMesh && o.dispose());
     items.dispose();
+    hazards?.dispose();
   }
   trackDef = def;
   track = buildTrack(def);
@@ -236,6 +242,12 @@ function buildTrackNow(def) {
   env.setTrack(def, track.terrain);
   fx.setDust(def.dust);
   startLights = createStartLights(decor);
+  hazards = createHazards({ scene, track, fx, quality: QUALITY });
+  volcanoShow = def.volcano ? createVolcanoShow({ fx, def, quality: QUALITY }) : null;
+  volcanoGlow = null;
+  decor.traverse((o) => {
+    if (o.userData?.glow) volcanoGlow = o.userData.glow;
+  });
   items = createItemSystem({
     scene,
     track,
@@ -397,6 +409,7 @@ function setupRace(order, laps) {
   chat.setRacing(true);
   startPress = null;
   lastTotalRecord = false;
+  hazards.reset();
   race = new Race(track, order, { laps, isOwned });
   playMusic('race');
   touch.show(isTouchDevice);
@@ -469,8 +482,8 @@ function setupRace(order, laps) {
 
 async function startOfflineRace(config) {
   // Kupa: 4 pist sabit sırayla; biten kupadan sonra "tekrar" yeni kupa başlatır
-  if (config.mode === 'cup') {
-    if (!cup || cup.done) cup = { round: 0, tracks: [...TRACK_IDS], points: new Map(), done: false };
+  if (CUP_SETS[config.mode]) {
+    if (!cup || cup.done || cup.mode !== config.mode) cup = { mode: config.mode, round: 0, tracks: [...CUP_SETS[config.mode]], points: new Map(), done: false };
   } else cup = null;
   await loadTrack(cup ? cup.tracks[cup.round] : settings.track); // pist modelleri inmediyse bekle
   lastConfig = config;
@@ -859,7 +872,7 @@ const progressOf = (kart) => (race.entryOf(kart)?.progress ?? 0) / (track.count 
 function kartInput(kart, playerInput, activeKarts) {
   if (!race.started) return NO_INPUT;
   if (kart === player && race.entryOf(kart).finishTime === null && !autopilot) return pauseOpen ? NO_INPUT : playerInput;
-  const input = driveInput(drivers.get(kart), kart, track, STEP, { items, karts: activeKarts, positionOf, progressOf });
+  const input = driveInput(drivers.get(kart), kart, track, STEP, { items, karts: activeKarts, positionOf, progressOf, hazards });
   if (input.useItem) items.use(kart, input.backward);
   return input;
 }
@@ -881,7 +894,7 @@ function checkShortcutEvents(kart) {
     kart.reset(p.position, p.heading);
     kart.updateGround(track);
     if (kart === player) {
-      hud.toast('Dereye düştün! 💦', 'warn');
+      hud.toast(kart.fallShortcut?.def.jump?.lava ? 'Lava düştün! 🔥' : 'Dereye düştün! 💦', 'warn');
       rig.shake(0.5);
       play('hit', { volume: 0.6 });
     }
@@ -911,6 +924,7 @@ function raceStep(input) {
     isOwned,
   );
   if (race.started) items.update(STEP, activeKarts, positionOf);
+  if (race.started) hazards.update(race.clock, STEP, activeKarts, isOwned);
   if (race.started && race.entryOf(player)?.finishTime === null) recorder.sample(player, STEP);
   race.update(STEP);
 }
@@ -962,6 +976,9 @@ function frame(now) {
     kart.events.length = 0;
   }
   if (race) items.animate(dt, karts);
+  const showTime = race ? race.clock : now / 1000;
+  hazards?.animate(now / 1000);
+  if (volcanoShow && !paused) volcanoShow.update(showTime, dt, volcanoGlow);
   emotes.update(paused ? 0 : dt);
   if (ghost && race) {
     const e = race.entryOf(player);
@@ -1084,7 +1101,7 @@ if (import.meta.env.DEV) {
   window.__tt.readInput = readInput;
   window.__tt.postfx = postfx;
   Object.assign(window.__tt, { emotes, chat, recordOf, nameplates });
-  Object.defineProperties(window.__tt, { ghost: { get: () => ghost }, drivers: { get: () => drivers } });
+  Object.defineProperties(window.__tt, { ghost: { get: () => ghost }, drivers: { get: () => drivers }, hazards: { get: () => hazards } });
   window.__tt.freeze = (on) => (paused = on); // menü açmadan dondur (ekran görüntüsü için)
   // Pist önizleme görüntüsü üretmek için (public/previews): sahneyi şu anki kamerayla çizip w×h JPEG döner
   window.__tt.snapshot = (w = 640, h = 360, q = 0.82) => {

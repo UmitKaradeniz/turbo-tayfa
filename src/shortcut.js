@@ -236,7 +236,9 @@ export function buildShortcut(sd, id, { closest, edge, count }) {
         const geo = new THREE.PlaneGeometry(2 * halfWidth + 3, jump.pitB - jump.pitA + 2).rotateX(-Math.PI / 2);
         const water = new THREE.Mesh(
           geo,
-          new THREE.MeshStandardMaterial({ color: jumpDef.water ?? 0x3aa6d8, transparent: true, opacity: 0.88, roughness: 0.25, metalness: 0.1 }),
+          jumpDef.lava
+            ? new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 0.9, 0.2), toneMapped: false })
+            : new THREE.MeshStandardMaterial({ color: jumpDef.water ?? 0x3aa6d8, transparent: true, opacity: 0.88, roughness: 0.25, metalness: 0.1 }),
         );
         water.rotation.y = Math.atan2(-mid.fx, -mid.fz);
         water.position.set(mid.x, sc.bedY(mid.s) - jump.depth + 1.4, mid.z);

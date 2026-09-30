@@ -107,6 +107,7 @@ const WALL_SPARK = new THREE.Color(3.0, 2.2, 1.0);
 const FLAME = [new THREE.Color(1.9, 0.55, 0.08), new THREE.Color(1.7, 1.05, 0.2)];
 const STAR = new THREE.Color(3.0, 2.6, 0.6);
 const BUBBLE = new THREE.Color(1.2, 2.4, 3.0);
+const EMBER = new THREE.Color(3.0, 1.1, 0.25);
 
 
 export function createKartEffects(scene, quality) {
@@ -145,6 +146,12 @@ export function createKartEffects(scene, quality) {
             _v.set(-kart.velocity.x * 0.1 + (Math.random() - 0.5) * 3, 2 + Math.random() * 3, -kart.velocity.z * 0.1 + (Math.random() - 0.5) * 3);
             sparks.emit(_p, _v, { life: 0.3 + Math.random() * 0.2, size: side > 0 ? 0.45 : 0.3, sizeEnd: 0.05, color: SPARK_COLORS[level - 1] });
           }
+        } else if (kart.surface === 'hot' && kart.grounded && speed > 4) {
+          // Kızgın zemin: tekerlerden turuncu kor kıvılcımları
+          if (Math.random() < 28 * dt * rate) {
+            _v.set((Math.random() - 0.5) * 3, 2.5 + Math.random() * 3, (Math.random() - 0.5) * 3);
+            sparks.emit(_p, _v, { life: 0.4 + Math.random() * 0.3, size: 0.4, sizeEnd: 0.05, color: EMBER });
+          }
         } else if ((kart.surface === 'sand' || kart.surface === 'dirt') && speed > 5 && kart.boostTime <= 0 && Math.random() < 25 * dt * rate) {
           _v.set((Math.random() - 0.5) * 2, 1 + Math.random() * 1.5, (Math.random() - 0.5) * 2);
           smoke.emit(_p, _v, { life: 0.7, size: 0.5, sizeEnd: 1.9, color: DUST, alpha: 0.4 });
@@ -181,6 +188,14 @@ export function createKartEffects(scene, quality) {
         _v.set(normal.x * 4 + (Math.random() - 0.5) * 8, 2 + Math.random() * 5, normal.z * 4 + (Math.random() - 0.5) * 8);
         sparks.emit(_p, _v, { life: 0.25 + Math.random() * 0.25, size: 0.35, sizeEnd: 0.05, color: WALL_SPARK });
       }
+    },
+
+    // Tehlikeler (gayzer, meteor) ve yanardağ gösterisi için doğrudan yayıcılar
+    emitSmoke(pos, vel, opts) {
+      smoke.emit(pos, vel, opts);
+    },
+    emitSpark(pos, vel, opts) {
+      sparks.emit(pos, vel, opts);
     },
 
     // Kum/toprak tozu rengi pist temasından

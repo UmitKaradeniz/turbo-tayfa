@@ -55,6 +55,9 @@ export function createEnvironment(scene, quality) {
   scene.add(stars);
   const snow = createSnow(Math.max(0.3, quality.particles ?? 1));
   scene.add(snow.points);
+  // Kor parçacıkları: yanardağ pistinde yukarı doğru süzülen kıvılcımlar
+  const embers = createSnow(Math.max(0.3, quality.particles ?? 1) * 0.5, { rise: true, size: 0.22, color: 0xff8a30, additive: true, opacity: 0.95 });
+  scene.add(embers.points);
 
   // --- Işıklar ---
   const hemi = new THREE.HemisphereLight(0xd6efff, 0xe9cf9c, 0.95);
@@ -105,13 +108,17 @@ export function createEnvironment(scene, quality) {
       SUN_GLOW.set(L.glow ?? 0xffebbf);
       scene.fog.near = L.fogNear ?? 160;
       scene.fog.far = L.fogFar ?? 620;
-      clouds.visible = !def.night;
-      stars.visible = !!def.night;
-      snow.points.visible = !!def.snow;
+      clouds.visible = !def.night && !def.noClouds;
+      stars.visible = !!def.night || !!def.space;
+      // Kar yağışı (beyaz) ya da kül yağışı (koyu, yavaş)
+      snow.points.visible = !!def.snow || !!def.ash;
+      snow.style(def.ash ? { color: 0x55504d, size: 0.5, opacity: 0.7, speed: 0.45 } : { color: 0xffffff, size: 0.3, opacity: 0.9, speed: 1 });
+      embers.points.visible = !!def.embers;
     },
     update(dt, focus, camera) {
       if (water) water.material.uniforms.time.value += dt;
       if (snow.points.visible) snow.update(dt, camera);
+      if (embers.points.visible) embers.update(dt, camera);
       if (stars.visible) stars.position.copy(camera.position);
       // Gölge kamerası odağı takip etsin (texel'e hizalı, titreme olmasın)
       const step = (42 * 2) / (quality.shadowSize || 1024);
@@ -149,6 +156,7 @@ function createWater(terrain, colors = {}) {
         shallow: { value: new THREE.Color(colors.shallow ?? 0x3fe0d0) },
         deep: { value: new THREE.Color(colors.deep ?? 0x1673c9) },
         foam: { value: new THREE.Color(0xffffff) },
+        lava: { value: colors.lava ? 1 : 0 },
       },
     ]),
     vertexShader: /* glsl */ `
@@ -163,7 +171,7 @@ function createWater(terrain, colors = {}) {
       }`,
     fragmentShader: /* glsl */ `
       uniform float time; uniform sampler2D heightMap; uniform float terrainSize;
-      uniform vec3 shallow; uniform vec3 deep; uniform vec3 foam;
+      uniform vec3 shallow; uniform vec3 deep; uniform vec3 foam; uniform float lava;
       varying vec3 vWorld;
       #include <fog_pars_fragment>
       void main() {
@@ -189,6 +197,17 @@ function createWater(terrain, colors = {}) {
         float alpha = mix(0.55, 1.0, smoothstep(0.0, 3.5, depth));
         alpha = max(alpha, foamAmt);
         gl_FragColor = vec4(col, alpha);
+        if (lava > 0.5) {
+          // Lav: yavaş akan sıcak damarlar, kıyıda soğuyup kararan kabuk
+          float n = sin(vWorld.x * 0.12 + time * 0.35) * sin(vWorld.z * 0.14 - time * 0.3)
+                  + 0.6 * sin((vWorld.x + vWorld.z) * 0.07 + time * 0.25)
+                  + 0.35 * sin(vWorld.x * 0.33 - time * 0.7) * sin(vWorld.z * 0.31 + time * 0.55);
+          vec3 lv = mix(deep, shallow, smoothstep(-0.5, 1.1, n));
+          lv = mix(lv, vec3(1.0, 0.85, 0.35), smoothstep(0.85, 1.4, n) * 0.6);
+          float crust = 1.0 - smoothstep(0.0, 0.9, depth + 0.3 * w2);
+          lv = mix(lv, vec3(0.05, 0.02, 0.015), crust * 0.8);
+          gl_FragColor = vec4(lv * 1.25, 1.0);
+        }
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
         #include <fog_fragment>
@@ -254,7 +273,7 @@ function createStars() {
 }
 
 // Kar yağışı: kameranın etrafında dönen küçük bir küp hacimde süzülen parçacıklar
-function createSnow(scale) {
+function createSnow(scale, { rise = false, size = 0.3, color = 0xffffff, additive = false, opacity = 0.9 } = {}) {
   const n = Math.round(650 * scale);
   const SIZE = 56;
   const pos = new Float32Array(n * 3);
@@ -267,18 +286,29 @@ function createSnow(scale) {
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const points = new THREE.Points(geo, new THREE.PointsMaterial({ map: flakeTexture(), color: 0xffffff, size: 0.3, sizeAttenuation: true, depthWrite: false, transparent: true, opacity: 0.9, alphaTest: 0.05 }));
+  const material = new THREE.PointsMaterial({ map: flakeTexture(), color, size, sizeAttenuation: true, depthWrite: false, transparent: true, opacity, alphaTest: 0.05, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending });
+  const points = new THREE.Points(geo, material);
   points.frustumCulled = false;
   points.visible = false;
   let t = 0;
+  let k = 1; // hız çarpanı
   return {
     points,
+    // Pist değişince görünümü ayarla (kar ↔ kül)
+    style(s) {
+      material.color.set(s.color);
+      material.size = s.size;
+      material.opacity = s.opacity;
+      k = s.speed;
+    },
     update(dt, camera) {
       t += dt;
       const a = geo.attributes.position;
+      const dir = rise ? 1 : -1;
       for (let i = 0; i < n; i++) {
-        let y = a.getY(i) - speed[i] * dt;
-        if (y < -8) y += SIZE * 0.6;
+        let y = a.getY(i) + dir * speed[i] * k * dt * (rise ? 0.7 : 1);
+        if (!rise && y < -8) y += SIZE * 0.6;
+        if (rise && y > SIZE * 0.6 - 8) y -= SIZE * 0.6;
         a.setY(i, y);
         a.setX(i, a.getX(i) + Math.sin(t * 0.7 + i) * 0.35 * dt);
       }

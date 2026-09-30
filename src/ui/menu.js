@@ -4,6 +4,7 @@ import { settings, saveSettings, DIFFICULTY } from '../settings.js';
 import { PERSONALITIES } from '../ai.js';
 import { formatTime } from './hud.js';
 import { QUALITY, saveQuality } from '../quality.js';
+import { CUP_SETS } from '../tracks/index.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
 // Oyun mantığı bilmez; seçimleri geri çağrılarla (handlers) bildirir.
@@ -112,8 +113,8 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           <h3>Pist</h3>
           <div class="tt-tracks">${tracks.map((t) => `<button class="tt-track" data-track="${t.id}"><span class="th"><img class="pv" src="${t.preview}" alt="" loading="lazy" /><img class="mm" src="${t.thumb}" alt="" /></span><div><div class="t">${t.name}</div><div class="m">${t.meta}</div><div class="rec"></div></div></button>`).join('')}</div>
           <div class="tt-label">Mod</div>
-          <div class="tt-seg" data-seg="mode"><button data-v="race">Yarış</button><button data-v="cup">🏆 Kupa</button><button data-v="timeTrial">Zamana Karşı</button></div>
-          <p class="cup-note" hidden>🏆 <b>Turbo Kupası:</b> 4 pist sırayla yarışılır. Her yarışta sıraya göre puan alırsın (1. = 15 puan), en çok puanı toplayan kupayı kazanır.</p>
+          <div class="tt-seg" data-seg="mode"><button data-v="race">Yarış</button><button data-v="cup">🏆 Kupa</button><button data-v="bigCup">🏆 Büyük Kupa</button><button data-v="timeTrial">Zamana Karşı</button></div>
+          <p class="cup-note" hidden></p>
           <div class="tt-label">Tur sayısı</div>
           <div class="tt-seg" data-seg="laps">${[1, 3, 5].map((n) => `<button data-v="${n}">${n} tur</button>`).join('')}</div>
           <div class="race-only"><div class="tt-label">Bot zorluğu</div>
@@ -234,14 +235,14 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     btn.classList.add('primary');
     btn.classList.remove('light');
     if (!online) {
-      btn.textContent = settings.mode === 'cup' ? 'KUPAYI BAŞLAT ▶' : 'YARIŞA BAŞLA ▶';
+      btn.textContent = CUP_SETS[settings.mode] ? 'KUPAYI BAŞLAT ▶' : 'YARIŞA BAŞLA ▶';
       return;
     }
     const others = online.room.players.filter((p) => p.id !== online.myId && p.connected);
     const readyCount = others.filter((p) => p.ready).length;
     if (isHost()) {
       const all = readyCount === others.length;
-      btn.textContent = all ? (online.room.settings.mode === 'cup' ? 'KUPAYI BAŞLAT ▶' : 'YARIŞI BAŞLAT ▶') : `Hazır bekleniyor (${readyCount}/${others.length})`;
+      btn.textContent = all ? (CUP_SETS[online.room.settings.mode] ? 'KUPAYI BAŞLAT ▶' : 'YARIŞI BAŞLAT ▶') : `Hazır bekleniyor (${readyCount}/${others.length})`;
       btn.disabled = !all;
     } else if (me()?.ready) {
       btn.textContent = 'HAZIRSIN ✓ (vazgeç)';
@@ -272,8 +273,11 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     // Zamana Karşı sadece tek oyunculu; Kupa'da pistler sabit sırayla gelir, pist seçimi gizlenir
     const mode = online ? online.room.settings.mode ?? 'race' : settings.mode;
     setup.querySelector('[data-seg="mode"] [data-v="timeTrial"]').hidden = !!online;
-    setup.querySelector('.cup-note').hidden = mode !== 'cup';
-    setup.querySelector('.tt-tracks').style.display = mode === 'cup' ? 'none' : '';
+    const cupTracks = CUP_SETS[mode];
+    const note = setup.querySelector('.cup-note');
+    note.hidden = !cupTracks;
+    if (cupTracks) note.innerHTML = `🏆 <b>${mode === 'cup' ? 'Turbo Kupası' : 'Büyük Kupa'}:</b> ${cupTracks.length} pist sırayla yarışılır. Her yarışta sıraya göre puan alırsın (1. = 15 puan), en çok puanı toplayan kupayı kazanır.`;
+    setup.querySelector('.tt-tracks').style.display = cupTracks ? 'none' : '';
     setup.querySelectorAll('.race-only').forEach((el) => (el.hidden = !online && mode === 'timeTrial'));
     renderSlots();
     renderStartButton();

@@ -11,6 +11,7 @@ export function buildDecor(track, decorate, density = 1) {
   const noShadow = new Set();
   const frost = new Set();
   const glow = new Map(); // model → ışıma şiddeti (gece pencereleri)
+  const tint = new Map(); // model → { color, emissive, intensity } (volkan kayaları)
   const extras = [];
   const reserved = [];
   const { terrain } = track;
@@ -43,6 +44,11 @@ export function buildDecor(track, decorate, density = 1) {
     // Bu modeller karlı görünür (kış pistleri)
     frost(...keys) {
       keys.forEach((k) => frost.add(k));
+    },
+
+    // Bu modeller koyulaşır / kor gibi ışır: tint({ color, emissive, intensity }, ...anahtarlar)
+    tint(style, ...keys) {
+      keys.forEach((k) => tint.set(k, style));
     },
 
     // Bu modellerin dokusu ışır (gece binalarının pencereleri)
@@ -106,7 +112,7 @@ export function buildDecor(track, decorate, density = 1) {
   const group = new THREE.Group();
   group.userData.byKey = new Map();
   for (const [key, matrices] of placements) {
-    const g = instancedModel(key, matrices, { castShadow: !noShadow.has(key), frost: frost.has(key), glow: glow.get(key) ?? 0 });
+    const g = instancedModel(key, matrices, { castShadow: !noShadow.has(key), frost: frost.has(key), glow: glow.get(key) ?? 0, tint: tint.get(key) ?? null });
     group.userData.byKey.set(key, g);
     group.add(g);
   }
