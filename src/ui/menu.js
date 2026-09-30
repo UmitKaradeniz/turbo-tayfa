@@ -56,6 +56,19 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       </div>
       <div class="corner"><button class="tt-btn ghost icon fs-btn" data-go="fullscreen" aria-label="Tam ekran">⛶</button><button class="tt-btn ghost icon" data-go="settings" aria-label="Ayarlar">⚙</button></div>
       <div class="bubble"><span class="bn"></span><small class="bd"></small></div>
+      <div class="controls" aria-label="Kontroller">
+        <div class="c-title">Nasıl oynanır? <small>💡 "BAŞLA!" öncesi gaza bas: roket kalkış!</small></div>
+        <div class="c-grid">
+          <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Sür (ok tuşları da olur)</span></div>
+          <div><kbd>Space</kbd><kbd>Shift</kbd><span>Drift: virajda basılı tut, bırakınca turbo</span></div>
+          <div><kbd>E</kbd><span>Item kullan (<kbd>S</kbd> + <kbd>E</kbd> geriye atar)</span></div>
+          <div><kbd>1</kbd>–<kbd>6</kbd><span>Emoji tepkisi</span></div>
+          <div><kbd>Enter</kbd><span>Sohbet (çevrimiçi)</span></div>
+          <div><kbd>R</kbd><span>Son checkpoint'e dön</span></div>
+          <div><kbd>Esc</kbd><span>Duraklat</span></div>
+        </div>
+      </div>
+      <div class="maker">Yapımcı <b>cafunify</b></div>
       <div class="credit">3D modeller: Kenney (CC0) · Detaylar CREDITS.md</div>
     </section>`);
   document.body.appendChild(main);
