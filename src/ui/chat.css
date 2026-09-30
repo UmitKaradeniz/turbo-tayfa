@@ -109,8 +109,9 @@
   opacity: 0.8;
 }
 @media (pointer: coarse) {
-  /* Dokunmatik: item yuvasının hemen altında küçük yatay sıra (alt köşeler kontrol butonlarında) */
-  #emote-bar { top: calc(max(12px, env(safe-area-inset-top)) + 100px); bottom: auto; gap: 5px; }
-  #emote-bar button { width: 38px; height: 38px; font-size: 19px; border-radius: 12px; }
+  /* Dokunmatik: az yer kaplasın diye 4 emoji (👏 ve 😱 gizli), küçük ve yarı saydam, item yuvasının altında */
+  #emote-bar { top: calc(max(12px, env(safe-area-inset-top)) + 96px); bottom: auto; gap: 4px; opacity: 0.75; }
+  #emote-bar button { width: 30px; height: 30px; font-size: 16px; border-radius: 10px; }
+  #emote-bar button[data-emote="0"], #emote-bar button[data-emote="3"] { display: none; }
   #emote-bar small { display: none; }
 }
