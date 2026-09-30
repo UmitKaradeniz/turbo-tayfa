@@ -32,6 +32,7 @@ export const KART = {
   wallSpeedLoss: 0.35,
 
   offroadSpeed: 0.55, // kumda en yüksek hız çarpanı
+  dirtSpeed: 0.85, // sıkışmış toprak kısayollarda çarpan
   offroadDrag: 28, // hız sınırının üstündeyken yavaşlama (m/s²)
 
   boostSpeed: 1.3, // turbo sırasında en yüksek hız çarpanı

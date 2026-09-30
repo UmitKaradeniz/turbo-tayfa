@@ -86,6 +86,8 @@ export function applyRemoteState(kart, s, track) {
   kart.speed = kart.velocity.x * Math.sin(kart.heading) + kart.velocity.z * Math.cos(kart.heading);
   const g = track.groundAt(kart.position, kart.trackIndex);
   kart.trackIndex = g.index;
+  kart.pathIndex = g.pathIndex;
+  kart.onShortcut = g.shortcut;
   kart.grounded = kart.position.y <= g.y + 0.3;
   kart.groundNormal.copy(g.normal);
   kart.surface = g.surface;

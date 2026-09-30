@@ -44,6 +44,22 @@ export function createMinimap(track, size = 170) {
   b.strokeStyle = '#ffffff';
   b.lineWidth = 7;
   b.stroke();
+  // Kısayollar: ince kesik çizgi
+  b.setLineDash([5, 4]);
+  b.lineCap = 'butt';
+  for (const sc of track.shortcuts ?? []) {
+    b.beginPath();
+    for (let d = 0; d <= sc.length; d += 4) {
+      const q = sc.pointAt(d);
+      const [qx, qz] = map(q.x, q.z);
+      d ? b.lineTo(qx, qz) : b.moveTo(qx, qz);
+    }
+    b.strokeStyle = '#ffd23f';
+    b.lineWidth = 3.5;
+    b.stroke();
+  }
+  b.setLineDash([]);
+  b.lineCap = 'round';
   // Başlangıç çizgisi
   const [sx, sz] = map(pts[0].x, pts[0].z);
   const r = track.rights[0];

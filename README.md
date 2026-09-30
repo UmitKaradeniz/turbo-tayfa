@@ -7,6 +7,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌴 2 pist: **Palmiye Koyu** (tropik ada) ve **Çam Vadisi** (orman, göl, tepe)
 - 🦊 8 karakter, en fazla 8 oyuncu; boş yerleri botlar doldurur
 - 💨 Drift + 3 kademeli mini-turbo, roket kalkış
+- 🛤️ Pist başına kısayol: Palmiye Koyu'nda hız tahtalı **kum yolu**, Çam Vadisi'nde dereyi aşan **rampa atlayışı**
 - 🎁 Itemler: Turbo Şişesi, Balon Kalkan, Hindistan Cevizi, Yağ Lekesi
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
 - 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
@@ -134,6 +135,7 @@ yarışa kaldığı yerden devam eder.
 
 - **Drift:** Virajda direksiyonu kırıp drift'e bas. Kıvılcımlar mavi → turuncu → mor
   oldukça bırakınca aldığın turbo uzar.
+- **Kısayollar:** Haritada sarı kesik çizgi olarak görünür. *Palmiye Koyu:* firketeyi kesen kum yolu kartı yavaşlatır (turbo varken yavaşlatmaz); ortadaki sarı **hız tahtasına** girersen turbo alırsın, yolun ortasında item kutuları da var. *Çam Vadisi:* inişteki S virajlarını kesen toprak yolda rampadan yeterli hızla (≈ 75 km/sa üstü) çıkarsan dereyi uçarak geçersin; yetmezse dereye düşüp kısayolun girişine dönersin. Botlar da kişiliklerine göre (kurnaz/agresif sık, temiz/uykucu nadiren) kısayolu kullanır.
 - **Roket kalkış:** Geri sayımda "BAŞLA!" yazısından hemen önce gaza bas.
 - Grafik kalitesi: **Ayarlar**'dan ya da adrese `?q=low`, `?q=medium`, `?q=high` ekleyerek.
 
@@ -149,6 +151,7 @@ src/
   main.js          Oyun akışı: menü → yarış → sonuç, tek/çok oyunculu
   kart.js          Arcade kart fiziği (drift, turbo, savrulma, kalkan)
   track.js         Orta çizgiden pist, zemin ve sınır üretimi
+  shortcut.js      Kısayollar: kendi yolu, kum/toprak, rampa + dere, hız tahtası
   tracks/          Pist tanımları (kontrol noktaları + tema + dekor)
   race.js          Tur, sıralama, checkpoint, bitiş
   items.js         Item kutuları ve itemler
@@ -167,6 +170,7 @@ tools/             Test aracı (sahte oyuncu)
    kontrol noktaları (`control`), tema renkleri, kullanılan modeller ve `decorate` fonksiyonu.
 2. `src/tracks/index.js`'e ekle.
 3. `server/rooms.js` içindeki `TRACKS` listesine kimliğini yaz.
+4. İsteğe bağlı kısayol: pist tanımına `shortcuts: [...]` ekle (bkz. `palmCove.js` / `pineValley.js`).
 
 Mimari bilinçli olarak basit: framework yok, veritabanı yok, hesap yok.
 

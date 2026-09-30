@@ -24,7 +24,7 @@ const COUNTDOWN_MS = 3600 + 1500; // istemci geri sayımı + kamera geçişi pay
 const RECONNECT_GRACE_MS = 60_000;
 const STATE_HZ = 20;
 const MIN_LAP_SECONDS = 12; // bundan hızlı tur = hile/hata
-const MAX_PROGRESS_RATE = 24; // örnek/saniye (~60 m/s), üstü reddedilir
+const MAX_PROGRESS_RATE = 40; // örnek/saniye, üstü reddedilir (kısayollar ilerlemeyi hızlandırır)
 const RESULTS_TIMEOUT_MS = 45_000; // ilk bitiren + bu süre → yarış biter
 
 const rooms = new Map();

@@ -187,7 +187,7 @@ export function updateEngine(kart, throttle, maxSpeed) {
   engine.filter.frequency.setTargetAtTime(500 + ratio * 1400 + throttle * 400 + boost * 800, t, 0.08);
   engine.out.gain.setTargetAtTime(0.05 + throttle * 0.05 + ratio * 0.05, t, 0.1);
   // Drift ya da kumda kayma
-  const sliding = kart.drifting ? 0.12 : kart.surface === 'sand' && ratio > 0.2 ? 0.05 : 0;
+  const sliding = kart.drifting ? 0.12 : (kart.surface === 'sand' || kart.surface === 'dirt') && ratio > 0.2 ? 0.05 : 0;
   engine.skid.gain.setTargetAtTime(sliding, t, 0.06);
   engine.band.frequency.setTargetAtTime(kart.drifting ? 1900 + ratio * 600 : 700, t, 0.1);
 }

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buildShortcut } from './shortcut.js';
 
 // Kapalı bir orta çizgiden (centerline) pist üretir: yol, bordür, başlangıç
 // işaretleri, ada zemini, sınırlar, zemin sorgusu ve grid pozisyonları.
@@ -97,6 +98,7 @@ export function buildTrack(def) {
         bt = t;
       }
     }
+    if (hint >= 0 && best > 900) return closest(x, z, -1); // ipucu penceresi pistten uzakta (kısayol): her yere bak
     const a = points[bi];
     const b = points[bi + 1 < count ? bi + 1 : 0];
     const px = segAx[bi] + segDx[bi] * bt;
@@ -172,9 +174,16 @@ export function buildTrack(def) {
   decal.receiveShadow = true;
   group.add(decal);
 
+  // --- Kısayollar (orta çizgiden ayrılıp geri dönen ek yollar) ---
+  const shortcuts = (def.shortcuts ?? []).map((sd, k) => buildShortcut(sd, k, { closest, edge, count }));
+
   // --- Ada zemini (yükseklik ızgarası) ---
-  const terrain = buildTerrain(def, { closest, insideLoop, edge, count });
+  const terrain = buildTerrain(def, { closest, insideLoop, edge, count, shortcuts });
   group.add(terrain.mesh);
+  for (const sc of shortcuts) {
+    sc.terrain = terrain;
+    group.add(...sc.buildMeshes(terrain));
+  }
 
   // --- Checkpointler (sayım Aşama 3'te) ---
   const checkpoints = [];
@@ -202,6 +211,27 @@ export function buildTrack(def) {
     checkpoints,
     closest,
     insideLoop,
+    shortcuts,
+
+    // Kısayol koridoruna uzaklık - yarım genişlik (negatif: koridorun içinde). Dekor/bariyer için.
+    shortcutClearance(x, z) {
+      let best = Infinity;
+      for (const sc of shortcuts) {
+        const n = sc.nearest(x, z);
+        if (n) best = Math.min(best, n.d - sc.halfAt(n.s));
+      }
+      return best;
+    },
+
+    // Kart bir atlama çukurunda mı? (kısayoldaki dere/uçurum: düşen kart geri alınır)
+    inPit(pos) {
+      for (const sc of shortcuts) {
+        if (!sc.jump) continue;
+        const n = sc.nearest(pos.x, pos.z);
+        if (n && n.d <= sc.halfWidth + 2 && n.s > sc.jump.pitA + 1 && n.s < sc.jump.pitB - 1 && pos.y < sc.bedY(n.s) - 1.8) return sc;
+      }
+      return null;
+    },
 
     // Grid pozisyonu k (0 = pol pozisyonu)
     gridSlot(k) {
@@ -212,7 +242,9 @@ export function buildTrack(def) {
       return { position: p, heading: Math.atan2(forwards[i].x, forwards[i].z) };
     },
 
-    // Zemin yüksekliği, normali ve yüzey tipi
+    // Zemin yüksekliği, normali ve yüzey tipi.
+    // index: en yakın ana orta çizgi örneği (arama ipucu); pathIndex: yarış ilerlemesi için
+    // örnek (kısayolda giriş ile çıkış arasında düzgünce ilerler, böylece ilerleme sıçramaz).
     groundAt(pos, hint = -1) {
       const c = closest(pos.x, pos.z, hint);
       const a = Math.abs(c.lateral);
@@ -221,21 +253,52 @@ export function buildTrack(def) {
         const r = rights[c.index];
         _n.crossVectors(r, f).normalize();
         const y = a <= hw ? c.y : c.y + (a - hw < curb * 0.35 ? 0.07 : THREE.MathUtils.lerp(0.07, -0.12, (a - hw - curb * 0.35) / (curb * 0.65)));
-        return { y, normal: _n, surface: a <= hw ? 'road' : 'curb', index: c.index };
+        return { y, normal: _n, surface: a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: null };
       }
       const y = terrain.heightAt(pos.x, pos.z);
       terrain.normalAt(pos.x, pos.z, _n);
-      return { y, normal: _n, surface: 'sand', index: c.index };
+      const g = { y, normal: _n, surface: 'sand', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: null, speed: null };
+      for (const sc of shortcuts) {
+        const n = sc.nearest(pos.x, pos.z);
+        if (!n || n.d > sc.halfAt(n.s) + 0.5) continue;
+        g.surface = sc.surface;
+        g.speed = sc.def.speed ?? null;
+        if (n.s >= sc.sA && n.s <= sc.sB) {
+          g.shortcut = true;
+          g.pathIndex = sc.virtualIndex(n.s);
+        }
+        if (sc.jump && n.s >= sc.jump.rampA && n.s <= sc.jump.rampB && n.d <= sc.halfWidth) {
+          g.ramp = { slope: sc.jump.height / (sc.jump.rampB - sc.jump.rampA), tx: n.tx, tz: n.tz };
+        }
+        for (const pad of sc.pads) if (n.d <= pad.halfWidth && Math.abs(n.s - pad.s) <= pad.length / 2) g.pad = pad;
+        break;
+      }
+      return g;
     },
 
     // Kartı bariyerlerin içinde tutar. Çarpışma olursa duvar normalini döner.
+    // Geçerli alan = ana yol koridoru + kısayol koridorları (birleşim); dışındaysa en az itmeyle içeri alınır.
     constrain(pos, radius, hint = -1) {
       const c = closest(pos.x, pos.z, hint);
       const limit = edge - radius;
       if (Math.abs(c.lateral) <= limit) return null;
       const r = rights[c.index];
       const s = Math.sign(c.lateral);
-      const push = Math.abs(c.lateral) - limit;
+      let push = Math.abs(c.lateral) - limit;
+      for (const sc of shortcuts) {
+        const n = sc.nearest(pos.x, pos.z);
+        if (!n) continue;
+        const scLimit = sc.halfAt(n.s) - radius;
+        if (n.d <= scLimit) return null; // kısayol koridorunun içinde
+        const scPush = n.d - scLimit;
+        if (scPush < push) {
+          const nx = (n.px - pos.x) / n.d;
+          const nz = (n.pz - pos.z) / n.d;
+          pos.x += nx * scPush;
+          pos.z += nz * scPush;
+          return new THREE.Vector3(nx, 0, nz);
+        }
+      }
       pos.x -= r.x * push * s;
       pos.z -= r.z * push * s;
       return new THREE.Vector3(-r.x * s, 0, -r.z * s);
@@ -287,7 +350,7 @@ function ribbon(points, rights, segments, profile, vPerSeg, colorAt = null, clos
 }
 
 // --- Ada zemini ---
-function buildTerrain(def, { closest, insideLoop, edge, count }) {
+function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] }) {
   const size = def.terrainSize;
   const res = 200;
   const n = res + 1;
@@ -340,6 +403,19 @@ function buildTerrain(def, { closest, insideLoop, edge, count }) {
       const w = 1 - smoothstep(edge + 1.5, edge + 16, c.dist);
       h = THREE.MathUtils.lerp(h, c.y - 0.15, w);
 
+      // Kısayol: yatağı düzle, çukur/rampa gibi özellikleri işle
+      let pathMix = 0;
+      let pathTint = null;
+      for (const sc of shortcuts) {
+        const q = sc.sample(x, z);
+        if (!q) continue;
+        h = THREE.MathUtils.lerp(h, q.bed, q.w);
+        if (q.path > pathMix) {
+          pathMix = q.path;
+          pathTint = q.tint;
+        }
+      }
+
       const k = j * n + i;
       heights[k] = h;
       land[k] = s;
@@ -351,6 +427,7 @@ function buildTerrain(def, { closest, insideLoop, edge, count }) {
       col.lerp(patchAmount > 0.5 ? C.patchDark : C.patch, patchAmount);
       if (mountains && sOuter < 0) col.lerp(C.cliff, smoothstep(-8, -40, sOuter) * (0.6 + 0.4 * smoothstep(-0.2, 0.6, patch(x * 2, z * 2))));
       col.lerp(C.shoulder, 1 - smoothstep(edge + 1, edge + 5, c.dist));
+      if (pathTint) col.lerp(pathTint, pathMix);
       colors[k * 3] = col.r;
       colors[k * 3 + 1] = col.g;
       colors[k * 3 + 2] = col.b;

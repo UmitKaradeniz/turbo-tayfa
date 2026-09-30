@@ -741,11 +741,36 @@ function kartInput(kart, playerInput, activeKarts) {
   return input;
 }
 
+// Kısayola giriş bildirimi ve atlama çukuruna (dere) düşen kartı geri alma
+let playerOnShortcut = false;
+function checkShortcutEvents(kart) {
+  if (kart === player && race.started) {
+    if (kart.onShortcut && !playerOnShortcut) hud.toast('KISAYOL! ⚡');
+    playerOnShortcut = kart.onShortcut;
+  }
+  if (!race.started || race.entryOf(kart)?.finishTime !== null) return;
+  const pit = track.inPit(kart.position);
+  kart.fallTime = pit ? kart.fallTime + STEP : 0;
+  if (pit) kart.fallShortcut = pit;
+  if (kart.fallTime > 0.25) {
+    // Dereye düşen kart kısayolun girişinin biraz gerisine döner (checkpoint ileride olabilir)
+    const p = race.respawnPoint(kart, kart.fallShortcut ? kart.fallShortcut.entryIndex - 14 : null);
+    kart.reset(p.position, p.heading);
+    kart.updateGround(track);
+    if (kart === player) {
+      hud.toast('Dereye düştün! 💦', 'warn');
+      rig.shake(0.5);
+      play('hit', { volume: 0.6 });
+    }
+  }
+}
+
 function raceStep(input) {
   const activeKarts = karts.filter((k) => k.active);
   for (const kart of karts) {
     if (!isOwned(kart) || !kart.active) continue; // pasif: Zamana Karşı'da yarışta olmayan kartlar
     const impact = kart.step(STEP, kartInput(kart, input, activeKarts), track);
+    checkShortcutEvents(kart);
     if (kart === player && impact > 3) {
       rig.shake(Math.min(0.8, impact / 20));
       fx.impact(kart.position, kart.wallNormal, impact);
@@ -882,6 +907,7 @@ function kartSound(kart, ev) {
     play('hit', { volume: vol });
     play('spin', { volume: vol * 0.7 });
   } else if (ev === 'blocked') play('shield_pop', { volume: vol });
+  else if (ev === 'pad') play('turbo', { volume: vol * 0.7 });
 }
 
 // Dinamik çözünürlük: FPS düşükse piksel oranını azalt, yüksekse geri artır.

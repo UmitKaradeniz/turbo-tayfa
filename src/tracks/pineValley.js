@@ -38,6 +38,24 @@ export default {
     [-120, -94, 1.4],
   ],
 
+  // Kısayol: tepeden inişteki S virajlarını kesen toprak yol. Rampadan (en az ~21 m/s ile) çıkan kart derenin
+  // üzerinden uçar; yetmezse dereye düşüp son checkpoint'e döner. İniş alanında item kutuları var.
+  shortcuts: [
+    {
+      id: 'ridgeJump',
+      name: 'Tepe Atlayışı',
+      points: [[67, 54], [40, 59], [0, 66], [-30, 72], [-64, 78]],
+      halfWidth: 5,
+      surface: 'dirt',
+      color: 0x9c7649,
+      jump: { at: [20, 62.6], ramp: 12, height: 2.4, gap: 12, depth: 5.5, landing: 14, drop: 0.7, rampColor: 0xb9803f, water: 0x4fb6d9 },
+      boxes: { at: 'landing', lateral: [-2.2, 2.2] },
+      edge: { keys: ['nature/log_stack', 'nature/rock_largeA', 'nature/stump_round', 'nature/rock_largeB'], step: 5, scale: [4, 6.5] },
+      botChance: 0.5,
+      botMinSpeed: 22,
+    },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',
@@ -98,6 +116,24 @@ export default {
     const o = ctx.along(top, track.innerSide[top] * (edge + 14));
     ctx.place('nature/statue_obelisk', o.x, o.z, 0, 9);
     ctx.reserve(o.x, o.z, 8);
+
+    // Kısayol girişi/çıkışı ve rampada bayraklar
+    for (const sc of track.shortcuts) {
+      for (const s of [4, sc.length - 4]) {
+        for (const side of [-1, 1]) {
+          const b = ctx.shortcutAt(sc, s, side * (sc.halfAt(s) + 3));
+          ctx.place(s < 10 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
+        }
+      }
+      if (sc.jump) {
+        for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
+          for (const side of [-1, 1]) {
+            const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
+            ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);
+          }
+        }
+      }
+    }
 
     // --- Orman ---
     ctx.noShadow('nature/grass', 'nature/grass_large', 'nature/flower_purpleA', 'nature/flower_yellowA', 'nature/mushroom_red');

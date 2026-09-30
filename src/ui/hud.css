@@ -329,3 +329,5 @@
 #hud.tt-mode #hud-position,
 #hud.tt-mode #hud-item { display: none; }
 #hud-toast .toast.record { background: linear-gradient(90deg, #f0a800, #ff6a1a); }
+
+#hud-toast .toast.warn { background: linear-gradient(90deg, #f0a800, #ff6a1a); }

@@ -7,12 +7,12 @@ import { KART } from './config.js';
 // attack: saldırı itemlerini ne kadar hevesle kullanır · defend: savunmaya ne kadar önem verir
 // drift: drift sıklığı · wander: şerit değiştirme · patience: item'ı ne kadar tutar · emote: tepki sıklığı
 export const PERSONALITIES = {
-  aggressive: { label: 'Agresif', attack: 1, defend: 0.3, drift: 1.25, wander: 1.4, patience: 0.5, emote: 0.6 },
-  clean: { label: 'Temiz', attack: 0.3, defend: 1, drift: 0.8, wander: 0.35, patience: 2.2, emote: 0.2 },
-  balanced: { label: 'Dengeli', attack: 0.65, defend: 0.65, drift: 0.95, wander: 1, patience: 1, emote: 0.35 },
-  sneaky: { label: 'Kurnaz', attack: 0.75, defend: 0.6, drift: 1, wander: 0.9, patience: 1.2, emote: 0.45, sneaky: true },
-  sleepy: { label: 'Uykucu', attack: 0.5, defend: 0.7, drift: 0.85, wander: 0.6, patience: 1.5, emote: 0.3, sleepy: true },
-  chatty: { label: 'Geveze', attack: 0.9, defend: 0.4, drift: 1.1, wander: 1.2, patience: 0.7, emote: 1 },
+  aggressive: { label: 'Agresif', shortcut: 0.85, attack: 1, defend: 0.3, drift: 1.25, wander: 1.4, patience: 0.5, emote: 0.6 },
+  clean: { label: 'Temiz', shortcut: 0.2, attack: 0.3, defend: 1, drift: 0.8, wander: 0.35, patience: 2.2, emote: 0.2 },
+  balanced: { label: 'Dengeli', shortcut: 0.5, attack: 0.65, defend: 0.65, drift: 0.95, wander: 1, patience: 1, emote: 0.35 },
+  sneaky: { label: 'Kurnaz', shortcut: 1, attack: 0.75, defend: 0.6, drift: 1, wander: 0.9, patience: 1.2, emote: 0.45, sneaky: true },
+  sleepy: { label: 'Uykucu', shortcut: 0.15, attack: 0.5, defend: 0.7, drift: 0.85, wander: 0.6, patience: 1.5, emote: 0.3, sleepy: true },
+  chatty: { label: 'Geveze', shortcut: 0.6, attack: 0.9, defend: 0.4, drift: 1.1, wander: 1.2, patience: 0.7, emote: 1 },
 };
 
 // skillRange: [en düşük, en yüksek] hız/yetenek oranı (zorluk ayarından gelir)
@@ -32,6 +32,8 @@ export function createDriver(seed, skillRange = [0.9, 0.97], personality = 'bala
     drifting: false,
     driftDir: 0,
     driftTimer: 0,
+    sc: null, // şu an izlenen kısayol
+    scChoice: {}, // kısayol id → bu turda karar (true/false)
     itemHeld: 0, // item elde tutma süresi
     itemPatience: (1.5 + rand(4) * 4) * p.patience,
     driftSkill: Math.min(1, (skill - 0.8) * 5), // yetenekli bot daha çok drift atar
@@ -82,17 +84,18 @@ export function driveInput(driver, kart, track, dt, ctx = null) {
     }
   }
 
+  const scTarget = shortcutTarget(driver, kart, track, idx, n, speed, look);
   const i = (idx + look) % n;
   const cp = track.centerline[i];
   const r = track.rights[i];
-  const tx = cp.x + r.x * lane;
-  const tz = cp.z + r.z * lane;
+  const tx = scTarget ? scTarget.x : cp.x + r.x * lane;
+  const tz = scTarget ? scTarget.z : cp.z + r.z * lane;
   const want = Math.atan2(tx - kart.position.x, tz - kart.position.z);
   const err = Math.atan2(Math.sin(want - kart.heading), Math.cos(want - kart.heading));
 
   // Viraj keskinliği (önümüzdeki en dar nokta)
   let radius = Infinity;
-  for (let k = 2; k <= look + 6; k += 2) radius = Math.min(radius, track.turnRadius[(idx + k) % n]);
+  if (!scTarget) for (let k = 2; k <= look + 6; k += 2) radius = Math.min(radius, track.turnRadius[(idx + k) % n]);
   const cornerLimit = Math.min(1, radius / 40 + 0.55);
   // Uykucu: ilk turlarda yavaş, son turda uyanır
   const skill = p.sleepy ? driver.skill + (progress < 0.34 ? -0.05 : progress > 0.66 ? 0.05 : 0) : driver.skill;
@@ -122,6 +125,40 @@ export function driveInput(driver, kart, track, dt, ctx = null) {
 
   if (items) decideItem(driver, kart, items, ctx, radius, progress, dt, input);
   return input;
+}
+
+// Kısayola girme kararı ve kısayol üzerinde hedef nokta. Kısayoldayken ana yol hedefi yerine
+// kısayolun orta çizgisindeki ileri bir noktayı döner (yoksa null).
+function shortcutTarget(driver, kart, track, idx, n, speed, look) {
+  const list = track.shortcuts;
+  if (!list.length) return null;
+  if (driver.sc) {
+    const sc = driver.sc;
+    const h = sc.nearest(kart.position.x, kart.position.z);
+    // Kısayoldan çıktı ya da bitişe yaklaştı → ana yola dön
+    if (!h || h.d > sc.halfWidth + 14 || h.s > sc.length - 5 || kart.spinTime > 0) {
+      driver.sc = null;
+      return null;
+    }
+    return sc.pointAt(h.s + 6 + speed * 0.32);
+  }
+  for (const sc of list) {
+    const ahead = (sc.entryIndex - idx + n) % n;
+    if (ahead > 60 && ahead < n - 6) {
+      delete driver.scChoice[sc.id]; // giriş geçildi / uzakta: sonraki tur için sıfırla
+      continue;
+    }
+    if (ahead > 40 && ahead < n - 6) continue;
+    if (driver.scChoice[sc.id] === undefined) driver.scChoice[sc.id] = Math.random() < driver.p.shortcut * (sc.def.botChance ?? 0.5) * 1.4;
+    if (!driver.scChoice[sc.id]) continue;
+    // Atlama varsa yeterli hızla girmeli
+    if (sc.def.botMinSpeed && speed < sc.def.botMinSpeed && ahead < 20) continue;
+    if (ahead <= 20 || ahead >= n - 6) {
+      driver.sc = sc;
+      return sc.pointAt(6 + speed * 0.32);
+    }
+  }
+  return null;
 }
 
 function decideItem(driver, kart, items, ctx, radius, progress, dt, input) {

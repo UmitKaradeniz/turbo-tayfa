@@ -73,7 +73,7 @@ export class Race {
     const { track } = this;
     const n = track.count;
     for (const e of this.entries) {
-      const idx = e.kart.trackIndex;
+      const idx = e.kart.pathIndex;
       if (idx < 0) continue;
       let d = idx - e.lastIndex;
       if (d > n / 2) d -= n;
@@ -110,7 +110,7 @@ export class Race {
       // Ters yön: pist yönünün tersine 1 saniyeden fazla gidiyorsa
       const f = track.forwards[idx];
       const along = e.kart.velocity.x * f.x + e.kart.velocity.z * f.z;
-      e.wrongWayTime = along < -3 ? e.wrongWayTime + dt : 0;
+      e.wrongWayTime = along < -3 && !e.kart.onShortcut ? e.wrongWayTime + dt : 0;
       const wrong = e.wrongWayTime > 1;
       if (wrong !== e.wrongWay) {
         e.wrongWay = wrong;
@@ -151,7 +151,7 @@ export class Race {
     if (!e) return;
     e.progress = progress;
     e.lapsDone = lapsDone;
-    e.lastIndex = kart.trackIndex;
+    e.lastIndex = kart.pathIndex;
   }
 
   // Güncel sıralama: bitirenler bitiş sırasına göre, diğerleri ilerlemeye göre
@@ -169,12 +169,18 @@ export class Race {
   }
 
   // Son checkpoint'in biraz gerisinde, pist ortasında kurtarma noktası
-  respawnPoint(kart) {
+  // capIndex: verilirse dönüş noktası bu örnekten ileride olamaz (kısayoldan düşen için)
+  respawnPoint(kart, capIndex = null) {
     const e = this.entryOf(kart);
     const { track } = this;
     const n = track.count;
     const cpSpacing = n / track.checkpoints.length;
-    const sample = Math.max(0, e.checkpoint) * cpSpacing;
+    let sample = Math.max(0, e.checkpoint) * cpSpacing;
+    if (capIndex !== null) {
+      const cap = ((capIndex % n) + n) % n;
+      const lap = Math.floor(e.progress / n) * n;
+      sample = Math.min(sample, lap + cap);
+    }
     const i = ((Math.round(sample) % n) + n) % n;
     const f = track.forwards[i];
     return { position: track.centerline[i].clone(), heading: Math.atan2(f.x, f.z) };

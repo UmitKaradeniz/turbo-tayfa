@@ -58,6 +58,12 @@ export function buildDecor(track, decorate, density = 1) {
       };
     },
 
+    // Kısayolun s metresindeki nokta (yanal ofset: + sağ) ve yönler
+    shortcutAt(sc, s, lateral = 0) {
+      const p = sc.pointAt(s, lateral);
+      return { ...p, acrossY: Math.atan2(-p.rz, p.rx), faceTrackY: Math.atan2(-p.rx * Math.sign(lateral || 1), -p.rz * Math.sign(lateral || 1)) };
+    },
+
     // Adaya rastgele serpiştir. where(land, roadDist, x, z) true dönerse yerleşir.
     scatter({ keys, count, scale: [a, b], where }) {
       const target = Math.round(count * density);
@@ -67,6 +73,7 @@ export function buildDecor(track, decorate, density = 1) {
         const x = (rng() * 2 - 1) * half;
         const z = (rng() * 2 - 1) * half;
         if (!where(terrain.landAt(x, z), terrain.roadDistAt(x, z), x, z)) continue;
+        if (track.shortcutClearance(x, z) < 5) continue; // kısayol yolu açık kalsın
         if (reserved.some(([rx, rz, rr]) => (x - rx) ** 2 + (z - rz) ** 2 < rr * rr)) continue;
         ctx.place(keys[Math.floor(rng() * keys.length)], x, z, rng() * Math.PI * 2, a + rng() * (b - a));
         placed++;
@@ -75,6 +82,7 @@ export function buildDecor(track, decorate, density = 1) {
   };
 
   placeBarriers(ctx, track);
+  placeShortcutEdges(ctx, track);
   decorate(ctx);
 
   const group = new THREE.Group();
@@ -115,9 +123,32 @@ function placeBarriers(ctx, track) {
       let d = carry;
       for (; d < len; d += PIECE) {
         const t = Math.min(1, (d + PIECE / 2) / len);
-        ctx.place(piece++ % 2 ? 'racing/barrierWhite' : 'racing/barrierRed', a.x + seg.x * t, a.y + seg.y * t, rotY, 8);
+        const bx = a.x + seg.x * t;
+        const bz = a.y + seg.y * t;
+        if (track.shortcutClearance(bx, bz) < 2) continue; // kısayol girişinde bariyer yok
+        ctx.place(piece++ % 2 ? 'racing/barrierWhite' : 'racing/barrierRed', bx, bz, rotY, 8);
       }
       carry = d - len;
+    }
+  }
+}
+
+// Kısayolun iki kenarına doğal "duvar" (kaya, kütük vb.): sc.def.edge = { keys, step, scale }
+function placeShortcutEdges(ctx, track) {
+  for (const sc of track.shortcuts) {
+    const e = sc.def.edge;
+    if (!e) continue;
+    let k = 0;
+    for (let s = 0; s <= sc.length; s += e.step ?? 4) {
+      for (const side of [-1, 1]) {
+        const p = sc.pointAt(s, side * (sc.halfAt(s) + 0.9));
+        // Ana yol koridorunun ve çukurun içine koyma
+        if (track.closest(p.x, p.z).dist < track.edge + 1) continue;
+        if (sc.jump && s > sc.jump.pitA - 1 && s < sc.jump.pitB + 1) continue;
+        const key = e.keys[(k++ + (side > 0 ? 1 : 0)) % e.keys.length];
+        const [a, b] = e.scale ?? [4, 6];
+        ctx.place(key, p.x, p.z, ctx.rng() * Math.PI * 2, a + ctx.rng() * (b - a));
+      }
     }
   }
 }

@@ -31,7 +31,11 @@ export class Kart {
     this.grounded = true;
     this.groundNormal = UP.clone();
     this.surface = 'road';
+    this.surfaceSpeed = null; // kısayolun kendi yüzey hız çarpanı (yoksa null)
     this.trackIndex = -1; // en yakın orta çizgi örneği (arama ipucu)
+    this.pathIndex = -1; // yarış ilerlemesi için örnek (kısayolda sanal, bkz. track.groundAt)
+    this.onShortcut = false;
+    this.fallTime = 0; // atlama çukuruna düştükten beri geçen süre
     this.drifting = false;
     this.driftDir = 0;
     this.driftTime = 0; // mini-turbo kademesi için
@@ -62,6 +66,9 @@ export class Kart {
     this.steer = 0;
     this.drifting = false;
     this.trackIndex = -1;
+    this.pathIndex = -1;
+    this.onShortcut = false;
+    this.fallTime = 0;
     this.boostTime = this.spinTime = this.shieldTime = 0;
   }
 
@@ -144,9 +151,9 @@ export class Kart {
 
     // Kumda en yüksek hız düşer
     // Turbo varken kum yavaşlatmaz
-    const offroad = this.surface === 'sand';
+    const offroad = this.surface === 'sand' || this.surface === 'dirt';
     const boosting = this.boostTime > 0;
-    const maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * KART.offroadSpeed : KART.maxSpeed;
+    const maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : KART.maxSpeed;
 
     // İleri/geri ivme
     if (this.grounded) {
@@ -159,7 +166,7 @@ export class Kart {
       } else if (input.throttle > 0) {
         forward += KART.brake * dt; // geri giderken gaz = fren
       } else {
-        const drag = KART.coastDrag * (offroad ? 2 : 1) * dt;
+        const drag = KART.coastDrag * (this.surface === 'sand' ? 2 : 1) * dt;
         forward = Math.abs(forward) <= drag ? 0 : forward - Math.sign(forward) * drag;
       }
       if (boosting && forward < maxSpeed) forward = Math.min(maxSpeed, forward + KART.boostAccel * dt);
@@ -214,13 +221,22 @@ export class Kart {
   updateGround(track) {
     const g = track.groundAt(this.position, this.trackIndex);
     this.trackIndex = g.index;
+    this.pathIndex = g.pathIndex;
+    this.onShortcut = g.shortcut;
     const snap = this.grounded ? KART.snapDistance : 0.01;
-    if (this.position.y <= g.y + snap && this.velocity.y <= 0.5) {
+    // Zeminin altına girdiyse (rampa yukarı çıkarken) her durumda yüzeye oturt
+    if (this.position.y <= g.y + snap && (this.velocity.y <= 0.5 || this.position.y < g.y)) {
       this.position.y = g.y;
-      this.velocity.y = 0;
+      // Rampada dikey hız korunur: rampanın ucundan kart eğim kadar yukarı fırlar
+      this.velocity.y = g.ramp ? Math.max(0, g.ramp.slope * (this.velocity.x * g.ramp.tx + this.velocity.z * g.ramp.tz)) : 0;
       this.grounded = true;
       this.groundNormal.copy(g.normal);
       this.surface = g.surface;
+      this.surfaceSpeed = g.speed ?? null;
+      if (g.pad) {
+        if (this.boostTime < 0.3) this.events.push('pad');
+        this.boost(g.pad.boost);
+      }
     } else {
       this.grounded = false;
     }
@@ -247,7 +263,7 @@ export class Kart {
     const spin = this.spinTime > 0 ? (1 - this.spinTime / KART.spinDuration) * Math.PI * 4 : 0;
     const speedRatio = Math.min(1, Math.abs(this.speed) / KART.maxSpeed);
     // Kumda hafif titreme
-    const bump = this.surface === 'sand' && this.grounded ? Math.sin(performance.now() * 0.05) * 0.015 * speedRatio : 0;
+    const bump = (this.surface === 'sand' || this.surface === 'dirt') && this.grounded ? Math.sin(performance.now() * 0.05) * 0.015 * speedRatio : 0;
     body.rotation.set(bump, this.visualDriftYaw + spin, -this.steer * 0.07 * speedRatio - this.visualDriftYaw * 0.15);
 
     for (const w of steerWheels) w.rotation.y = this.steer * 0.45;

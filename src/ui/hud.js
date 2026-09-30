@@ -166,6 +166,14 @@ export function createHud({ portraits, minimap, itemIcons }) {
       toasts.appendChild(el);
       el.addEventListener('animationend', () => el.remove());
     },
+    // Kısa bildirim ('warn': turuncu)
+    toast(text, kind = '') {
+      const el = document.createElement('div');
+      el.className = `toast ${kind}`;
+      el.textContent = text;
+      toasts.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    },
     wrongWay(show) {
       wrongWay.classList.toggle('show', show);
     },

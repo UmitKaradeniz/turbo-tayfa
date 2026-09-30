@@ -38,6 +38,24 @@ export default {
     [-88, 86, 0.6],
   ],
 
+  // Kısayol: firketeyi kesen dar bir kum yolu. Kumda kart yavaşlar; ama hız tahtaları ve
+  // turbo (kumda yavaşlamaz) ile yol yarıya yakın kısalır. Ortasında bir sıra item kutusu var.
+  shortcuts: [
+    {
+      id: 'sandCut',
+      name: 'Kum Kısayolu',
+      points: [[132, 19], [118, 10], [90, -8], [60, -27], [30, -45], [8, -59], [-4, -66]],
+      halfWidth: 4.6,
+      surface: 'sand',
+      speed: 0.53, // derin kum: normal kumdan biraz daha yavaş
+      color: 0xc99b5d,
+      pads: [{ f: 0.55, boost: 0.8 }],
+      boxes: { at: 'mid', lateral: [-2.4, 0, 2.4] },
+      edge: { keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/plant_bushLarge', 'nature/rock_largeC'], step: 5, scale: [4, 7] },
+      botChance: 0.55,
+    },
+  ],
+
   // Dekor listesindeki tüm modeller (yükleme ekranı bunları önceden yükler)
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
@@ -128,6 +146,16 @@ export default {
       const h = ctx.along(hill + k * 6, track.innerSide[hill] * (edge + 16 + k * 3));
       ctx.place('nature/statue_head', h.x, h.z, h.faceTrackY + (k - 1) * 0.4, 7 + k);
       ctx.reserve(h.x, h.z, 8);
+    }
+
+    // Kısayol girişi ve çıkışında bayrak kuleleri
+    for (const sc of track.shortcuts) {
+      for (const s of [4, sc.length - 4]) {
+        for (const side of [-1, 1]) {
+          const b = ctx.shortcutAt(sc, s, side * (sc.halfAt(s) + 3));
+          ctx.place(s < 10 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
+        }
+      }
     }
 
     // --- Doğa ---
