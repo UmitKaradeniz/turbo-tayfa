@@ -1,8 +1,13 @@
 import * as THREE from 'three';
 
-// Kartların üstünde oyuncu adı (canvas dokulu sprite). Yakındaki rakiplerde görünür.
+// Online yarışta diğer gerçek oyuncuların kartı üstünde oyuncu adı (canvas dokulu sprite).
+// Botlar için etiket konmaz. Ekrandaki boyut uzaktan da okunacak kadar büyür.
 
-function makeTexture(text, color, isBot) {
+const NEAR = 14; // bu mesafeye kadar gerçek boyut, ötesinde ekrandaki boyutu korumak için büyür
+const FADE_START = 130;
+const FADE_END = 170;
+
+function makeTexture(text, color) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const font = '800 44px Nunito, system-ui, sans-serif';
@@ -11,10 +16,13 @@ function makeTexture(text, color, isBot) {
   canvas.width = w;
   canvas.height = 76;
   ctx.font = font;
-  ctx.fillStyle = isBot ? 'rgba(11,42,85,0.55)' : 'rgba(11,42,85,0.82)';
+  ctx.fillStyle = 'rgba(11,42,85,0.85)';
   ctx.beginPath();
   ctx.roundRect(2, 2, w - 4, 72, 24);
   ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.stroke();
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.arc(30, 38, 11, 0, Math.PI * 2);
@@ -28,37 +36,39 @@ function makeTexture(text, color, isBot) {
 }
 
 export function createNameplates(scene) {
-  const plates = new Map(); // kart → sprite
+  const plates = new Map(); // kart → { sprite, aspect }
 
   return {
-    set(kart, text, isBot = false) {
+    set(kart, text) {
       this.remove(kart);
       if (!text) return;
-      const { tex, aspect } = makeTexture(text, kart.character.color, isBot);
+      const { tex, aspect } = makeTexture(text, kart.character.color);
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthWrite: false, transparent: true, fog: false }));
-      sprite.scale.set(0.62 * aspect, 0.62, 1);
       sprite.renderOrder = 5;
       scene.add(sprite);
-      plates.set(kart, sprite);
+      plates.set(kart, { sprite, aspect });
     },
     remove(kart) {
-      const s = plates.get(kart);
-      if (!s) return;
-      scene.remove(s);
-      s.material.map.dispose();
-      s.material.dispose();
+      const p = plates.get(kart);
+      if (!p) return;
+      scene.remove(p.sprite);
+      p.sprite.material.map.dispose();
+      p.sprite.material.dispose();
       plates.delete(kart);
     },
     clear() {
       for (const k of [...plates.keys()]) this.remove(k);
     },
     update(camera, own) {
-      for (const [kart, s] of plates) {
+      for (const [kart, { sprite, aspect }] of plates) {
         const p = kart.object.position;
-        s.position.set(p.x, p.y + 3.4, p.z);
+        sprite.position.set(p.x, p.y + 3.4, p.z);
         const d = p.distanceTo(camera.position);
-        s.visible = kart !== own && kart.object.visible && d < 70;
-        s.material.opacity = Math.min(1, (70 - d) / 20);
+        sprite.visible = kart !== own && kart.object.visible && d < FADE_END;
+        if (!sprite.visible) continue;
+        const h = 0.75 * Math.max(1, d / NEAR);
+        sprite.scale.set(h * aspect, h, 1);
+        sprite.material.opacity = Math.min(1, (FADE_END - d) / (FADE_END - FADE_START));
       }
     },
   };

@@ -580,7 +580,7 @@ async function startOnlineRace(msg) {
   for (const e of msg.entrants) {
     const kart = online.kartById.get(e.id);
     displayNames.set(kart, e.bot ? kart.character.name : e.name);
-    nameplates.set(kart, e.bot ? kart.character.name : e.name, e.bot);
+    if (!e.bot) nameplates.set(kart, e.name); // sadece gerçek oyuncuların üstünde isim yazar
   }
 
   menu.hideAll();
@@ -1009,7 +1009,7 @@ if (import.meta.env.DEV) {
   window.__tt.autopilot = (on) => (autopilot = on);
   window.__tt.readInput = readInput;
   window.__tt.postfx = postfx;
-  Object.assign(window.__tt, { emotes, chat, recordOf });
+  Object.assign(window.__tt, { emotes, chat, recordOf, nameplates });
   Object.defineProperties(window.__tt, { ghost: { get: () => ghost }, drivers: { get: () => drivers } });
   window.__tt.freeze = (on) => (paused = on); // menü açmadan dondur (ekran görüntüsü için)
   // Pist önizleme görüntüsü üretmek için (public/previews): sahneyi şu anki kamerayla çizip w×h JPEG döner
