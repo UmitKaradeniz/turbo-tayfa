@@ -6,7 +6,7 @@ import { readInput } from './input.js';
 import { loadModels, hasModels } from './assets.js';
 import { initErrorReports, setReportContext, reportIssue } from './report.js';
 import { Kart, resolveKartCollisions } from './kart.js';
-import { CHARACTERS, KART_MODELS } from './kartModel.js';
+import { CHARACTERS, KART_MODELS, pickRivals } from './kartModel.js';
 import { CameraRig } from './cameraRig.js';
 import { buildTrack, trackOutline } from './track.js';
 import { buildDecor } from './decor.js';
@@ -82,6 +82,12 @@ const karts = CHARACTERS.map((c) => {
   return kart;
 });
 const kartOf = (id) => karts.find((k) => k.character.id === id) ?? karts[0];
+// Kadro 24 kişi; sahada her zaman en çok 8 sürücü var. Sahada olmayanlar pasif (gizli) kalır.
+const setField = (list) => {
+  for (const k of karts) k.active = list.includes(k);
+};
+let menuRivals = pickRivals(settings.character).map(kartOf); // menüde görünen rakipler
+let booted = false; // menü kurulurken (henüz pist yokken) sahne işlemleri atlanır
 
 // --- Arayüz ---
 const portraits = renderPortraits(renderer, CHARACTERS);
@@ -118,9 +124,14 @@ const menu = createMenu({
   portraits,
   tracks: trackCards,
   handlers: {
+    rivals: (ids) => {
+      menuRivals = ids.map(kartOf);
+      if (booted && !race && track) showMenuField();
+    },
     screen: (name) => setMenuView(name),
     character: (id) => {
       focus = kartOf(id);
+      if (track) showMenuField();
       focus.model.play('gesture-positive');
       setTimeout(() => focus.model.play('idle'), 1400);
       play('ui_select');
@@ -275,7 +286,7 @@ function buildTrackNow(def) {
   });
   minimap = createMinimap(track);
   hud.setMinimap(minimap);
-  if (!race) placeOnGrid(karts);
+  if (!race) showMenuField();
   if (window.__tt) Object.assign(window.__tt, { track, items });
 }
 
@@ -338,6 +349,13 @@ function placeOnGrid(order) {
   });
 }
 
+// Menü sahnesi: seçili karakter ve rakipleri gride dizilir, diğerleri gizli
+function showMenuField() {
+  const field = [focus, ...menuRivals.filter((k) => k !== focus)].slice(0, 8);
+  setField(field);
+  placeOnGrid(field);
+}
+
 // Menüde kamera kartın etrafında döner; geniş ekranda kart sağa kaydırılır (sol panel boş kalsın)
 function setMenuView(name) {
   menuView = name;
@@ -381,8 +399,8 @@ function endRaceLocal() {
   menu.refreshRecords();
   touch.show(false);
   playMusic('menu');
-  placeOnGrid(karts);
   focus = kartOf(settings.character);
+  showMenuField();
   rig.transition('orbit', 1.5);
 }
 
@@ -489,12 +507,11 @@ async function startOfflineRace(config) {
   lastConfig = config;
   player = kartOf(config.character);
   timeTrial = config.mode === 'timeTrial';
-  const bots = karts.filter((k) => k !== player);
+  const bots = (config.rivals ?? pickRivals(config.character)).map(kartOf).filter((k) => k !== player).slice(0, 7);
   // Oyuncu ortalarda (5.) başlar; önünde geçilecek rakipler olsun. Zamana Karşı: tek başına
   const order = timeTrial ? [player] : [...bots.slice(0, 4), player, ...bots.slice(4)];
-  placeOnGrid(karts);
+  setField(order);
   placeOnGrid(order);
-  if (timeTrial) for (const k of bots) k.active = false;
   const skill = DIFFICULTY[config.difficulty]?.skill ?? DIFFICULTY.normal.skill;
   drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + Math.random() * 100, k === player ? [0.97, 0.97] : skill, k.character.personality)]));
   displayNames = new Map(karts.map((k) => [k, k === player && settings.name ? settings.name : k.character.name]));
@@ -658,6 +675,7 @@ async function startOnlineRace(msg) {
   online.owned = new Set([player]);
   if (online.isHost) msg.entrants.filter((e) => e.bot).forEach((e) => online.owned.add(online.kartById.get(e.id)));
 
+  setField(order);
   placeOnGrid(order);
   const skill = DIFFICULTY[msg.difficulty]?.skill ?? DIFFICULTY.normal.skill;
   drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + (msg.goAt % 1000), skill, k.character.personality)]));
@@ -707,7 +725,10 @@ net.on('room', (msg) => {
   if (!race && msg.settings?.track) loadTrack(msg.settings.track);
   // Sunucu karakterimizi değiştirdiyse (başkası almıştı) önizlemeyi güncelle
   const mine = msg.players.find((p) => p.id === net.id);
-  if (!race && mine) focus = kartOf(mine.character);
+  if (!race && mine && focus !== kartOf(mine.character)) {
+    focus = kartOf(mine.character);
+    if (track) showMenuField();
+  }
   const nowHost = msg.hostId === net.id;
 
   // Oda sahibi değişti ve yeni sahip biziz: botları devral
@@ -828,6 +849,7 @@ function updateRemoteKarts() {
 }
 
 // --- Başlangıç: menü ---
+booted = true;
 loadTrack(settings.track);
 playMusic('menu');
 rig.mode = 'orbit';
@@ -963,6 +985,7 @@ function frame(now) {
 
   const alpha = race && !paused ? accumulator / STEP : 1;
   for (const kart of karts) {
+    if (!kart.active) continue;
     if (isOwned(kart) || !race) kart.updateVisual(alpha, paused ? 0 : dt);
     else kart.updateVisual(1, dt);
     if (race && !paused && kart.active) {
@@ -1078,7 +1101,7 @@ function adaptResolution(fps) {
 function updateHud(dt) {
   const entry = race.entryOf(player);
   const activeKarts = karts.filter((k) => k.active);
-  hud.setPosition(race.positionOf(player), karts.length);
+  hud.setPosition(race.positionOf(player), activeKarts.length);
   hud.setLap(Math.min(race.laps, Math.max(1, entry.lapsDone + 1)), race.laps);
   hud.setTime(entry.finishTime ?? Math.max(0, race.clock));
   const speed = Math.abs(player.speed);

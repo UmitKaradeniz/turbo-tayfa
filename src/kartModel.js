@@ -12,7 +12,33 @@ export const CHARACTERS = [
   { id: 'monkey', personality: 'sneaky', color: '#9b6a43', name: 'Cambaz', desc: 'Her yola bir kısayol arar', pet: 'pets/animal-monkey', kart: 'karts/kart-oopi' },
   { id: 'koala', personality: 'sleepy', color: '#9aa3ad', name: 'Uykucu', desc: 'Yavaş görünür, son turda uyanır', pet: 'pets/animal-koala', kart: 'karts/kart-oobi' },
   { id: 'parrot', personality: 'chatty', color: '#2ecc71', name: 'Geveze', desc: 'Çenesi de motoru da hiç durmaz', pet: 'pets/animal-parrot', kart: 'karts/kart-oozi' },
+  { id: 'cat', personality: 'sneaky', color: '#d9a066', name: 'Pamuk', desc: 'Sessiz adımlarla geçer, kimse fark etmez', pet: 'pets/animal-cat', kart: 'karts/kart-oozi' },
+  { id: 'dog', personality: 'aggressive', color: '#b9814f', name: 'Bıdık', desc: 'Sadık ama yarışta hiç acımaz', pet: 'pets/animal-dog', kart: 'karts/kart-oodi' },
+  { id: 'lion', personality: 'aggressive', color: '#e2a73b', name: 'Kükrer', desc: 'Pistin kralı olduğuna inanıyor', pet: 'pets/animal-lion', kart: 'karts/kart-ooli' },
+  { id: 'elephant', personality: 'balanced', color: '#9aa7b8', name: 'Tombiş', desc: 'Ağır görünür ama durdurulamaz', pet: 'pets/animal-elephant', kart: 'karts/kart-oobi' },
+  { id: 'giraffe', personality: 'clean', color: '#f0c04a', name: 'Uzun', desc: 'Herkesi yukarıdan izler, hata yapmaz', pet: 'pets/animal-giraffe', kart: 'karts/kart-oopi' },
+  { id: 'cow', personality: 'sleepy', color: '#d8d8d8', name: 'Sütlaç', desc: 'Sakin, sabırlı, bazen inatçı', pet: 'pets/animal-cow', kart: 'karts/kart-oodi' },
+  { id: 'pig', personality: 'chatty', color: '#ffb0c0', name: 'Pembe', desc: 'Çamura bulanınca daha hızlı olduğunu söyler', pet: 'pets/animal-pig', kart: 'karts/kart-ooli' },
+  { id: 'hog', personality: 'balanced', color: '#8a6a55', name: 'Dişli', desc: 'Düz yolda burnunu önüne koyar', pet: 'pets/animal-hog', kart: 'karts/kart-oozi' },
+  { id: 'chick', personality: 'aggressive', color: '#ffd94a', name: 'Civciv', desc: 'Minicik ama sabırsız, hep öne geçmek ister', pet: 'pets/animal-chick', kart: 'karts/kart-oopi' },
+  { id: 'crab', personality: 'sneaky', color: '#e0523a', name: 'Kıskaç', desc: 'Yanlamasına gider, dosdoğru kazanır', pet: 'pets/animal-crab', kart: 'karts/kart-oobi' },
+  { id: 'deer', personality: 'clean', color: '#b98b5a', name: 'Ceylan', desc: 'Zarif ve çevik, virajlarda kayar gibi döner', pet: 'pets/animal-deer', kart: 'karts/kart-oodi' },
+  { id: 'bee', personality: 'aggressive', color: '#ffcf2e', name: 'Vızıltı', desc: 'Hızlı, sinirli ve iğneli', pet: 'pets/animal-bee', kart: 'karts/kart-ooli' },
+  { id: 'caterpillar', personality: 'sleepy', color: '#7ed957', name: 'Tırtıl', desc: 'Yavaş başlar, kelebek gibi biter', pet: 'pets/animal-caterpillar', kart: 'karts/kart-oozi' },
+  { id: 'polar', personality: 'clean', color: '#cfe3f5', name: 'Kutup', desc: 'Soğukkanlı bir rakip, hiç telaşlanmaz', pet: 'pets/animal-polar', kart: 'karts/kart-oobi' },
+  { id: 'beaver', personality: 'balanced', color: '#8b5a2b', name: 'Kunduz', desc: 'Yolu kendi yapar, dişini sıkar', pet: 'pets/animal-beaver', kart: 'karts/kart-oopi' },
+  { id: 'fish', personality: 'chatty', color: '#4fc3f7', name: 'Balık', desc: 'Sudan çıkmış ama en hızlısı o', pet: 'pets/animal-fish', kart: 'karts/kart-oodi' },
 ];
+
+// Yarış sahası 8 kişidir: oyuncu + 7 rakip. Rakipler kadrodan rastgele seçilir.
+export function pickRivals(mineId, n = 7) {
+  const pool = CHARACTERS.filter((c) => c.id !== mineId).map((c) => c.id);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
 
 export const KART_MODELS = [...new Set(CHARACTERS.flatMap((c) => [c.pet, c.kart]))];
 

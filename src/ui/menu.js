@@ -2,6 +2,7 @@ import './base.css';
 import './menu.css';
 import { settings, saveSettings, DIFFICULTY } from '../settings.js';
 import { PERSONALITIES } from '../ai.js';
+import { pickRivals } from '../kartModel.js';
 import { formatTime } from './hud.js';
 import { QUALITY, saveQuality } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
@@ -28,6 +29,13 @@ const KEYS_HELP = `
 export function createMenu({ characters, portraits, tracks, handlers, records, chatPanel }) {
   const botTag = (c) => `Bot · ${PERSONALITIES[c.personality]?.label ?? ''}`;
   const byId = Object.fromEntries(characters.map((c) => [c.id, c]));
+  // Tek oyunculu yarışta rakipler: kadrodan rastgele 7 sürücü ('🔀' ile değiştirilir)
+  let rivalIds = pickRivals(settings.character);
+  const rerollRivals = () => {
+    rivalIds = pickRivals(settings.character);
+    handlers.rivals?.(rivalIds);
+    renderSlots();
+  };
   const toastWrap = h('<div class="tt-toast-wrap"></div>');
   document.body.appendChild(toastWrap);
 
@@ -96,7 +104,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           <div class="tt-char-info"><span class="swatch"></span><div><div class="name"></div><div class="desc"></div></div></div>
         </div>
         <div class="tt-card enter">
-          <h3>Pilotlar <small class="count"></small></h3>
+          <h3>Pilotlar <small class="count"></small><button class="tt-btn light icon reroll" data-go="reroll" aria-label="Rakipleri değiştir" title="Rakipleri değiştir">🔀</button></h3>
           <ul class="tt-slots"></ul>
         </div>
       </div>
@@ -139,7 +147,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     if (!online) {
       const mine = byId[settings.character];
       const name = settings.name ? `${escapeHtml(settings.name)} · ${mine.name}` : mine.name;
-      list.innerHTML = [slotHtml(mine, name, 'Sen', 'me'), ...(settings.mode === 'timeTrial' ? [] : characters.filter((c) => c !== mine).map((c) => slotHtml(c, c.name, botTag(c))))].join('');
+      list.innerHTML = [slotHtml(mine, name, 'Sen', 'me'), ...(settings.mode === 'timeTrial' ? [] : rivalIds.map((id) => byId[id]).filter(Boolean).map((c) => slotHtml(c, c.name, botTag(c))))].join('');
       setup.querySelector('.count').textContent = settings.mode === 'timeTrial' ? 'Sen + rekor hayaletin' : '8/8';
       return;
     }
@@ -150,9 +158,10 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       const cls = [p.id === myId && 'me', p.ready && 'ready', !p.connected && 'off'].filter(Boolean).join(' ');
       return slotHtml(byId[p.character] ?? characters[0], escapeHtml(p.name), tag, cls);
     });
-    const bots = characters.filter((c) => !taken.has(c.id)).map((c) => slotHtml(c, c.name, botTag(c), 'bot'));
-    list.innerHTML = [...rows, ...bots].join('');
-    setup.querySelector('.count').textContent = `${room.players.length} oyuncu + ${bots.length} bot`;
+    const botCount = Math.max(0, 8 - room.players.length);
+    const botRow = botCount ? `<li class="bot"><span class="n"></span><span style="font-size:28px;line-height:34px">🤖</span><span>Rastgele ${botCount} bot</span><span class="tag">Yarış başlarken seçilir</span></li>` : '';
+    list.innerHTML = [...rows, botRow].join('');
+    setup.querySelector('.count').textContent = `${room.players.length} oyuncu + ${botCount} bot`;
   };
 
   const renderCharacter = (id) => {
@@ -168,8 +177,9 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   const selectCharacter = (id, notify = true) => {
     saveSettings({ character: id });
     renderCharacter(id);
-    renderSlots();
     if (notify) handlers.character(id);
+    if (!online && notify) rerollRivals();
+    else renderSlots();
   };
 
   const segSyncs = [];
@@ -394,7 +404,10 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           break;
         }
         show(null);
-        handlers.start({ character: settings.character, laps: settings.laps, difficulty: settings.difficulty, mode: settings.mode });
+        handlers.start({ character: settings.character, laps: settings.laps, difficulty: settings.difficulty, mode: settings.mode, rivals: rivalIds });
+        break;
+      case 'reroll':
+        rerollRivals();
         break;
       case 'host':
         handlers.host();
@@ -482,6 +495,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
 
   selectCharacter(settings.character in byId ? settings.character : characters[0].id, false);
   renderOnline();
+  handlers.rivals?.(rivalIds); // başlangıçtaki rakipler sahnede de aynı olsun
 
   return {
     toast,
@@ -503,6 +517,10 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       show(main);
     },
     refreshRecords() {
+      if (!online) {
+        rivalIds = pickRivals(settings.character); // yeni yarış için yeni rakipler
+        handlers.rivals?.(rivalIds);
+      }
       renderOnline();
     },
     showSetup() {

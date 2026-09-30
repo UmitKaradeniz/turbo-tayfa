@@ -17,7 +17,10 @@ import crypto from 'node:crypto';
 //   finish {id, time, place}          raceOver {cup}       pong {t, server}
 
 const MAX_PLAYERS = 8;
-const CHARACTERS = ['fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot'];
+const CHARACTERS = [
+  'fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot',
+  'cat', 'dog', 'lion', 'elephant', 'giraffe', 'cow', 'pig', 'hog', 'chick', 'crab', 'deer', 'bee', 'caterpillar', 'polar', 'beaver', 'fish',
+]; // istemcideki src/kartModel.js ile aynı kimlikler
 const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon'];
 // Turbo Kupası setleri (istemcideki src/tracks/index.js ile aynı olmalı)
 const CUP_SETS = { cup: ['palmCove', 'pineValley', 'snowPeak', 'nightCity'], bigCup: TRACKS };
@@ -158,7 +161,15 @@ function startRace(room, trackCount) {
   // İnsanlar karışık sırayla önde, botlar arkada
   const order = humans.sort(() => Math.random() - 0.5);
   const taken = new Set(order.map((p) => p.character));
-  const bots = CHARACTERS.filter((c) => !taken.has(c)).map((c) => ({ id: `bot-${c}`, character: c }));
+  // Sahada her zaman 8 sürücü olur: insanlar + kalan yerler rastgele botlarla dolar
+  // Kupada botlar tüm yarışlar boyunca aynı kalır (puan tablosu tutarlı olsun)
+  let botChars = room.cup?.botChars;
+  if (!botChars) {
+    const pool = CHARACTERS.filter((c) => !taken.has(c)).sort(() => Math.random() - 0.5);
+    botChars = pool.slice(0, Math.max(0, MAX_PLAYERS - order.length));
+    if (room.cup) room.cup.botChars = botChars;
+  }
+  const bots = botChars.filter((c) => !taken.has(c)).map((c) => ({ id: `bot-${c}`, character: c }));
   room.entrants = [
     ...order.map((p) => ({ id: p.id, character: p.character, name: p.name, bot: false })),
     ...bots.map((b) => ({ id: b.id, character: b.character, name: null, bot: true })),
