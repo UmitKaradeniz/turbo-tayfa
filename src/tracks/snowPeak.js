@@ -48,6 +48,18 @@ export default {
 
   // Kısayol: doğu tırmanışını atlayıp doğrudan zirveye çıkan sıkışmış kar yolu. Kar yavaşlatır;
   // buz tahtaları turbo verir, ortada item kutuları var.
+  hillReach: 130,
+  // Dağ-bayır: tırmanış ve iniş virajlarında yol içe yatar, buz bölgesinden önce kar tümsekleri var
+  bank: [
+    { f: [0.17, 0.21], deg: 8 },
+    { f: [0.25, 0.29], deg: 8 },
+    { f: [0.41, 0.48], deg: 10 },
+    { f: [0.75, 0.78], deg: 10 },
+    { f: [0.8, 0.84], deg: 10 },
+    { f: [0.89, 0.92], deg: 9 },
+  ],
+  bumps: [{ f: [0.525, 0.575], amp: 0.8, period: 30 }],
+
   shortcuts: [
     {
       id: 'iceCut',
