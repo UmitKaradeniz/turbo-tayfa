@@ -33,7 +33,7 @@ export default {
     [54, 75, 6],
     [28, 101, 4.6],
     [-12, 157, 2.2],
-    [-81, 180, 0.5],
+    [-81, 180, -0.25], // dere geçidi: yol suyun altında kalır (hız %10 düşer)
     [-129, 133, 0.8], // vadi tabanı (bataklık), tırmanış başlıyor
     [-120, 57, 7],
     [-92, 9, 12.5],
@@ -54,7 +54,7 @@ export default {
   bumps: [{ f: [0.455, 0.505], amp: 1.6, period: 30 }, { f: [0.8, 0.93], amp: 1.6, period: 34 }], // 1. sırt zirvesinde atlayış, 2. dinozor izi
 
   // Zemin bölgeleri: ana yolda zorunlu bataklık
-  zones: [{ type: 'mud', f: [0.3, 0.34], lateral: [-8, 8] }],
+  zones: [{ type: 'mud', f: [0.322, 0.352], lateral: [-8, 8] }],
 
   hazards: [
     // Yamaçlardan yuvarlanan kayalar

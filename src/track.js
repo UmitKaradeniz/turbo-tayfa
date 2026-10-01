@@ -342,7 +342,9 @@ export function buildTrack(def) {
         const base = c.y + c.lateral * c.roll;
         const y = a <= hw ? base : base + (a - hw < curb * 0.35 ? 0.07 : THREE.MathUtils.lerp(0.07, -0.12, (a - hw - curb * 0.35) / (curb * 0.65)));
         const hz = a <= hw && zones.length ? zoneAt(c.index, c.lateral) : null;
-        return { y, normal: _n, surface: hz ? hz.surface : a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: hz?.pad ?? null, speed: hz?.speed ?? null, grip: hz?.grip ?? null, bounce: hz?.bounce ?? 0 };
+        // Su taşan yol (su seviyesi y=0): suyun içinden geçmek hızı %10 keser
+        const flooded = !def.noWater && y < 0.1;
+        return { y, normal: _n, surface: flooded && !hz ? 'water' : hz ? hz.surface : a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: hz?.pad ?? null, speed: hz ? hz.speed : flooded ? 0.9 : null, grip: hz?.grip ?? null, bounce: hz?.bounce ?? 0 };
       }
       const y = terrain.heightAt(pos.x, pos.z);
       terrain.normalAt(pos.x, pos.z, _n);
