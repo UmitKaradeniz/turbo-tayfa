@@ -68,6 +68,10 @@ export default {
 
   // Kısayol: krater çukurunu rampayla aşan Ay tozu yolu. Düşük yerçekiminde atlayış uzun sürer,
   // ama yeterli hız gerekir; yetmezse kratere düşüp girişe dönersin. Turbo tahtaları ve item kutuları var.
+  // Dağ-bayır: düşük yerçekiminde krater kenarı tümsekleri uzun atlayışlar yaptırır; uzun virajlarda yol içe yatar
+  bank: [{ f: [0.72, 0.75], deg: 8 }, { f: [0.91, 0.99], deg: 8 }],
+  bumps: [{ f: [0.36, 0.5], amp: 1.1, period: 42 }],
+
   shortcuts: [
     {
       id: 'craterLeap',
