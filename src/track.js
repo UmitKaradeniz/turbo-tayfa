@@ -11,11 +11,26 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
+// Tümsek/çukur dizisi: def.bumps = [{ f: [başlangıç, bitiş] (turun oranı), amp (m), period (m) }]
+function applyBumps(points, def, segLen) {
+  const count = points.length;
+  for (const b of def.bumps ?? []) {
+    const i0 = Math.round(b.f[0] * count);
+    const i1 = Math.round(b.f[1] * count);
+    const ramp = Math.max(4, Math.round((b.period / segLen) * 0.75));
+    for (let i = i0; i <= i1; i++) {
+      const env = smoothstep(i0, i0 + ramp, i) * smoothstep(i1, i1 - ramp, i);
+      points[((i % count) + count) % count].y += b.amp * Math.sin((2 * Math.PI * (i - i0) * segLen) / b.period) * env;
+    }
+  }
+}
+
 // Sadece orta çizgi (menüdeki pist küçük resmi için; zemin üretmez)
 export function trackOutline(def) {
   const curve = new THREE.CatmullRomCurve3(def.control.map(([x, z, y]) => new THREE.Vector3(x, y, z)), true, 'centripetal');
   const count = Math.round(curve.getLength() / 2.5);
   const centerline = curve.getSpacedPoints(count).slice(0, count);
+  applyBumps(centerline, def, curve.getLength() / count);
   const rights = centerline.map((p, i) => {
     const f = centerline[(i + 1) % count].clone().sub(centerline[(i - 1 + count) % count]).setY(0).normalize();
     return f.cross(UP).normalize();
@@ -38,17 +53,7 @@ export function buildTrack(def) {
   const count = Math.round(length / 2.5);
   const segLen = length / count;
   const points = curve.getSpacedPoints(count).slice(0, count);
-  // Tümsek/çukur dizisi: def.bumps = [{ f: [başlangıç, bitiş], amp (m), period (m) }]
-  const at0 = (i) => ((i % count) + count) % count;
-  for (const b of def.bumps ?? []) {
-    const i0 = Math.round(b.f[0] * count);
-    const i1 = Math.round(b.f[1] * count);
-    const ramp = Math.max(4, Math.round((b.period / segLen) * 0.75));
-    for (let i = i0; i <= i1; i++) {
-      const env = smoothstep(i0, i0 + ramp, i) * smoothstep(i1, i1 - ramp, i);
-      points[at0(i)].y += b.amp * Math.sin((2 * Math.PI * (i - i0) * segLen) / b.period) * env;
-    }
-  }
+  applyBumps(points, def, segLen);
   const forwards = [];
   const rights = [];
   for (let i = 0; i < count; i++) {
@@ -148,6 +153,14 @@ export function buildTrack(def) {
       if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
     }
     return inside;
+  }
+
+  // Kısayol giriş/çıkışında yatık viraj yok (bağlantı düzgün kalsın)
+  for (const sd of def.shortcuts ?? []) {
+    for (const p of [sd.points[0], sd.points[sd.points.length - 1]]) {
+      const ci = closest(p[0], p[1]).index;
+      for (let k = -14; k <= 14; k++) rolls[at(ci + k)] *= smoothstep(4, 14, Math.abs(k));
+    }
   }
 
   const group = new THREE.Group();

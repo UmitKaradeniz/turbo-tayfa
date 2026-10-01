@@ -57,12 +57,12 @@ export function buildStreetLamps(ctx, { every = 8, skip = () => false } = {}) {
     const side = (i / every) % 2 ? 1 : -1;
     const base = ctx.along(i, side * (hw + track.def.curbWidth + 2.2));
     if (track.shortcutClearance(base.x, base.z) < 3 || skip(i)) continue;
-    const y = track.centerline[i].y;
+    const y = base.y;
     const head = ctx.along(i, side * (hw + track.def.curbWidth + 0.6));
     poles.push(new THREE.Matrix4().makeTranslation(base.x, y, base.z));
     heads.push(new THREE.Vector3(head.x, y + 7.6, head.z));
     const pool = ctx.along(i, side * hw * 0.3);
-    pools.push(new THREE.Matrix4().makeTranslation(pool.x, y + 0.045, pool.z));
+    pools.push(new THREE.Matrix4().makeTranslation(pool.x, pool.y + 0.045, pool.z));
   }
 
   const group = new THREE.Group();

@@ -38,6 +38,10 @@ export default {
     [-88, 86, 0.6],
   ],
 
+  // Dağ-bayır: tepe dönüşlerinde yol içe yatar, batı sahili düzlüğünde kumul dalgaları var
+  bank: [{ f: [0.17, 0.26], deg: 7 }, { f: [0.41, 0.5], deg: 8 }],
+  bumps: [{ f: [0.72, 0.84], amp: 0.45, period: 40 }],
+
   // Kısayol: firketeyi kesen dar bir kum yolu. Kumda kart yavaşlar; ama hız tahtaları ve
   // turbo (kumda yavaşlamaz) ile yol yarıya yakın kısalır. Ortasında bir sıra item kutusu var.
   shortcuts: [

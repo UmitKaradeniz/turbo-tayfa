@@ -76,6 +76,7 @@ export function buildDecor(track, decorate, density = 1) {
       return {
         x: p.x + r.x * lateral,
         z: p.z + r.z * lateral,
+        y: p.y + lateral * track.rolls[k], // yatık yolun o noktadaki yüksekliği
         forwardY: Math.atan2(f.x, f.z), // modelin +Z'si pist yönüne baksın
         acrossY: Math.atan2(-r.z, r.x), // modelin +X'i pistin sağına baksın
         faceTrackY: Math.atan2(-r.x * Math.sign(lateral), -r.z * Math.sign(lateral)), // +Z piste dönük

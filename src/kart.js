@@ -191,7 +191,7 @@ export class Kart {
         forward = Math.abs(forward) <= drag ? 0 : forward - Math.sign(forward) * drag;
       }
       if (boosting && forward < maxSpeed) forward = Math.min(maxSpeed, forward + KART.boostAccel * dt);
-      forward -= this.grade * SLOPE.gravityPull * dt;
+      forward -= this.grade * SLOPE.gravityPull * (track.def?.gravity ?? 1) * dt; // Ay'da çekim zayıf
       // Hız sınırının üstündeyse (kuma girince, turbo bitince) yumuşakça yavaşla
       if (forward > maxSpeed) forward = Math.max(maxSpeed, forward - KART.offroadDrag * dt);
       forward = Math.max(forward, -KART.maxReverse);
