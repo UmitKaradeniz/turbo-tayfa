@@ -29,19 +29,23 @@ export default {
     [-26, 147.7, 1], // başlangıç
     [-91.3, 108.8, 1],
     [-161.6, 58.8, 1.5],
-    [-147.7, -26, 2],
-    [-91.7, -64.2, 3],
-    [-73.1, -117, 4.5],
-    [-23.4, -166.4, 6],
-    [41.3, -144.2, 7],
-    [69.4, -95.5, 6],
-    [111.1, -74.9, 4], // kısayol girişi
+    [-147.7, -26, 3], // krater yamacına tırmanış
+    [-91.7, -64.2, 5],
+    [-73.1, -117, 8],
+    [-23.4, -166.4, 11],
+    [41.3, -144.2, 12.5], // krater kenarı (zirve)
+    [69.4, -95.5, 10], // kalderaya iniş
+    [111.1, -74.9, 6], // kısayol girişi
     [159.5, -28.1, 2.5],
     [135.2, 36.2, 1.5],
     [85.8, 72, 1], // kısayol çıkışı
     [65.7, 123.6, 1],
     [28.1, 159.5, 1],
   ],
+
+  hillReach: 110,
+  // Dağ-bayır: krater kenarı ve iniş virajlarında yol içe yatar
+  bank: [{ f: [0.14, 0.18], deg: 7 }, { f: [0.43, 0.49], deg: 10 }, { f: [0.68, 0.72], deg: 7 }, { f: [0.92, 0.96], deg: 7 }],
 
   // Kızgın zemin: yolun bir bölümünde parlayan çatlaklar kartı yavaşlatır (turbo varken yavaşlatmaz).
   // f: turun oranı, lateral: yolun solu (-) ile sağı (+) arasında metre.
@@ -61,6 +65,9 @@ export default {
     { type: 'geyser', f: 0.69, lateral: -3.5, radius: 4.2, period: 7, offset: 3 },
     { type: 'geyser', f: 0.8, lateral: 3.5, radius: 4.2, period: 8, offset: 0 },
     { type: 'geyser', f: 0.94, lateral: -3.5, radius: 4.2, period: 7, offset: 6 },
+    // Kalderaya inerken yamaçtan yuvarlanan kayalar
+    { type: 'ball', skin: 'rock', ballRadius: 2.4, f: 0.555, period: 11, offset: 2, dir: 1 },
+    { type: 'ball', skin: 'rock', ballRadius: 2.4, f: 0.66, period: 12, offset: 6, dir: -1 },
   ],
 
   // Kısayol: yanardağın eteğinden geçen toprak yol; ortasında lav nehrini aşan rampa var.
