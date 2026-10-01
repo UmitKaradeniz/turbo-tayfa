@@ -27,10 +27,10 @@ export default {
     [85, -150, 0.6],
     [165, -100, 0.9],
     [190, -30, 1.6],
-    [165, 40, 2.4],
-    [110, 70, 2.8],
-    [95, 125, 2.2],
-    [30, 165, 1.4],
+    [165, 40, 5.2], // şeker tepesi
+    [110, 70, 2],
+    [95, 125, 4.2], // ikinci tepe
+    [30, 165, 1.2],
     [-55, 160, 0.9],
     [-110, 130, 0.8], // kısayol girişi
     [-175, 100, 1.2],
@@ -73,6 +73,10 @@ export default {
   zones: [
     { type: 'honey', f: [0.255, 0.285], lateral: [-8, 2.5] },
   ],
+
+  // Dağ-bayır: dalgalı şeker tepeleri (control), tepeler arası virajda yatık yol, pasta kırıntısı tümsekleri
+  bank: [{ f: [0.34, 0.38], deg: 8 }],
+  bumps: [{ f: [0.48, 0.55], amp: 0.35, period: 18 }],
 
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
