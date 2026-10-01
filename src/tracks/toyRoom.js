@@ -27,10 +27,10 @@ export default {
     [-20, 140, 0.6], // başlangıç
     [95, 145, 0.6],
     [170, 115, 0.8],
-    [195, 50, 1.5],
-    [165, -15, 2.2],
-    [105, -40, 2.6],
-    [70, -85, 1.8],
+    [195, 50, 1.8], // yatak ve yastık tepeleri başlıyor
+    [165, -15, 4.5],
+    [105, -40, 2],
+    [70, -85, 5],
     [15, -125, 1],
     [-55, -115, 0.6],
     [-105, -70, 0.6], // kısayol girişi
@@ -74,6 +74,10 @@ export default {
     { type: 'carpet', f: [0.19, 0.23], lateral: [-8, 8] },
     { type: 'bounce', f: [0.245, 0.257], lateral: [-3.2, 3.2], color: '#ffd23f' },
   ],
+
+  // Dağ-bayır: yatak/yastık tepeleri (control), virajda hafif yatık yol, kapı yanında lego tümsekleri
+  bank: [{ f: [0.7, 0.74], deg: 6 }],
+  bumps: [{ f: [0.875, 0.925], amp: 0.3, period: 16 }],
 
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
