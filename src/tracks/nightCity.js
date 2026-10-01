@@ -61,6 +61,14 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: ıslak asfalt (hafif kaygan) ve yola serpilmiş neon hız şeritleri
+  zones: [
+    { type: 'boost', f: [0.08, 0.095], lateral: [-2.6, 2.6], color: '#3fe0ff' },
+    { type: 'wet', f: [0.21, 0.26], lateral: [-8, 8] },
+    { type: 'boost', f: [0.295, 0.31], lateral: [-6, -1.2], color: '#ff3fa4' },
+    { type: 'boost', f: [0.335, 0.35], lateral: [1.2, 6], color: '#ff3fa4' },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',

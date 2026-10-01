@@ -18,6 +18,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
 - 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 9 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
+- 🌿 Pistlere özgü zeminler: bataklık (Çam Vadisi), buz ve derin kar (Kar Zirvesi), sığ su (Palmiye), ıslak asfalt ve neon hız şeritleri (Neon), halı ve trambolin (Oyuncak Odası), bal (Şeker Diyarı), trambolin ve hız şeritleri (Lunapark, Ay)
 - 🎵 Her pistin kendi müziği var (Palmiye, Çam, Kar, Neon, Volkan, Ay); müzik yalnızca girilen pist için yüklenir
 - 🐾 24 sürücü: yarış sahası 8 kişidir (sen + 7 rakip), rakipleri menüdeki 🔀 düğmesiyle değiştirirsin
 - 🤖 Kişilikli botlar: agresif, temiz, kurnaz, dengeli, uykucu, geveze
@@ -154,6 +155,7 @@ yarışa kaldığı yerden devam eder.
 - **Oyuncak Odası:** Yolda zamanlı **dev plaj topları** var: çizgili uyarı şeridi yanıp sönünce top yolu bir yandan öbür yana yuvarlanır, çarptığı kart savrulur. Kısayol oyuncak sandığını rampayla aşar.
 - **Şeker Diyarı:** Yolda zamanlı **pembe şeker fıskiyeleri** var (Volkan'daki gayzerlerle aynı mantık: halka parlayınca fışkırır, içindeki kart savrulur). Kısayol çikolata nehrini rampayla aşar.
 - **Lunapark:** Yolda zamanlı **konfeti fıskiyeleri** var (mavi halka parlayınca fışkırır, içindeki kart savrulur). Kısayol ray boşluğunu rampayla aşar.
+- **Zeminler:** Yolda rengi farklı şeritler var. *Çamur/su/bal/halı/derin kar* kartı yavaşlatır (turbo varken yavaşlatmaz), *buz* ve *ıslak asfalt* tutuşu azaltır (kart kayar), *ok işaretli şerit* turbo verir, *halkalı pedler* kartı havaya fırlatır. Botlar yavaşlatan zeminlerden mümkünse kaçınır.
 - **Drift:** Virajda direksiyonu kırıp drift'e bas. Kıvılcımlar mavi → turuncu → mor
   oldukça bırakınca aldığın turbo uzar.
 - **Kısayollar:** Haritada sarı kesik çizgi olarak görünür. *Palmiye Koyu:* firketeyi kesen kum yolu kartı yavaşlatır (turbo varken yavaşlatmaz); ortadaki sarı **hız tahtasına** girersen turbo alırsın, yolun ortasında item kutuları da var. *Kar Zirvesi:* doğu tırmanışını atlayıp zirveye çıkan sıkışmış kar yolu; buz tahtaları turbo verir. *Neon Şehir:* binaların arasından geçen servis yolu; ortada kanalı aşan rampa var (Çam Vadisi'ndeki gibi yeterli hız gerekir). *Çam Vadisi:* inişteki S virajlarını kesen toprak yolda rampadan yeterli hızla (≈ 75 km/sa üstü) çıkarsan dereyi uçarak geçersin; yetmezse dereye düşüp kısayolun girişine dönersin. Botlar da kişiliklerine göre (kurnaz/agresif sık, temiz/uykucu nadiren) kısayolu kullanır.

@@ -68,6 +68,13 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: hız şeritleri ve hız treni trambolini
+  zones: [
+    { type: 'boost', f: [0.1, 0.115], lateral: [-2.6, 2.6], color: '#ff4f9a' },
+    { type: 'bounce', f: [0.68, 0.692], lateral: [-3.2, 3.2], color: '#ff4fd8' },
+    { type: 'boost', f: [0.71, 0.725], lateral: [-2.6, 2.6], color: '#ffd23f' },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['park-entrance', 'stall-drinks', 'stall-food', 'stall-information', 'station-gate', 'ride-entrance', 'coaster-steel-looping', 'coaster-steel-straight-hill-complete', 'coaster-wood-looping', 'coaster-mouse-looping', 'coaster-train', 'coaster-train-wooden', 'train-monorail', 'tree', 'tree-large', 'flowers', 'grass', 'bench', 'trash', 'support-large', 'coaster-steel-straight', 'coaster-wood-straight', 'coaster-monorail-looping', 'coaster-flume-looping'].map((k) => `coaster/${k}`),

@@ -1072,6 +1072,7 @@ function kartSound(kart, ev) {
     play('spin', { volume: vol * 0.7 });
   } else if (ev === 'blocked') play('shield_pop', { volume: vol });
   else if (ev === 'pad') play('turbo', { volume: vol * 0.7 });
+  else if (ev === 'bounce') play('item_land', { volume: vol * 0.8, rate: 1.3 });
 }
 
 // Dinamik çözünürlük: FPS düşükse piksel oranını azalt, yüksekse geri artır.

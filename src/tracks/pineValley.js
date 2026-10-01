@@ -58,6 +58,12 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: ana yolda zorunlu bataklık (2-3 sn yavaşlatır) ve ortada hız şeridi
+  zones: [
+    { type: 'mud', f: [0.24, 0.29], lateral: [-8, 8] },
+    { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',

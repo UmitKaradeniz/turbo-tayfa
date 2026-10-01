@@ -108,6 +108,15 @@ const FLAME = [new THREE.Color(1.9, 0.55, 0.08), new THREE.Color(1.7, 1.05, 0.2)
 const STAR = new THREE.Color(3.0, 2.6, 0.6);
 const BUBBLE = new THREE.Color(1.2, 2.4, 3.0);
 const EMBER = new THREE.Color(3.0, 1.1, 0.25);
+// Zemine göre tekerlerden fışkıran parçacıklar: çamur, su, bal, kar (duman) ve buz (parıltı)
+const SURF_FX = {
+  mud: { color: new THREE.Color(0.38, 0.26, 0.15), alpha: 0.7, up: 2.4, size: 0.7, rate: 40 },
+  water: { color: new THREE.Color(0.85, 0.93, 1), alpha: 0.6, up: 3.2, size: 0.6, rate: 45 },
+  honey: { color: new THREE.Color(0.95, 0.62, 0.12), alpha: 0.65, up: 1.6, size: 0.6, rate: 30 },
+  snowdrift: { color: new THREE.Color(0.97, 0.98, 1), alpha: 0.7, up: 2.2, size: 0.8, rate: 40 },
+  carpet: { color: new THREE.Color(0.8, 0.5, 0.45), alpha: 0.35, up: 1, size: 0.5, rate: 14 },
+};
+const ICE_SPARK = new THREE.Color(1.6, 2.2, 3.0);
 
 
 export function createKartEffects(scene, quality) {
@@ -152,6 +161,17 @@ export function createKartEffects(scene, quality) {
             _v.set((Math.random() - 0.5) * 3, 2.5 + Math.random() * 3, (Math.random() - 0.5) * 3);
             sparks.emit(_p, _v, { life: 0.4 + Math.random() * 0.3, size: 0.4, sizeEnd: 0.05, color: EMBER });
           }
+        } else if (SURF_FX[kart.surface] && kart.grounded && speed > 4) {
+          const f = SURF_FX[kart.surface];
+          if (Math.random() < f.rate * dt * rate) {
+            _v.set((Math.random() - 0.5) * 3, f.up * (0.6 + Math.random() * 0.8), (Math.random() - 0.5) * 3);
+            smoke.emit(_p, _v, { life: 0.7, size: f.size, sizeEnd: f.size * 3, color: f.color, alpha: f.alpha });
+          }
+        } else if (kart.surface === 'ice' && kart.grounded && speed > 6) {
+          if (Math.random() < 30 * dt * rate) {
+            _v.set((Math.random() - 0.5) * 2, 1.5 + Math.random() * 2, (Math.random() - 0.5) * 2);
+            sparks.emit(_p, _v, { life: 0.4, size: 0.3, sizeEnd: 0.05, color: ICE_SPARK });
+          }
         } else if ((kart.surface === 'sand' || kart.surface === 'dirt') && speed > 5 && kart.boostTime <= 0 && Math.random() < 25 * dt * rate) {
           _v.set((Math.random() - 0.5) * 2, 1 + Math.random() * 1.5, (Math.random() - 0.5) * 2);
           smoke.emit(_p, _v, { life: 0.7, size: 0.5, sizeEnd: 1.9, color: DUST, alpha: 0.4 });
@@ -176,6 +196,7 @@ export function createKartEffects(scene, quality) {
       _p.copy(kart.object.position).setY(kart.object.position.y + 1);
       if (name.startsWith('miniTurbo')) burst(_p, SPARK_COLORS[Number(name.slice(-1)) - 1], 18, 7, 4);
       else if (name === 'pad') burst(_p, SPARK_COLORS[1], 16, 8, 4);
+      else if (name === 'bounce') burst(_p.setY(_p.y - 0.4), SPARK_COLORS[2], 20, 7, 5);
       else if (name === 'hit') burst(_p.setY(_p.y + 1), STAR, 22, 6, 6, 0.5, 0.7);
       else if (name === 'blocked') burst(_p, BUBBLE, 30, 9, 3, 0.45, 0.5);
     },

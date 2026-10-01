@@ -64,6 +64,13 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: buzlu bölümler (kart kayar), sağ şeritte derin kar ve ikinci buz geçidi
+  zones: [
+    { type: 'ice', f: [0.58, 0.63], lateral: [-8, 8], grip: 0.3 },
+    { type: 'snow', f: [0.67, 0.72], lateral: [0.5, 8] },
+    { type: 'ice', f: [0.845, 0.88], lateral: [-8, 8], grip: 0.3 },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen',

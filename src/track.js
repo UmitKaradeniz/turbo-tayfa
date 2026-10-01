@@ -175,34 +175,56 @@ export function buildTrack(def) {
   decal.receiveShadow = true;
   group.add(decal);
 
-  // --- Kızgın zemin çatlakları (volkan): yolun bir kısmı kartı yavaşlatır, lav gibi parlar ---
-  // def.hotZones: [{ f: [başlangıç, bitiş] (turun oranı), lateral: [sol, sağ] (metre), speed }]
-  const hotZones = (def.hotZones ?? []).map((z) => ({
+  // --- Zemin bölgeleri: yolun bir kısmında farklı zemin (kızgın zemin, çamur, buz, su, bal, halı, hız şeridi, trambolin) ---
+  // def.zones: [{ type, f: [başlangıç, bitiş] (turun oranı), lateral: [sol, sağ] (metre), speed?, grip?, color? }]
+  // (eski def.hotZones: type 'hot' sayılır)
+  const ZONE_TYPES = {
+    hot: { surface: 'hot', speed: 0.72, bad: true },
+    mud: { surface: 'mud', speed: 0.55, bad: true },
+    water: { surface: 'water', speed: 0.68, bad: true },
+    honey: { surface: 'honey', speed: 0.42, bad: true },
+    carpet: { surface: 'carpet', speed: 0.78, bad: true },
+    snow: { surface: 'snowdrift', speed: 0.62, bad: true },
+    ice: { surface: 'ice', speed: 1, grip: 0.2, bad: true },
+    wet: { surface: 'ice', speed: 1, grip: 0.45, bad: true },
+    boost: { surface: 'road', pad: { boost: 0.9 }, bad: false },
+    bounce: { surface: 'road', bounce: 11, bad: false },
+  };
+  const zones = [...(def.hotZones ?? []).map((z) => ({ type: 'hot', ...z })), ...(def.zones ?? [])].map((z) => ({
+    type: z.type,
+    ...ZONE_TYPES[z.type],
     from: Math.round(z.f[0] * count),
     to: Math.round(z.f[1] * count),
     l0: Math.min(...z.lateral),
     l1: Math.max(...z.lateral),
-    speed: z.speed ?? 0.72,
+    ...(z.speed != null && { speed: z.speed }),
+    ...(z.grip != null && { grip: z.grip }),
+    color: z.color,
   }));
-  const hotAt = (index, lateral) => {
-    for (const z of hotZones) if (index >= z.from && index <= z.to && lateral >= z.l0 && lateral <= z.l1) return z;
+  const hotZones = zones.filter((z) => z.bad); // botların kaçındığı zeminler
+  const zoneAt = (index, lateral) => {
+    for (const z of zones) if (index >= z.from && index <= z.to && lateral >= z.l0 && lateral <= z.l1) return z;
     return null;
   };
-  const hotMeshes = hotZones.map((z) => {
+  const zoneMeshes = zones.map((z) => {
     const pts = [];
     const rts = [];
     for (let i = z.from; i <= z.to; i++) {
       pts.push(points[at(i)].clone().add(new THREE.Vector3(0, 0.03, 0)));
       rts.push(rights[at(i)]);
     }
-    const tex = crackTexture(z.l1 - z.l0, (z.to - z.from) * segLen);
-    const mesh = new THREE.Mesh(
-      ribbon(pts, rts, pts.length - 1, [[z.l0, 0], [z.l1, 0]], 1 / (pts.length - 1), null, false),
-      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, color: new THREE.Color(1.6, 1.3, 1.1), toneMapped: false }),
-    );
+    const glow = z.type === 'hot' || z.type === 'boost' || z.type === 'bounce';
+    const tex = z.type === 'hot' ? crackTexture(z.l1 - z.l0, (z.to - z.from) * segLen) : zoneTexture(z, z.l1 - z.l0, (z.to - z.from) * segLen);
+    const material = glow
+      ? new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, color: z.type === 'hot' ? new THREE.Color(1.6, 1.3, 1.1) : new THREE.Color(1.4, 1.4, 1.4), toneMapped: false })
+      : new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 });
+    const mesh = new THREE.Mesh(ribbon(pts, rts, pts.length - 1, [[z.l0, 0], [z.l1, 0]], 1 / (pts.length - 1), null, false), material);
+    mesh.receiveShadow = !glow;
+    mesh.userData.type = z.type;
     group.add(mesh);
     return mesh;
   });
+  const hotMeshes = zoneMeshes.filter((m) => m.userData.type === 'hot');
 
   // --- Kısayollar (orta çizgiden ayrılıp geri dönen ek yollar) ---
   const shortcuts = (def.shortcuts ?? []).map((sd, k) => buildShortcut(sd, k, { closest, edge, count }));
@@ -242,6 +264,7 @@ export function buildTrack(def) {
     closest,
     insideLoop,
     shortcuts,
+    zones,
     hotZones,
     hotMeshes,
 
@@ -285,8 +308,8 @@ export function buildTrack(def) {
         const r = rights[c.index];
         _n.crossVectors(r, f).normalize();
         const y = a <= hw ? c.y : c.y + (a - hw < curb * 0.35 ? 0.07 : THREE.MathUtils.lerp(0.07, -0.12, (a - hw - curb * 0.35) / (curb * 0.65)));
-        const hz = a <= hw && hotZones.length ? hotAt(c.index, c.lateral) : null;
-        return { y, normal: _n, surface: hz ? 'hot' : a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: null, speed: hz ? hz.speed : null };
+        const hz = a <= hw && zones.length ? zoneAt(c.index, c.lateral) : null;
+        return { y, normal: _n, surface: hz ? hz.surface : a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: hz?.pad ?? null, speed: hz?.speed ?? null, grip: hz?.grip ?? null, bounce: hz?.bounce ?? 0 };
       }
       const y = terrain.heightAt(pos.x, pos.z);
       terrain.normalAt(pos.x, pos.z, _n);
@@ -657,6 +680,135 @@ function crackTexture(width, length) {
   mask2.addColorStop(0, 'rgba(0,0,0,0)');
   mask2.addColorStop(0.06, 'rgba(0,0,0,1)');
   mask2.addColorStop(0.94, 'rgba(0,0,0,1)');
+  mask2.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = mask2;
+  g.fillRect(0, 0, w, h);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+// Zemin bölgesi dokuları (çamur, buz, su, bal, halı, hız şeridi, trambolin)
+function zoneTexture(z, width, length) {
+  const pxPerM = 10;
+  const w = Math.max(32, Math.round(width * pxPerM));
+  const h = Math.max(64, Math.round(length * pxPerM));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const g = canvas.getContext('2d');
+  let seed = 777 + z.from;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const blobs = (n, rMin, rMax, color) => {
+    for (let i = 0; i < n; i++) {
+      const x = rnd() * w;
+      const y = rnd() * h;
+      const r = rMin + rnd() * (rMax - rMin);
+      g.fillStyle = color;
+      g.beginPath();
+      g.ellipse(x, y, r, r * (0.5 + rnd() * 0.5), rnd() * 3, 0, Math.PI * 2);
+      g.fill();
+    }
+  };
+  if (z.type === 'mud') {
+    g.fillStyle = 'rgba(78,54,32,0.95)';
+    g.fillRect(0, 0, w, h);
+    blobs((w * h) / 1800, 8, 28, 'rgba(52,34,20,0.7)');
+    blobs((w * h) / 3500, 6, 16, 'rgba(120,90,56,0.45)');
+    blobs((w * h) / 5000, 10, 24, 'rgba(110,130,140,0.35)'); // su birikintileri
+  } else if (z.type === 'ice' || z.type === 'wet') {
+    const wet = z.type === 'wet';
+    g.fillStyle = wet ? 'rgba(40,60,110,0.38)' : 'rgba(205,235,255,0.6)';
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = wet ? 'rgba(180,210,255,0.5)' : 'rgba(255,255,255,0.75)';
+    g.lineWidth = 3;
+    for (let i = 0; i < (w * h) / 2500; i++) {
+      const x = rnd() * w;
+      const y = rnd() * h;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + (rnd() - 0.5) * 40, y + 20 + rnd() * 60);
+      g.stroke();
+    }
+    blobs((w * h) / 4000, 10, 30, wet ? 'rgba(160,200,255,0.25)' : 'rgba(255,255,255,0.35)');
+  } else if (z.type === 'water') {
+    g.fillStyle = 'rgba(60,150,220,0.62)';
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(210,240,255,0.7)';
+    g.lineWidth = 2.5;
+    for (let i = 0; i < (w * h) / 1500; i++) {
+      const x = rnd() * w;
+      const y = rnd() * h;
+      g.beginPath();
+      g.ellipse(x, y, 10 + rnd() * 16, 3 + rnd() * 4, 0, 0, Math.PI * 2);
+      g.stroke();
+    }
+  } else if (z.type === 'honey') {
+    g.fillStyle = 'rgba(232,148,28,0.86)';
+    g.fillRect(0, 0, w, h);
+    blobs((w * h) / 2500, 10, 30, 'rgba(255,200,80,0.5)');
+    blobs((w * h) / 4000, 6, 14, 'rgba(160,90,10,0.4)');
+  } else if (z.type === 'snow') {
+    g.fillStyle = 'rgba(246,250,255,0.95)';
+    g.fillRect(0, 0, w, h);
+    blobs((w * h) / 1600, 10, 30, 'rgba(255,255,255,1)');
+    blobs((w * h) / 2600, 8, 20, 'rgba(200,220,240,0.6)');
+  } else if (z.type === 'carpet') {
+    g.fillStyle = 'rgba(196,58,72,0.97)';
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(255,214,120,0.9)';
+    g.lineWidth = 3;
+    for (let x = -h; x < w + h; x += 26) {
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + h, h);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(x + h, 0);
+      g.lineTo(x, h);
+      g.stroke();
+    }
+  } else if (z.type === 'boost') {
+    g.fillStyle = 'rgba(10,14,40,0.8)';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = z.color ?? '#ffd23f';
+    for (let y = h - 14; y > 14; y -= 46) {
+      g.beginPath();
+      g.moveTo(w / 2, y - 26);
+      g.lineTo(w * 0.8, y + 4);
+      g.lineTo(w * 0.8, y + 18);
+      g.lineTo(w / 2, y - 8);
+      g.lineTo(w * 0.2, y + 18);
+      g.lineTo(w * 0.2, y + 4);
+      g.closePath();
+      g.fill();
+    }
+  } else if (z.type === 'bounce') {
+    g.fillStyle = 'rgba(40,10,70,0.7)';
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = z.color ?? '#ff4fd8';
+    g.lineWidth = 6;
+    const r = Math.min(w, h) * 0.38;
+    for (const k of [1, 0.66, 0.33]) {
+      g.beginPath();
+      g.arc(w / 2, h / 2, r * k, 0, Math.PI * 2);
+      g.stroke();
+    }
+  }
+  // Kenarlar yumuşakça kaybolsun
+  g.globalCompositeOperation = 'destination-in';
+  const mask = g.createLinearGradient(0, 0, w, 0);
+  mask.addColorStop(0, 'rgba(0,0,0,0)');
+  mask.addColorStop(0.1, 'rgba(0,0,0,1)');
+  mask.addColorStop(0.9, 'rgba(0,0,0,1)');
+  mask.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = mask;
+  g.fillRect(0, 0, w, h);
+  const mask2 = g.createLinearGradient(0, 0, 0, h);
+  mask2.addColorStop(0, 'rgba(0,0,0,0)');
+  mask2.addColorStop(0.05, 'rgba(0,0,0,1)');
+  mask2.addColorStop(0.95, 'rgba(0,0,0,1)');
   mask2.addColorStop(1, 'rgba(0,0,0,0)');
   g.fillStyle = mask2;
   g.fillRect(0, 0, w, h);

@@ -13,6 +13,9 @@ const SPIN_INPUT = { throttle: 0, brake: 0, steer: 0, drift: false };
 const _qYaw = new THREE.Quaternion();
 
 // Drift kademesi: kıvılcım rengi ve mini-turbo süresi buna göre (0 = yok)
+// Hızı kısan zeminler (hız oranı yüzeyden gelir; yoksa varsayılan)
+const SLOW_SURFACES = new Set(['sand', 'dirt', 'hot', 'mud', 'water', 'honey', 'carpet', 'snowdrift']);
+
 export function driftLevel(driftTime) {
   if (driftTime > KART.miniTurbo[2].after) return 3;
   if (driftTime > KART.miniTurbo[1].after) return 2;
@@ -32,6 +35,7 @@ export class Kart {
     this.groundNormal = UP.clone();
     this.surface = 'road';
     this.surfaceSpeed = null; // kısayolun kendi yüzey hız çarpanı (yoksa null)
+    this.surfaceGrip = 1; // buzlu zeminde < 1: kart kayar
     this.trackIndex = -1; // en yakın orta çizgi örneği (arama ipucu)
     this.pathIndex = -1; // yarış ilerlemesi için örnek (kısayolda sanal, bkz. track.groundAt)
     this.onShortcut = false;
@@ -151,7 +155,7 @@ export class Kart {
 
     // Kumda en yüksek hız düşer
     // Turbo varken kum yavaşlatmaz
-    const offroad = this.surface === 'sand' || this.surface === 'dirt' || this.surface === 'hot';
+    const offroad = SLOW_SURFACES.has(this.surface);
     const boosting = this.boostTime > 0;
     const maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : KART.maxSpeed;
 
@@ -177,7 +181,7 @@ export class Kart {
       // Yan kaymayı sönümle (drift'te daha az). Sönen yan hızın çoğu ileri hıza
       // aktarılır; böylece virajda ve drift'te kart hızını kaybetmez (arcade hissi).
       const before = lateral;
-      lateral *= Math.exp(-(this.drifting ? KART.driftGrip : KART.grip) * dt);
+      lateral *= Math.exp(-(this.drifting ? KART.driftGrip : KART.grip) * this.surfaceGrip * dt);
       if (forward > 0) {
         const gained = (before * before - lateral * lateral) * KART.slideKeep;
         forward = Math.min(Math.max(maxSpeed, forward), Math.sqrt(forward * forward + gained));
@@ -233,6 +237,13 @@ export class Kart {
       this.groundNormal.copy(g.normal);
       this.surface = g.surface;
       this.surfaceSpeed = g.speed ?? null;
+      this.surfaceGrip = g.grip ?? 1;
+      if (g.bounce) {
+        // Trambolin: kart havaya fırlar
+        this.velocity.y = g.bounce;
+        this.grounded = false;
+        this.events.push('bounce');
+      }
       if (g.pad) {
         if (this.boostTime < 0.3) this.events.push('pad');
         this.boost(g.pad.boost);

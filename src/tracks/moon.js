@@ -86,6 +86,12 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: ortada turbo şeridi ve krater trambolini (düşük yerçekiminde çok yükseğe atar)
+  zones: [
+    { type: 'boost', f: [0.268, 0.284], lateral: [-2.6, 2.6], color: '#3fa9ff' },
+    { type: 'bounce', f: [0.6, 0.615], lateral: [-3.2, 3.2], color: '#6fd0ff' },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen',

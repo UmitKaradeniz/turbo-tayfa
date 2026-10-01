@@ -57,6 +57,12 @@ export default {
   ],
 
   // Dekor listesindeki tüm modeller (yükleme ekranı bunları önceden yükler)
+  // Zemin bölgeleri: sığ su geçidi (yavaşlatır, sıçratır) ve ortada hız şeridi
+  zones: [
+    { type: 'water', f: [0.67, 0.715], lateral: [-8, 8] },
+    { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
     'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/lightPostModern',

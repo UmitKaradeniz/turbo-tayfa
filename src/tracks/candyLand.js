@@ -69,6 +69,11 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: sol şeritte yapışkan bal (çok yavaşlatır, sağdan kaçılır)
+  zones: [
+    { type: 'honey', f: [0.255, 0.285], lateral: [-8, 2.5] },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['cupcake', 'muffin', 'donut', 'donut-sprinkles', 'donut-chocolate', 'ice-cream', 'ice-cream-cup', 'sundae', 'lollypop', 'cake', 'cake-birthday', 'cookie', 'cookie-chocolate', 'candy-bar', 'popsicle', 'popsicle-chocolate', 'ginger-bread', 'strawberry', 'cherries', 'watermelon', 'pie', 'waffle', 'pancakes', 'pudding'].map((k) => `food/${k}`),

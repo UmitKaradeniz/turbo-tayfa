@@ -69,6 +69,12 @@ export default {
     },
   ],
 
+  // Zemin bölgeleri: halı (yavaşlatır) ve oyuncak trambolini
+  zones: [
+    { type: 'carpet', f: [0.19, 0.23], lateral: [-8, 8] },
+    { type: 'bounce', f: [0.245, 0.257], lateral: [-3.2, 3.2], color: '#ffd23f' },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['gate-finish', 'item-cone', 'vehicle-drag-racer', 'vehicle-monster-truck', 'vehicle-racer', 'vehicle-racer-low', 'vehicle-speedster', 'vehicle-suv', 'vehicle-truck', 'vehicle-vintage-racer', 'track-road-narrow-looping', 'supports'].map((k) => `toy/${k}`),

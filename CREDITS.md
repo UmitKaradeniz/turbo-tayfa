@@ -60,6 +60,7 @@ Motor ve drift kayma sesleri dosya değildir; tarayıcıda WebAudio ile kodla ü
 - Pist rotaları "Palmiye Koyu" ve "Çam Vadisi": özgün tasarım (`src/tracks/`)
 - Şeker Diyarı: pembe şeker fıskiyeleri aynı gayzer sisteminin renk paletiyle (`src/hazards.js`) kodla üretildi
 - Oyuncak Odası: yola yuvarlanan dev plaj topu tuzağı (`src/hazards.js`) ve turuncu oyuncak yolu dokusu (`src/track.js`) kodla üretildi
+- Zemin bölgeleri (çamur, buz, su, bal, halı, kar, hız şeridi, trambolin) dokuları kodla üretildi (`src/track.js`)
 - Ay Yolu: Dünya (gökyüzündeki küre), Ay kraterleri (arazi), düşük yerçekimi ve meteor yağmuru kodla üretildi (`src/environment.js`, `src/track.js`, `src/hazards.js`)
 - Volkan Adası: yanardağ (koni, lav akıntıları, patlama gösterisi), lav denizi shader'ı, kızgın zemin çatlakları dokusu, gayzerler, kül/kor yağışı: tamamı kodla üretildi (`src/volcano.js`, `src/hazards.js`, `src/environment.js`, `src/track.js`)
 - Item görselleri (Turbo Şişesi, Hindistan Cevizi, "?" item kutusu, Balon Kalkan, Yağ Lekesi): Kenney paketlerinde karşılığı olmadığı için kodla üretilen düşük poligonlu modeller ve canvas dokuları (`src/itemModels.js`)
