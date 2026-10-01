@@ -85,6 +85,16 @@ export function buildDecor(track, decorate, density = 1) {
     // Kısayolun s metresindeki nokta (yanal ofset: + sağ) ve yönler
     shortcutAt(sc, s, lateral = 0) {
       const p = sc.pointAt(s, lateral);
+      // Kısayol ana yola bağlandığı yerde nokta yolun içine düşebilir; kule gibi katı görünen
+      // nesneler yolda durup içinden geçilmesin diye en yakın yol kenarının dışına taşınır.
+      const c = track.closest(p.x, p.z);
+      if (c.dist < track.edge + 1.5) {
+        const side = Math.sign(c.lateral) || 1;
+        const cp = track.centerline[c.index];
+        const r = track.rights[c.index];
+        p.x = cp.x + r.x * side * (track.edge + 3);
+        p.z = cp.z + r.z * side * (track.edge + 3);
+      }
       return { ...p, acrossY: Math.atan2(-p.rz, p.rx), faceTrackY: Math.atan2(-p.rx * Math.sign(lateral || 1), -p.rz * Math.sign(lateral || 1)) };
     },
 
