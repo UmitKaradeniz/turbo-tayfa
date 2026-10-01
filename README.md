@@ -165,7 +165,7 @@ yarışa kaldığı yerden devam eder.
   oldukça bırakınca aldığın turbo uzar.
 - **Kısayollar:** Haritada sarı kesik çizgi olarak görünür. *Palmiye Koyu:* firketeyi kesen kum yolu kartı yavaşlatır (turbo varken yavaşlatmaz); ortadaki sarı **hız tahtasına** girersen turbo alırsın, yolun ortasında item kutuları da var. *Kar Zirvesi:* doğu tırmanışını atlayıp zirveye çıkan sıkışmış kar yolu; buz tahtaları turbo verir. *Neon Şehir:* binaların arasından geçen servis yolu; ortada kanalı aşan rampa var (Çam Vadisi'ndeki gibi yeterli hız gerekir). *Çam Vadisi:* inişteki S virajlarını kesen toprak yolda rampadan yeterli hızla (≈ 75 km/sa üstü) çıkarsan dereyi uçarak geçersin; yetmezse dereye düşüp kısayolun girişine dönersin. Botlar da kişiliklerine göre (kurnaz/agresif sık, temiz/uykucu nadiren) kısayolu kullanır.
 - **Roket kalkış:** Geri sayımda "BAŞLA!" yazısından hemen önce gaza bas.
-- Grafik kalitesi: **Ayarlar**'dan ya da adrese `?q=low`, `?q=medium`, `?q=high` ekleyerek.
+- Grafik kalitesi: varsayılan **Otomatik**. İlk açılışta ana menüde ~5 sn kare süresi ölçülür (yükleme takılmaları ve 30 FPS'e kilitli ekranlar sonucu bozmaz), sonra yarışlarda gerçek performansa bakılır: iki ayrı yarışta çözünürlük uzun süre düşük kalırsa bir kademe iner, art arda 4 yarış tam FPS'le geçerse bir kademe çıkar (bir sonraki açılışta uygulanır). Elle **Düşük/Orta/Yüksek** seçersen hiç değişmez; adrese `?q=low`, `?q=medium`, `?q=high` ekleyerek de zorlanabilir. Mantık: `src/autoQuality.js`.
 
 ---
 

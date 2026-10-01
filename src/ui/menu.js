@@ -301,7 +301,8 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       <div class="tt-card">
         <h2>Ayarlar</h2>
         <div class="tt-label">Grafik kalitesi</div>
-        <div class="tt-seg" data-q>${['low', 'medium', 'high'].map((q) => `<button data-v="${q}">${{ low: 'Düşük', medium: 'Orta', high: 'Yüksek' }[q]}</button>`).join('')}</div>
+        <div class="tt-seg" data-q>${['auto', 'low', 'medium', 'high'].map((q) => `<button data-v="${q}">${{ auto: 'Otomatik', low: 'Düşük', medium: 'Orta', high: 'Yüksek' }[q]}</button>`).join('')}</div>
+        <p class="q-info" style="font-size:13px;font-weight:700;opacity:.6;margin:6px 2px 0"></p>
         <p class="q-note" style="font-size:13px;font-weight:700;opacity:.6;margin:6px 2px 0;display:none">Kalite değişikliği sayfa yenilenince uygulanır.</p>
         <label class="tt-toggle">Kamera sarsıntısı<input type="checkbox" data-set="shake" /><span class="sw"></span></label>
         <label class="tt-toggle">FPS göstergesi<input type="checkbox" data-set="showFps" /><span class="sw"></span></label>
@@ -315,11 +316,15 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       </div>
     </div>`);
   document.body.appendChild(settingsModal);
-  let pendingQuality = QUALITY.name;
+  let pendingQuality = QUALITY.mode;
+  const TIER_NAMES = { low: 'Düşük', medium: 'Orta', high: 'Yüksek' };
   const syncQuality = () => {
     settingsModal.querySelectorAll('[data-q] button').forEach((b) => b.classList.toggle('on', b.dataset.v === pendingQuality));
-    settingsModal.querySelector('.q-note').style.display = pendingQuality !== QUALITY.name ? 'block' : 'none';
-    settingsModal.querySelector('[data-go="settings-done"]').textContent = pendingQuality !== QUALITY.name ? 'Kaydet ve yenile' : 'Tamam';
+    const changed = pendingQuality !== QUALITY.mode;
+    settingsModal.querySelector('.q-note').style.display = changed ? 'block' : 'none';
+    settingsModal.querySelector('[data-go="settings-done"]').textContent = changed ? 'Kaydet ve yenile' : 'Tamam';
+    const next = QUALITY.pendingTier && QUALITY.pendingTier !== QUALITY.name ? ` · sonraki açılışta: ${TIER_NAMES[QUALITY.pendingTier]}` : '';
+    settingsModal.querySelector('.q-info').textContent = pendingQuality === 'auto' ? `Cihaza göre ayarlanır · şu an: ${TIER_NAMES[QUALITY.name]}${next}` : '';
   };
   settingsModal.querySelector('[data-q]').addEventListener('click', (e) => {
     const b = e.target.closest('button');
@@ -449,12 +454,12 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       case 'settings':
         settingsFromPause = pause.classList.contains('show');
         pause.classList.remove('show');
-        pendingQuality = QUALITY.name;
+        pendingQuality = QUALITY.mode;
         syncQuality();
         settingsModal.classList.add('show');
         break;
       case 'settings-done':
-        if (pendingQuality !== QUALITY.name) {
+        if (pendingQuality !== QUALITY.mode) {
           saveQuality(pendingQuality);
           const url = new URL(location.href);
           url.searchParams.delete('q');

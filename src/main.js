@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PHYSICS_HZ, KART } from './config.js';
 import { QUALITY } from './quality.js';
+import { createAutoTuner } from './autoQuality.js';
 import { settings, DIFFICULTY } from './settings.js';
 import { readInput } from './input.js';
 import { loadModels, hasModels } from './assets.js';
@@ -58,12 +59,14 @@ const gpuName = (() => {
 // Hata raporları (sunucu loguna): yakalanmamış hatalar, WebGL kaybı, düşük FPS
 let lastFps = 0;
 initErrorReports();
-setReportContext(() => ({ track: trackDef?.id, quality: QUALITY.name, pixelRatio: pixelRatio.toFixed(2), fps: Math.round(lastFps), gpu: gpuName, mode: timeTrial ? 'timeTrial' : race ? 'race' : 'menu', online: !!online }));
+setReportContext(() => ({ track: trackDef?.id, quality: QUALITY.name + (QUALITY.auto ? '(auto)' : ''), pixelRatio: pixelRatio.toFixed(2), fps: Math.round(lastFps), gpu: gpuName, mode: timeTrial ? 'timeTrial' : race ? 'race' : 'menu', online: !!online }));
 renderer.domElement.addEventListener('webglcontextlost', () => reportIssue('webgl', 'context lost'));
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 1500);
 const postfx = createPostFX(renderer, scene, camera, QUALITY);
+// Otomatik kalite: sadece ana menüde, açık pencere/oda yokken sayfayı yeni seviyeyle yeniden başlatabilir
+const autoTuner = QUALITY.auto ? createAutoTuner({ canReload: () => !race && !online && !document.querySelector('.tt-modal.show') }) : null;
 
 // --- Yükleme: karakterler + seçili pistin modelleri (diğer pistler seçilince yüklenir) ---
 const loadingBar = document.querySelector('#loading .bar > div');
@@ -429,6 +432,7 @@ function setupRace(order, laps) {
   lastTotalRecord = false;
   hazards.reset();
   race = new Race(track, order, { laps, isOwned });
+  autoTuner?.raceReset();
   playMusic('race', trackDef.id);
   touch.show(isTouchDevice);
   if (isTouchDevice && innerHeight > innerWidth) menu.toast('Daha geniş görüş için telefonu yatay çevir ↻');
@@ -524,6 +528,7 @@ async function startOfflineRace(config) {
 }
 
 function showResults() {
+  autoTuner?.raceFinish();
   if (timeTrial) {
     const e = race.entryOf(player);
     const rec = recordOf(trackDef.id);
@@ -857,13 +862,14 @@ rig.update(1, focus, true);
 updateViewOffset();
 applyViewOffset(10);
 if (import.meta.env.DEV) {
-  window.__tt = { THREE, renderer, scene, camera, rig, karts, track, env, hud, menu, net, items, get race() { return race; }, get player() { return player; }, get online() { return online; } };
+  window.__tt = { THREE, renderer, scene, camera, rig, karts, track, env, hud, menu, net, items, QUALITY, autoTuner, get race() { return race; }, get player() { return player; }, get online() { return online; } };
 }
 
 // Tüm shader'ları önceden derle, ilk karede takılma olmasın
 renderer.compile(scene, camera);
 // Açılış ekranı en az 2.4 s görünsün (logo animasyonu ve yapımcı yazısı için)
 setTimeout(() => document.getElementById('loading').classList.add('done'), Math.max(0, 2400 - performance.now()));
+autoTuner?.markReady(Math.max(performance.now(), 2400));
 menu.showMain();
 
 // Sayfa yenilendiyse ve bir odadaysak geri bağlan; davet linkiyle geldiyse katılma penceresini aç
@@ -1025,6 +1031,7 @@ function frame(now) {
 
   postfx.render();
 
+  if (autoTuner && !race) autoTuner.menuFrame(dt, now, !paused && !online && !document.querySelector('.tt-modal.show'));
   fpsFrames++;
   fpsTime += dt;
   if (fpsTime >= 0.5) {
@@ -1082,6 +1089,7 @@ let fastTime = 0;
 let ratioCeiling = basePixelRatio;
 function adaptResolution(fps) {
   if (!race || paused || document.hidden) return;
+  if (race.started) autoTuner?.raceSample(fps, pixelRatio, basePixelRatio);
   slowTime = fps < 48 ? slowTime + 0.5 : 0;
   fastTime = fps > 58 ? fastTime + 0.5 : 0;
   let next = pixelRatio;
