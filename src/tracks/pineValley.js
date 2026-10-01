@@ -26,10 +26,10 @@ export default {
     [60, -108, 1.8],
     [110, -84, 3.2],
     [138, -40, 6],
-    [132, 6, 9], // tepeye tırmanış
-    [104, 42, 11],
-    [64, 54, 11],
-    [30, 34, 9.5], // iniş ve S virajları
+    [132, 6, 10.5], // tepeye tırmanış
+    [104, 42, 13.5],
+    [64, 54, 14], // zirve
+    [30, 34, 11.5], // iniş ve S virajları
     [6, 8, 8],
     [-24, 16, 7],
     [-42, 54, 6],
@@ -39,6 +39,11 @@ export default {
     [-148, -40, 1.6],
     [-120, -94, 1.4],
   ],
+
+  hillReach: 120, // yol yükseldikçe çevresindeki yamaç da yola kadar yükselir
+  // Dağ-bayır: inişteki S virajlarında yol içe yatar, orman düzlüğünde kök tümsekleri var
+  bank: [{ f: [0.5, 0.57], deg: 9 }, { f: [0.64, 0.74], deg: 10 }],
+  bumps: [{ f: [0.8, 0.92], amp: 0.5, period: 28 }],
 
   // Kısayol: tepeden inişteki S virajlarını kesen toprak yol. Rampadan (en az ~21 m/s ile) çıkan kart derenin
   // üzerinden uçar; yetmezse dereye düşüp son checkpoint'e döner. İniş alanında item kutuları var.
