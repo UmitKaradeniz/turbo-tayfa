@@ -25,12 +25,12 @@ export default {
     [-20, 150, 1], // başlangıç
     [100, 160, 1.5],
     [185, 95, 2.5], // kısayol girişi
-    [240, 58, 4],
-    [268, -10, 6],
-    [240, -84, 7],
-    [165, -115, 5], // kısayol çıkışı
-    [95, -135, 3],
-    [10, -140, 2],
+    [240, 58, 6], // zincir yokuşu: hız treninin tırmanışı
+    [268, -10, 10],
+    [240, -84, 14], // zirve
+    [165, -115, 6], // kısayol çıkışı (dik inişin ortası)
+    [95, -135, 1.8],
+    [10, -140, 1.5],
     [-70, -125, 1.5],
     [-135, -85, 1],
     [-185, -20, 1.5],
@@ -50,6 +50,11 @@ export default {
   })),
 
   // Kısayol: hız treni raylarının altından geçen yol; ortasında vagon boşluğunu aşan rampa var.
+  hillReach: 130,
+  // Hız treni: dik inişin virajında yol içe yatar, ardından iki deve hörgücü tümseği
+  bank: [{ f: [0.42, 0.52], deg: 8 }],
+  bumps: [{ f: [0.55, 0.65], amp: 1.3, period: 36 }],
+
   shortcuts: [
     {
       id: 'railLeap',
