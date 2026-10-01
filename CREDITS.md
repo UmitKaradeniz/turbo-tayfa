@@ -23,6 +23,7 @@ ile yayımlandı: ticari kullanım dahil serbest, atıf zorunlu değil. Yine de 
 | Furniture Kit | 2.0 | https://kenney.nl/assets/furniture-kit | CC0 1.0 | `bear`, `books`, `pillow*`, `bookcase*`, `bed*`, `lounge*`, `table*`, `desk`, `chair`, `lamp*`, `plantSmall1`, `pottedPlant`, `radio`, `speaker`, `television*`, `cardboardBox*`, `rug*`, `cabinetTelevision`, `sideTable`, `stoolBar` | Oyuncak Odası: dev eşyalar |
 | Toy Car Kit | 1.2 | https://kenney.nl/assets/toy-car-kit | CC0 1.0 | `gate-finish`, `item-cone`, `vehicle-*` (8 oyuncak araç), `track-road-narrow-looping`, `supports` (+ projede duran ama kullanılmayan `gate`, `item-coin-gold`, `track-road-wide-*`) | Oyuncak Odası: bitiş kapısı, koniler, araçlar, looping parçası |
 | Brick Kit | 1.0 | https://kenney.nl/assets/brick-kit | CC0 1.0 | `bevel-lq-brick-2x4/2x2/1x4/2x8/1x2/slope-2x2/1x1-round`, `bevel-lq-plate-2x8` | Oyuncak Odası: dev blok kuleleri (oyunda renklendirilir) |
+| Food Kit | 2.0 | https://kenney.nl/assets/food-kit | CC0 1.0 | `cupcake`, `muffin`, `donut(-sprinkles/-chocolate)`, `ice-cream(-cup)`, `sundae`, `lollypop`, `cake(-birthday)`, `cookie(-chocolate)`, `candy-bar`, `popsicle(-chocolate)`, `ginger-bread`, `strawberry`, `cherries`, `watermelon`, `pie`, `waffle`, `pancakes`, `pudding` | Şeker Diyarı: dev tatlılar |
 
 Not: Racing Kit reklam panolarındaki "TANKCO" logosu Kenney'in paket içindeki hayali markasıdır.
 
@@ -40,6 +41,7 @@ eski iOS Safari için ffmpeg ile üretilmiş MP3 kopyasıyla birlikte duruyor.
 | Robotic City V2 | Teh_Bucket | https://opengameart.org/content/robotic-city-v2 | CC0 1.0 | Neon Şehir yarış müziği (`music_nightCity`) |
 | Determined Pursuit (epic orchestra loop) | Tozan | https://opengameart.org/content/determined-pursuit-epic-orchestra-loop | CC0 1.0 | Volkan Adası yarış müziği (`music_volcano`) |
 | Happy Adventure (Loop) | fluffrabbit | https://opengameart.org/content/happy-adventure-loop | CC0 1.0 | Oyuncak Odası yarış müziği (`music_toyRoom`) |
+| Honey Bear (loop) | PotatoKing | https://opengameart.org/content/honey-bear | CC0 1.0 | Şeker Diyarı yarış müziği (`music_candyLand`) |
 | Fast Space Tune type | qubodup | https://opengameart.org/content/fast-space-tune-type | CC0 1.0 | Ay Yolu yarış müziği (`music_moon`) |
 | Feel Good Island Loop | AntumDeluge (Brandon Morris'in eserinden) | https://opengameart.org/content/feel-good-island-loop | CC0 1.0 (sayfada OGA-BY 3.0 ile çift lisans; CC0 seçildi) | Menü/lobi müziği (`music_menu`) |
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | Arayüz tıklama/seçim, item kutusu, rulet, tur, kalkan patlaması |
@@ -54,6 +56,7 @@ Motor ve drift kayma sesleri dosya değildir; tarayıcıda WebAudio ile kodla ü
 - Asfalt dokusu, başlangıç çizgisi / grid çıkartması, bordür renkleri: kodla üretilen canvas dokuları (`src/track.js`)
 - Ada zemini, deniz shader'ı, gökyüzü ve bulutlar: kodla üretildi (`src/track.js`, `src/environment.js`)
 - Pist rotaları "Palmiye Koyu" ve "Çam Vadisi": özgün tasarım (`src/tracks/`)
+- Şeker Diyarı: pembe şeker fıskiyeleri aynı gayzer sisteminin renk paletiyle (`src/hazards.js`) kodla üretildi
 - Oyuncak Odası: yola yuvarlanan dev plaj topu tuzağı (`src/hazards.js`) ve turuncu oyuncak yolu dokusu (`src/track.js`) kodla üretildi
 - Ay Yolu: Dünya (gökyüzündeki küre), Ay kraterleri (arazi), düşük yerçekimi ve meteor yağmuru kodla üretildi (`src/environment.js`, `src/track.js`, `src/hazards.js`)
 - Volkan Adası: yanardağ (koni, lav akıntıları, patlama gösterisi), lav denizi shader'ı, kızgın zemin çatlakları dokusu, gayzerler, kül/kor yağışı: tamamı kodla üretildi (`src/volcano.js`, `src/hazards.js`, `src/environment.js`, `src/track.js`)

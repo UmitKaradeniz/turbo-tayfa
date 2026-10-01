@@ -93,6 +93,12 @@ export function createHazards({ scene, track, fx, quality }) {
     const h = { d, style, index: i, pos, lateral: d.lateral ?? 0, ballPos: new THREE.Vector3(), radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
 
     h.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: d.type === 'ball' ? stripeTex : ringTex, color: style.ring, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, toneMapped: false }));
+    // Renk paleti (şeker diyarında pembe, lunaparkta konfeti): d.colors = { ring, column, ember, hot, smoke } (r,g,b dizileri)
+    if (d.colors) {
+      const C = (a) => (a ? new THREE.Color(...a) : null);
+      h.pal = { ring: C(d.colors.ring), column: C(d.colors.column), ember: C(d.colors.ember), hot: C(d.colors.hot), smoke: C(d.colors.smoke) };
+      if (h.pal.ring) h.ring.material.color.copy(h.pal.ring);
+    }
     h.ring.scale.setScalar(h.radius);
     h.ring.position.set(pos.x, pos.y + 0.06, pos.z);
     group.add(h.ring);
@@ -113,6 +119,7 @@ export function createHazards({ scene, track, fx, quality }) {
       group.add(h.ball);
     } else if (d.type === 'geyser') {
       h.column = new THREE.Mesh(colGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.7, 0.42, 0.06), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }));
+      if (h.pal?.column) h.column.material.color.copy(h.pal.column);
       h.column.position.copy(pos);
       h.column.visible = false;
       group.add(h.column);
@@ -142,8 +149,8 @@ export function createHazards({ scene, track, fx, quality }) {
       const rr = Math.random() * h.radius * 0.6;
       const p = new THREE.Vector3(h.pos.x + Math.cos(a) * rr, h.pos.y + 0.3, h.pos.z + Math.sin(a) * rr);
       const v = new THREE.Vector3((Math.random() - 0.5) * spread, up * (0.6 + Math.random() * 0.7), (Math.random() - 0.5) * spread);
-      fx.emitSpark(p, v, { life: 0.7 + Math.random() * 0.7, size: 0.4, sizeEnd: 0.06, color: Math.random() < 0.4 ? EMBER_HOT : EMBER });
-      if (Math.random() < 0.5) fx.emitSmoke(p, v.clone().multiplyScalar(0.45), { life: 1.4 + Math.random(), size: 1.0, sizeEnd: 4.2, color: ASH, alpha: 0.55 });
+      fx.emitSpark(p, v, { life: 0.7 + Math.random() * 0.7, size: 0.4, sizeEnd: 0.06, color: Math.random() < 0.4 ? (h.pal?.hot ?? EMBER_HOT) : (h.pal?.ember ?? EMBER) });
+      if (Math.random() < 0.5) fx.emitSmoke(p, v.clone().multiplyScalar(0.45), { life: 1.4 + Math.random(), size: 1.0, sizeEnd: 4.2, color: h.pal?.smoke ?? ASH, alpha: 0.55 });
     }
   }
 

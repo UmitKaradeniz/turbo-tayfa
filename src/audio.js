@@ -11,7 +11,7 @@ const SOUNDS = [
 ];
 const MUSIC = { menu: 'music_menu', race: 'music_race' };
 // Pist başına yarış müziği (dosya: music_<pist>); listede olmayan pist genel yarış müziğini çalar
-const TRACK_MUSIC = new Set(['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon', 'toyRoom']);
+const TRACK_MUSIC = new Set(['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon', 'toyRoom', 'candyLand']);
 
 const ext = (() => {
   const a = document.createElement('audio');
