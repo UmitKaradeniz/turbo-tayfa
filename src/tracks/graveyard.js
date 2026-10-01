@@ -32,12 +32,12 @@ export default {
     [-30, 150, 1], // başlangıç
     [70, 160, 1.5],
     [160, 130, 2.4],
-    [212, 60, 3.5],
-    [215, -25, 4.5],
-    [175, -95, 4],
-    [105, -135, 3],
-    [30, -125, 2],
-    [-30, -90, 1.4],
+    [212, 60, 4.5], // kilise tepesine tırmanış
+    [215, -25, 9.5], // kilise tepesi
+    [175, -95, 6.5],
+    [105, -135, 3.5],
+    [30, -125, 1.8],
+    [-30, -90, 1.3], // vadi tabanı (bataklık)
     [-95, -95, 1], // kısayol girişi
     [-170, -90, 1.2],
     [-232, -12, 2],
@@ -46,6 +46,11 @@ export default {
   ],
 
   // Zemin bölgeleri: gevşek mezar toprağı (yavaşlatır) ve mor hız şeridi
+  hillReach: 110,
+  // Dağ-bayır: kilise tepesi (control), inişte ve batı kıvrımında yatık yol, mezar toprağı tümsekleri
+  bank: [{ f: [0.38, 0.46], deg: 7 }, { f: [0.7, 0.78], deg: 6 }],
+  bumps: [{ f: [0.865, 0.925], amp: 0.4, period: 20 }],
+
   zones: [
     { type: 'mud', f: [0.505, 0.545], lateral: [-8, 8] },
     { type: 'boost', f: [0.36, 0.375], lateral: [-2.6, 2.6], color: '#b58cff' },
