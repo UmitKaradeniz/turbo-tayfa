@@ -7,9 +7,10 @@ import moon from './moon.js';
 import toyRoom from './toyRoom.js';
 import candyLand from './candyLand.js';
 import funfair from './funfair.js';
+import graveyard from './graveyard.js';
 
 // Tüm pistler. Yeni pist eklemek için tanım dosyasını buraya ekleyin.
-export const TRACKS = { palmCove, pineValley, snowPeak, nightCity, volcano, moon, toyRoom, candyLand, funfair };
+export const TRACKS = { palmCove, pineValley, snowPeak, nightCity, volcano, moon, toyRoom, candyLand, funfair, graveyard };
 
 // Turbo Kupası setleri: Kupa = ilk dört klasik pist, Büyük Kupa = hepsi
 export const CUP_SETS = { cup: ['palmCove', 'pineValley', 'snowPeak', 'nightCity'], bigCup: Object.keys(TRACKS) };

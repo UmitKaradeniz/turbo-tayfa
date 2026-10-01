@@ -18,7 +18,7 @@ export async function loadModels(keys, onProgress) {
   if (!todo.length) return onProgress?.(1);
   await Promise.all(
     todo.map(async (key) => {
-      const gltf = await loader.loadAsync(`/models/${key}.glb`);
+      const gltf = await loader.loadAsync(`/models/${key}.${key.startsWith('halloween/') ? 'gltf' : 'glb'}`); // KayKit paketi .gltf (dış .bin + doku) gelir
       gltf.scene.traverse((o) => {
         if (o.isMesh) {
           o.castShadow = true;

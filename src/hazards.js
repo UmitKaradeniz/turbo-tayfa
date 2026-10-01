@@ -77,6 +77,27 @@ function makeBall(radius, skin = 'beach') {
     wrap.add(car);
     wrap.userData.roller = new THREE.Group(); // araba yuvarlanmaz
     return wrap;
+  } else if (skin === 'ghost') {
+    // Hayalet: parlayan yarı saydam gövde, kuyruk ve siyah gözler; yuvarlanmaz, süzülür
+    const ghost = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color: 0xeaf6ff, emissive: 0x88b4ff, emissiveIntensity: 0.7, transparent: true, opacity: 0.88, roughness: 0.4 });
+    const body = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.85, 18, 12), mat);
+    body.scale.set(1, 1.15, 1);
+    body.position.y = radius * 0.9;
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(radius * 0.85, radius * 1.6, 14, 1, true), mat);
+    tail.position.y = radius * 0.1;
+    tail.rotation.x = Math.PI;
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0b0b18 });
+    for (const sz of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.13, 8, 6), eyeMat);
+      eye.position.set(radius * 0.72, radius * 1.05, sz * radius * 0.3);
+      ghost.add(eye);
+    }
+    ghost.add(body, tail);
+    ghost.position.y = -radius * 0.35;
+    wrap.add(ghost);
+    wrap.userData.roller = new THREE.Group();
+    return wrap;
   } else if (skin === 'rock') {
     const g = new THREE.IcosahedronGeometry(radius, 1);
     const pos = g.attributes.position;
@@ -256,7 +277,7 @@ export function createHazards({ scene, track, fx, quality }) {
             h.ball.visible = true;
             h.ball.position.set(h.ballPos.x, h.ballPos.y + h.ballR, h.ballPos.z);
             h.roller.rotation.z = -lat / h.ballR;
-            h.ball.rotation.y = Math.atan2(-h.right.z, h.right.x) + (h.d.skin === 'car' && h.dir < 0 ? Math.PI : 0);
+            h.ball.rotation.y = Math.atan2(-h.right.z, h.right.x) + ((h.d.skin === 'car' || h.d.skin === 'ghost') && h.dir < 0 ? Math.PI : 0);
             active = true;
           } else if (c >= warnStart) {
             const k = (c - warnStart) / S.warn;

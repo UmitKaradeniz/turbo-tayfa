@@ -12,11 +12,12 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
 - 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol
+- 👻 **Hayalet Mezarlığı:** sisli gece, mezar taşları, oyulmuş balkabakları; yolu kesen hayaletler, yeşil ruh sütunları ve mezar toprağı yolu
 - 🎡 **Lunapark:** hız treni halkaları, tezgâhlar, konfeti fıskiyeleri ve ray boşluğunu aşan kısayol
 - 🍭 **Şeker Diyarı:** dev kekler, donutlar, lolipoplar; çikolata yol, pembe şeker fıskiyeleri ve çikolata nehrini aşan kısayol
 - 🧸 **Oyuncak Odası:** dev bir odada kanepeler, kitaplıklar, blok kuleleri; yolu kesen dev plaj topları ve kutulardan geçen kısayol
 - 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
-- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 9 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
+- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 10 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
 - 🪵 Hareketli tehlikeler: yuvarlanan kütükler (Çam Vadisi), çığ topları (Kar Zirvesi), yolu kesen trafik (Neon Şehir), dev plaj topları (Oyuncak Odası)
 - 🌿 Pistlere özgü zeminler: bataklık (Çam Vadisi), buz ve derin kar (Kar Zirvesi), sığ su (Palmiye), ıslak asfalt ve neon hız şeritleri (Neon), halı ve trambolin (Oyuncak Odası), bal (Şeker Diyarı), trambolin ve hız şeritleri (Lunapark, Ay)
@@ -150,7 +151,7 @@ yarışa kaldığı yerden devam eder.
 - **Zamana Karşı:** Hızlı Yarış → Mod: *Zamana Karşı*. Bot ve item yok; en iyi turun
   yarı saydam bir hayalet olarak seninle yarışır. Rekorlar bu tarayıcıda saklanır.
 
-- **Turbo Kupası / Büyük Kupa:** Hızlı Yarış / oda lobisi → Mod: *Kupa* (Palmiye Koyu → Çam Vadisi → Kar Zirvesi → Neon Şehir) ya da *Büyük Kupa* (tüm pistler, Volkan Adası, Ay Yolu, Oyuncak Odası, Şeker Diyarı ve Lunapark dahil). Puanlar 15-12-10-8-6-4-2-1; her yarış sonunda puan tablosu çıkar, çevrimiçide **Sonraki Pist**'i oda sahibi başlatır. En çok puanı toplayan kupayı kazanır.
+- **Turbo Kupası / Büyük Kupa:** Hızlı Yarış / oda lobisi → Mod: *Kupa* (Palmiye Koyu → Çam Vadisi → Kar Zirvesi → Neon Şehir) ya da *Büyük Kupa* (tüm pistler, Volkan Adası, Ay Yolu, Oyuncak Odası, Şeker Diyarı, Lunapark ve Hayalet Mezarlığı dahil). Puanlar 15-12-10-8-6-4-2-1; her yarış sonunda puan tablosu çıkar, çevrimiçide **Sonraki Pist**'i oda sahibi başlatır. En çok puanı toplayan kupayı kazanır.
 - **Volkan Adası:** Yolda zamanlı **gayzerler** var: halka kızarıp yanıp sönünce kor fışkırır, içindeki kart savrulur; halkanın yanından geç. Parlayan **kızgın zemin çatlakları** kartı yavaşlatır (turbo varken yavaşlatmaz). Kısayol lav nehrini rampayla aşar; yetmezse lava düşüp girişe dönersin.
 - **Ay Yolu:** Yerçekimi yaklaşık yarıya iner; kart süzülür, rampalardan uzağa uçar, havadayken direksiyon az etki eder. Zamanlı **meteorlar**: yolda kırmızı uyarı halkası büyür, sonra meteor düşer ve halkadaki kart savrulur. Kısayol krater çukurunu rampayla aşar (yeterli hız gerekir); turbo tahtaları ve item kutuları var.
 - **Oyuncak Odası:** Yolda zamanlı **dev plaj topları** var: çizgili uyarı şeridi yanıp sönünce top yolu bir yandan öbür yana yuvarlanır, çarptığı kart savrulur. Kısayol oyuncak sandığını rampayla aşar.
