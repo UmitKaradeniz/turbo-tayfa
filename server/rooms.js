@@ -21,7 +21,7 @@ const CHARACTERS = [
   'fox', 'penguin', 'panda', 'tiger', 'bunny', 'monkey', 'koala', 'parrot',
   'cat', 'dog', 'lion', 'elephant', 'giraffe', 'cow', 'pig', 'hog', 'chick', 'crab', 'deer', 'bee', 'caterpillar', 'polar', 'beaver', 'fish',
 ]; // istemcideki src/kartModel.js ile aynı kimlikler
-const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon'];
+const TRACKS = ['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon', 'toyRoom'];
 // Turbo Kupası setleri (istemcideki src/tracks/index.js ile aynı olmalı)
 const CUP_SETS = { cup: ['palmCove', 'pineValley', 'snowPeak', 'nightCity'], bigCup: TRACKS };
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // karışan 0/O, 1/I yok

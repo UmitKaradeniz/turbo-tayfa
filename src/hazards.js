@@ -15,7 +15,48 @@ const DUST = new THREE.Color(0.75, 0.72, 0.7);
 const STYLE = {
   geyser: { ring: new THREE.Color(1.7, 0.36, 0.05), warn: 1.6, burst: 1.0, hit: 0.75, tall: 11 },
   meteor: { ring: new THREE.Color(1.0, 0.1, 0.08), warn: 2.2, fall: 0.6, hit: 0.5, impact: 0.7 },
+  // Oyuncak odasında yolu baştan başa kesen dev top: önce yolun üstünde çizgili uyarı şeridi yanıp söner
+  ball: { ring: new THREE.Color(1.5, 0.35, 0.1), warn: 2.0, cross: 1.5 },
 };
+
+function stripeTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(255,255,255,0.22)';
+  g.fillRect(0, 0, 64, 64);
+  g.fillStyle = 'rgba(255,255,255,0.95)';
+  for (let k = -64; k < 128; k += 32) {
+    g.beginPath();
+    g.moveTo(k, 64);
+    g.lineTo(k + 16, 64);
+    g.lineTo(k + 16 + 64, 0);
+    g.lineTo(k + 64, 0);
+    g.closePath();
+    g.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+// Dev plaj topu: renkli dilimli küre
+function makeBall(radius) {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 128;
+  const g = c.getContext('2d');
+  const cols = ['#ff4b4b', '#ffffff', '#ffd23f', '#ffffff', '#3f8cff', '#ffffff'];
+  cols.forEach((col, i) => {
+    g.fillStyle = col;
+    g.fillRect((i * 256) / cols.length, 0, 256 / cols.length + 1, 128);
+  });
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 16), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45 }));
+  m.castShadow = true;
+  return m;
+}
 
 function ringTexture() {
   const c = document.createElement('canvas');
@@ -38,6 +79,7 @@ export function createHazards({ scene, track, fx, quality }) {
   const n = track.count;
   const group = new THREE.Group();
   const ringTex = ringTexture();
+  const stripeTex = stripeTexture();
   const ringGeo = new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2);
   const colGeo = new THREE.CylinderGeometry(0.55, 0.85, 1, 14, 1, true).translate(0, 0.5, 0);
   const hazards = [];
@@ -48,14 +90,28 @@ export function createHazards({ scene, track, fx, quality }) {
     const r = track.rights[i];
     const pos = new THREE.Vector3(c.x + r.x * (d.lateral ?? 0), c.y, c.z + r.z * (d.lateral ?? 0));
     const style = STYLE[d.type];
-    const h = { d, style, index: i, pos, lateral: d.lateral ?? 0, radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
+    const h = { d, style, index: i, pos, lateral: d.lateral ?? 0, ballPos: new THREE.Vector3(), radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
 
-    h.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: ringTex, color: style.ring, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, toneMapped: false }));
+    h.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: d.type === 'ball' ? stripeTex : ringTex, color: style.ring, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, toneMapped: false }));
     h.ring.scale.setScalar(h.radius);
     h.ring.position.set(pos.x, pos.y + 0.06, pos.z);
     group.add(h.ring);
 
-    if (d.type === 'geyser') {
+    if (d.type === 'ball') {
+      // Top yolun sağ vektörü boyunca bir yandan öbür yana yuvarlanır
+      h.right = track.rights[i];
+      h.span = track.def.halfWidth + (d.overshoot ?? 8);
+      h.dir = d.dir ?? 1;
+      h.ballR = d.ballRadius ?? 2.6;
+      h.radius = h.ballR + 0.9; // isabet yarıçapı
+      const rot = Math.atan2(-h.right.z, h.right.x);
+      h.ring.rotation.y = rot;
+      h.ring.scale.set(h.span, 1, 2.6);
+      h.ring.material.map.repeat.set(h.span / 2.2, 1.4);
+      h.ball = makeBall(h.ballR);
+      h.ball.visible = false;
+      group.add(h.ball);
+    } else if (d.type === 'geyser') {
       h.column = new THREE.Mesh(colGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.7, 0.42, 0.06), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }));
       h.column.position.copy(pos);
       h.column.visible = false;
@@ -133,6 +189,24 @@ export function createHazards({ scene, track, fx, quality }) {
             } else ring = 0.16 + 0.05 * Math.sin(time * 2 + h.index); // sönmüş çatlak, hafif kızıl parıltı
           }
           if (!(c >= warnStart && c < burstStart)) h.ring.scale.setScalar(h.radius);
+        } else if (h.d.type === 'ball') {
+          const crossStart = h.period - S.cross;
+          const warnStart = crossStart - S.warn;
+          h.ball.visible = false;
+          if (c >= crossStart) {
+            const u = (c - crossStart) / S.cross;
+            ring = 0.35;
+            const lat = h.dir * (-h.span + 2 * h.span * u);
+            h.ballPos.set(h.pos.x - h.lateral * h.right.x + h.right.x * lat, h.pos.y, h.pos.z - h.lateral * h.right.z + h.right.z * lat);
+            h.ball.visible = true;
+            h.ball.position.set(h.ballPos.x, h.ballPos.y + h.ballR, h.ballPos.z);
+            h.ball.rotation.z = -lat / h.ballR;
+            h.ball.rotation.y = Math.atan2(-h.right.z, h.right.x);
+            active = true;
+          } else if (c >= warnStart) {
+            const k = (c - warnStart) / S.warn;
+            ring = 0.25 + 0.6 * k + 0.25 * Math.sin(k * k * 60);
+          } else ring = 0;
         } else {
           // Meteor: önce yere düşen uyarı halkası, sonra yukarıdan çarpma, ardından duman
           const fallStart = h.period - S.fall;
@@ -178,14 +252,15 @@ export function createHazards({ scene, track, fx, quality }) {
         if (!active) continue;
         for (const kart of karts) {
           if (!kart.active || !owned(kart)) continue;
-          const dx = kart.position.x - h.pos.x;
-          const dz = kart.position.z - h.pos.z;
+          const hp = h.d.type === 'ball' ? h.ballPos : h.pos;
+          const dx = kart.position.x - hp.x;
+          const dz = kart.position.z - hp.z;
           if (dx * dx + dz * dz > h.radius * h.radius) continue;
           if (Math.abs(kart.position.y - h.pos.y) > 3.5) continue;
           const key = `${hazards.indexOf(h)}:${cycle}`;
           if (hitMemo.get(kart) === key) continue;
           hitMemo.set(kart, key);
-          kart.velocity.y = Math.max(kart.velocity.y, h.d.type === 'geyser' ? 9 : 6);
+          kart.velocity.y = Math.max(kart.velocity.y, h.d.type === 'geyser' ? 9 : h.d.type === 'ball' ? 7 : 6);
           kart.grounded = false;
           kart.spinOut();
         }
@@ -197,6 +272,7 @@ export function createHazards({ scene, track, fx, quality }) {
       if (((driver?.phase ?? 0) % 1) < 0.25) return lane; // dikkatsiz bot
       const hw = track.def.halfWidth - 1.6;
       for (const h of hazards) {
+        if (h.d.type === 'ball') continue; // top yolu baştan başa keser, şerit değiştirmek kurtarmaz
         const ahead = (h.index - idx + n) % n;
         if (ahead > 28) continue;
         if (Math.abs(lane - h.lateral) < h.radius + 1.6) {

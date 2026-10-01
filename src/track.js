@@ -133,14 +133,15 @@ export function buildTrack(def) {
       [-hw, 0],
       [hw, 0],
     ], segLen / 16),
-    new THREE.MeshStandardMaterial({ map: asphaltTexture(), roughness: 0.92 }),
+    new THREE.MeshStandardMaterial({ map: asphaltTexture(def.roadStyle), roughness: 0.92 }),
   );
   road.receiveShadow = true;
   group.add(road);
 
   // --- Bordürler (yoldan hafif yüksek, dışa doğru kuma iner) ---
   const curbMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75, flatShading: true });
-  const stripe = (i) => (i % 2 ? 0xffffff : 0xe23b36);
+  const curbColors = def.roadStyle?.curbs ?? [0xffffff, 0xe23b36];
+  const stripe = (i) => (i % 2 ? curbColors[0] : curbColors[1]);
   for (const side of [-1, 1]) {
     const profile = side < 0
       ? [[-hw - curb, -0.12], [-hw - curb * 0.35, 0.07], [-hw, 0.07]]
@@ -520,18 +521,19 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
 }
 
 // --- Prosedürel dokular ---
-function asphaltTexture() {
+function asphaltTexture(style = {}) {
+  const { base = '#5b606b', blotchDark = '40,44,52', blotchLight = '110,116,126', line = '#f4f4f0' } = style;
   const w = 256;
   const h = 512;
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#5b606b';
+  ctx.fillStyle = base;
   ctx.fillRect(0, 0, w, h);
   // Hafif lekeler ve tanecikler
   for (let i = 0; i < 60; i++) {
-    ctx.fillStyle = `rgba(${Math.random() < 0.5 ? '40,44,52' : '110,116,126'},${0.05 + Math.random() * 0.06})`;
+    ctx.fillStyle = `rgba(${Math.random() < 0.5 ? blotchDark : blotchLight},${0.05 + Math.random() * 0.06})`;
     ctx.beginPath();
     ctx.ellipse(Math.random() * w, Math.random() * h, 10 + Math.random() * 40, 10 + Math.random() * 60, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -542,7 +544,7 @@ function asphaltTexture() {
     ctx.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5);
   }
   // Kenar çizgileri
-  ctx.fillStyle = '#f4f4f0';
+  ctx.fillStyle = line;
   ctx.fillRect(w * 0.025, 0, w * 0.022, h);
   ctx.fillRect(w * 0.953, 0, w * 0.022, h);
   const tex = new THREE.CanvasTexture(canvas);
