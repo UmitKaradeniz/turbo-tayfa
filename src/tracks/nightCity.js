@@ -24,23 +24,27 @@ export default {
     [-5.8, 133.4, 1],
     [70.2, 116.4, 1],
     [107.2, 86.1, 1],
-    [119.8, 59.4, 1.2],
-    [124.9, 24.4, 1.5],
-    [141.9, -13.3, 1.5],
-    [143.8, -61.4, 1.5],
-    [130.1, -96, 1],
+    [119.8, 59.4, 3], // şehir tepesi: yokuş çıkış
+    [124.9, 24.4, 5.5],
+    [141.9, -13.3, 5],
+    [143.8, -61.4, 3],
+    [130.1, -96, 1.2],
     [82.8, -112.7, 1],
     [21.4, -108.5, 1],
     [7.6, -98.9, 1.2],
-    [-29.2, -35.2, 1.4],
-    [-57.2, -31.5, 1.5],
-    [-99.9, -70, 1.5],
+    [-29.2, -35.2, 2.4], // küçük tepe
+    [-57.2, -31.5, 3.4],
+    [-99.9, -70, 2.4],
     [-122.4, -76.2, 1],
     [-163.8, -52.3, 1],
     [-163.2, 26.9, 1],
     [-128.9, 57.1, 1],
     [-110, 95, 1],
   ],
+
+  hillReach: 60, // bina bloklarının altındaki zemin yola kadar yükselmesin; sadece yol çevresi
+  // Şehir tepeleri: viraj çıkışlarında yol hafif içe yatar
+  bank: [{ f: [0.37, 0.4], deg: 6 }, { f: [0.58, 0.64], deg: 6 }, { f: [0.74, 0.78], deg: 6 }],
 
   // Kısayol: binaların arasından geçen dar servis yolu. Ortasında kanalı aşan bir rampa var: yeterli hızla
   // çıkmazsan kanala düşersin. İniş alanında item kutuları var.
