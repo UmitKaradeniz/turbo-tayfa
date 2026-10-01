@@ -24,6 +24,7 @@ ile yayımlandı: ticari kullanım dahil serbest, atıf zorunlu değil. Yine de 
 | Toy Car Kit | 1.2 | https://kenney.nl/assets/toy-car-kit | CC0 1.0 | `gate-finish`, `item-cone`, `vehicle-*` (8 oyuncak araç), `track-road-narrow-looping`, `supports` (+ projede duran ama kullanılmayan `gate`, `item-coin-gold`, `track-road-wide-*`) | Oyuncak Odası: bitiş kapısı, koniler, araçlar, looping parçası |
 | Brick Kit | 1.0 | https://kenney.nl/assets/brick-kit | CC0 1.0 | `bevel-lq-brick-2x4/2x2/1x4/2x8/1x2/slope-2x2/1x1-round`, `bevel-lq-plate-2x8` | Oyuncak Odası: dev blok kuleleri (oyunda renklendirilir) |
 | Food Kit | 2.0 | https://kenney.nl/assets/food-kit | CC0 1.0 | `cupcake`, `muffin`, `donut(-sprinkles/-chocolate)`, `ice-cream(-cup)`, `sundae`, `lollypop`, `cake(-birthday)`, `cookie(-chocolate)`, `candy-bar`, `popsicle(-chocolate)`, `ginger-bread`, `strawberry`, `cherries`, `watermelon`, `pie`, `waffle`, `pancakes`, `pudding` | Şeker Diyarı: dev tatlılar |
+| Coaster Kit | 1.0 | https://kenney.nl/assets/coaster-kit | CC0 1.0 | `park-entrance`, `stall-drinks/food/information`, `station-gate`, `ride-entrance`, `coaster-steel/wood/mouse/monorail/flume-looping`, `coaster-steel-straight-hill-complete`, `coaster-train(-wooden)`, `train-monorail`, `tree(-large)`, `flowers`, `grass`, `bench`, `trash` (+ projede duran ama kullanılmayan `support-large`, `coaster-*-straight`, `coaster-steel-corner-large`, `queue-straight`) | Lunapark: giriş, hız treni halkaları, tezgâhlar, trenler, ağaçlar |
 
 Not: Racing Kit reklam panolarındaki "TANKCO" logosu Kenney'in paket içindeki hayali markasıdır.
 
@@ -42,6 +43,7 @@ eski iOS Safari için ffmpeg ile üretilmiş MP3 kopyasıyla birlikte duruyor.
 | Determined Pursuit (epic orchestra loop) | Tozan | https://opengameart.org/content/determined-pursuit-epic-orchestra-loop | CC0 1.0 | Volkan Adası yarış müziği (`music_volcano`) |
 | Happy Adventure (Loop) | fluffrabbit | https://opengameart.org/content/happy-adventure-loop | CC0 1.0 | Oyuncak Odası yarış müziği (`music_toyRoom`) |
 | Honey Bear (loop) | PotatoKing | https://opengameart.org/content/honey-bear | CC0 1.0 | Şeker Diyarı yarış müziği (`music_candyLand`) |
+| Summer Park - 8bit tune (loop) | qubodup | https://opengameart.org/content/summer-park-8bit-tune-loop | CC0 1.0 | Lunapark yarış müziği (`music_funfair`) |
 | Fast Space Tune type | qubodup | https://opengameart.org/content/fast-space-tune-type | CC0 1.0 | Ay Yolu yarış müziği (`music_moon`) |
 | Feel Good Island Loop | AntumDeluge (Brandon Morris'in eserinden) | https://opengameart.org/content/feel-good-island-loop | CC0 1.0 (sayfada OGA-BY 3.0 ile çift lisans; CC0 seçildi) | Menü/lobi müziği (`music_menu`) |
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | Arayüz tıklama/seçim, item kutusu, rulet, tur, kalkan patlaması |
