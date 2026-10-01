@@ -27,36 +27,42 @@ export default {
   water: { shallow: 0x7ee0b8, deep: 0x2a8f7e },
   light: { hemiSky: 0xfff0d0, hemiGround: 0x7a9a50, hemi: 1.05, sun: 0xfff0d6, sunI: 2.8, sunDir: [-0.45, 0.65, 0.4], glow: 0xffe9bc, fogNear: 200, fogFar: 740 },
   control: [
-    [179, 46, 2.2],
-    [110, 75, 3.6],
-    [54, 75, 4],
-    [28, 101, 3],
-    [-12, 157, 1.4],
-    [-81, 180, 0.4],
-    [-129, 133, 0.8],
-    [-120, 57, 2.2],
-    [-92, 9, 3.6],
-    [-102, -26, 3.9],
-    [-123, -67, 2.9], // kısayol girişi
-    [-115, -161, 1.4],
-    [-50, -178, 0.4],
-    [13, -128, 0.8], // kısayol çıkışı
-    [38, -84, 2.3],
-    [73, -75, 3.6],
-    [142, -68, 3.9],
-    [197, -20, 2.9],
+    // Yükseklik profili: start düzlüğü (7 m) → göl çanağına iniş → Dev Sırt tırmanışı (16 m) → dik iniş → dinozor izi tümsekleri
+    [179, 46, 7],
+    [110, 75, 6.8],
+    [54, 75, 6],
+    [28, 101, 4.6],
+    [-12, 157, 2.2],
+    [-81, 180, 0.5],
+    [-129, 133, 0.8], // vadi tabanı (bataklık), tırmanış başlıyor
+    [-120, 57, 7],
+    [-92, 9, 12.5],
+    [-102, -26, 15], // sırt zirvesi
+    [-123, -67, 13.5], // kısayol girişi
+    [-115, -161, 3.5],
+    [-50, -178, 1.2],
+    [13, -128, 1], // kısayol çıkışı
+    [38, -84, 1.6],
+    [73, -75, 2.2],
+    [142, -68, 3.2],
+    [197, -20, 5],
   ],
+  hillReach: 150, // yol yükseldikçe çevresindeki yamaç da yola kadar yükselir
+  // Uzun virajlarda yol içe yatar (iç kenar alçalır)
+  bank: [{ f: [0.2, 0.32], deg: 7 }, { f: [0.58, 0.71], deg: 11 }],
+  // Son düzlükte art arda çukur-tümsek ("dinozor izi")
+  bumps: [{ f: [0.455, 0.505], amp: 1.6, period: 30 }, { f: [0.8, 0.93], amp: 1.6, period: 34 }], // 1. sırt zirvesinde atlayış, 2. dinozor izi
 
   // Zemin bölgeleri: ana yolda zorunlu bataklık
-  zones: [{ type: 'mud', f: [0.395, 0.435], lateral: [-8, 8] }],
+  zones: [{ type: 'mud', f: [0.3, 0.34], lateral: [-8, 8] }],
 
   hazards: [
     // Yamaçlardan yuvarlanan kayalar
     { type: 'ball', skin: 'rock', ballRadius: 2.6, f: 0.08, period: 12, offset: 3, dir: 1 },
-    { type: 'ball', skin: 'rock', ballRadius: 2.6, f: 0.3, period: 11, offset: 7, dir: -1 },
+    { type: 'ball', skin: 'rock', ballRadius: 2.6, f: 0.27, period: 11, offset: 7, dir: -1 },
     { type: 'ball', skin: 'rock', ballRadius: 2.6, f: 0.9, period: 12, offset: 1, dir: 1 },
     // Dinozor ayak darbeleri: halka kızarır, toprak ve toz fışkırır
-    ...[0.22, 0.36, 0.6, 0.67, 0.84].map((f, k) => ({
+    ...[0.22, 0.41, 0.6, 0.67, 0.84].map((f, k) => ({
       type: 'geyser',
       f,
       lateral: k % 2 ? 3.5 : -3.5,

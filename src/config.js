@@ -47,6 +47,18 @@ export const KART = {
   spinDuration: 1.3,
 };
 
+// Eğim: yokuşta en yüksek hız düşer ve kart geri çekilir, inişte hız sınırı aşılır.
+// grade = yükselme / ilerleme (0.10 = %10 yokuş). Düz pistte etkisiz.
+export const SLOPE = {
+  gravityPull: 38, // eğim başına m/s² (yokuşta yavaşlatır, inişte hızlandırır)
+  upLoss: 1.5, // yokuşta hız sınırı çarpanı = 1 - grade * upLoss
+  upMin: 0.8,
+  downGain: 2.0, // inişte hız sınırı çarpanı = 1 + (-grade) * downGain
+  downMax: 1.22,
+  crestHop: 2.6, // m/s: havalanırken eklenen dikey hız
+  crestG: 0.7, // yol, serbest düşüşün bu oranından hızlı alçalırsa (tepe/tümsek) kart havalanır
+};
+
 export const CAMERA = {
   distance: 7.2,
   height: 3.4,

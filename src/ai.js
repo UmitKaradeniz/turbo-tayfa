@@ -1,4 +1,5 @@
 import { KART } from './config.js';
+import { slopeSpeedMul } from './kart.js';
 
 // Bot sürücü: orta çizgide ileriye bakan bir hedef noktayı kovalar; keskin
 // virajlarda drift atıp mini-turbo alır, item kutularına yönelir, item kullanır
@@ -102,7 +103,8 @@ export function driveInput(driver, kart, track, dt, ctx = null) {
   const cornerLimit = Math.min(1, radius / 40 + 0.55);
   // Uykucu: ilk turlarda yavaş, son turda uyanır
   const skill = p.sleepy ? driver.skill + (progress < 0.34 ? -0.05 : progress > 0.66 ? 0.05 : 0) : driver.skill;
-  const target = KART.maxSpeed * skill * cornerLimit;
+  const downhill = kart.grade < -0.04;
+  const target = KART.maxSpeed * skill * cornerLimit * (downhill ? 1 : slopeSpeedMul(kart.grade));
 
   // Drift: keskin virajda viraj yönüne drift at, viraj bitince bırak (mini-turbo)
   const turnDir = Math.sign(err) || 1;
@@ -118,7 +120,7 @@ export function driveInput(driver, kart, track, dt, ctx = null) {
 
   const input = {
     throttle: speed < target || kart.boostTime > 0 ? 1 : 0,
-    brake: 0,
+    brake: downhill && speed > target + 5 ? 0.7 : 0, // inişte köşe öncesi frenle
     steer: Math.max(-1, Math.min(1, err * 2.6)),
     drift: driver.drifting,
     useItem: false,

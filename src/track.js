@@ -38,6 +38,17 @@ export function buildTrack(def) {
   const count = Math.round(length / 2.5);
   const segLen = length / count;
   const points = curve.getSpacedPoints(count).slice(0, count);
+  // Tümsek/çukur dizisi: def.bumps = [{ f: [başlangıç, bitiş], amp (m), period (m) }]
+  const at0 = (i) => ((i % count) + count) % count;
+  for (const b of def.bumps ?? []) {
+    const i0 = Math.round(b.f[0] * count);
+    const i1 = Math.round(b.f[1] * count);
+    const ramp = Math.max(4, Math.round((b.period / segLen) * 0.75));
+    for (let i = i0; i <= i1; i++) {
+      const env = smoothstep(i0, i0 + ramp, i) * smoothstep(i1, i1 - ramp, i);
+      points[at0(i)].y += b.amp * Math.sin((2 * Math.PI * (i - i0) * segLen) / b.period) * env;
+    }
+  }
   const forwards = [];
   const rights = [];
   for (let i = 0; i < count; i++) {
@@ -57,6 +68,19 @@ export function buildTrack(def) {
     const angle = Math.acos(Math.min(1, (a.x * b.x + a.z * b.z) / Math.hypot(a.x, a.z) / Math.hypot(b.x, b.z)));
     turnRadius.push(angle < 1e-4 ? Infinity : (6 * segLen) / angle);
     innerSide.push(cross < 0 ? -1 : 1); // sol dönüşte iç taraf = -sağ
+  }
+
+  // --- Yatık virajlar: def.bank = [{ f: [başlangıç, bitiş] (turun oranı), deg }] ---
+  // rolls[i] = yanal eğim (yükselme / yanal mesafe, + sağ kenar yüksek). Viraj iç kenarı alçalır.
+  const rolls = new Float32Array(count);
+  for (const b of def.bank ?? []) {
+    const i0 = Math.round(b.f[0] * count);
+    const i1 = Math.round(b.f[1] * count);
+    let side = 0;
+    for (let i = i0; i <= i1; i++) side += innerSide[at(i)];
+    const ramp = Math.max(6, Math.round((i1 - i0) * 0.3));
+    const tanA = Math.tan((b.deg * Math.PI) / 180) * (side >= 0 ? -1 : 1);
+    for (let i = i0; i <= i1; i++) rolls[at(i)] += tanA * smoothstep(i0, i0 + ramp, i) * smoothstep(i1, i1 - ramp, i);
   }
 
   // --- En yakın orta çizgi noktası (hint verilirse sadece çevresine bakar) ---
@@ -110,6 +134,7 @@ export function buildTrack(def) {
       x: px,
       z: pz,
       y: a.y + (b.y - a.y) * bt,
+      roll: rolls[bi] + (rolls[bi + 1 < count ? bi + 1 : 0] - rolls[bi]) * bt,
       lateral: (x - px) * r.x + (z - pz) * r.z,
       dist: Math.sqrt(best),
     };
@@ -132,7 +157,7 @@ export function buildTrack(def) {
     ribbon(points, rights, count, [
       [-hw, 0],
       [hw, 0],
-    ], segLen / 16),
+    ], segLen / 16, null, true, rolls),
     new THREE.MeshStandardMaterial({ map: asphaltTexture(def.roadStyle), roughness: 0.92 }),
   );
   road.receiveShadow = true;
@@ -146,7 +171,7 @@ export function buildTrack(def) {
     const profile = side < 0
       ? [[-hw - curb, -0.12], [-hw - curb * 0.35, 0.07], [-hw, 0.07]]
       : [[hw, 0.07], [hw + curb * 0.35, 0.07], [hw + curb, -0.12]];
-    const mesh = new THREE.Mesh(ribbon(points, rights, count, profile, 0, stripe), curbMat);
+    const mesh = new THREE.Mesh(ribbon(points, rights, count, profile, 0, stripe, true, rolls), curbMat);
     mesh.receiveShadow = true;
     group.add(mesh);
   }
@@ -156,14 +181,16 @@ export function buildTrack(def) {
   const decalSegs = Math.round(decalLen / segLen);
   const decalPoints = [];
   const decalRights = [];
+  const decalRolls = [];
   for (let k = decalSegs; k >= 0; k--) {
     decalPoints.push(points[at(-k + 2)].clone().add(new THREE.Vector3(0, 0.015, 0)));
     decalRights.push(rights[at(-k + 2)]);
+    decalRolls.push(rolls[at(-k + 2)]);
   }
   const decalLength = decalSegs * segLen;
   const gridSlotDist = (k) => 10 + Math.floor(k / 2) * 7 + (k % 2) * 3.5;
   const decal = new THREE.Mesh(
-    ribbon(decalPoints, decalRights, decalPoints.length - 1, [[-hw, 0], [hw, 0]], 1 / (decalPoints.length - 1), null, false),
+    ribbon(decalPoints, decalRights, decalPoints.length - 1, [[-hw, 0], [hw, 0]], 1 / (decalPoints.length - 1), null, false, decalRolls),
     new THREE.MeshStandardMaterial({
       map: startDecalTexture(hw, decalLength, 2 * segLen, gridSlotDist),
       transparent: true,
@@ -209,7 +236,9 @@ export function buildTrack(def) {
   const zoneMeshes = zones.map((z) => {
     const pts = [];
     const rts = [];
+    const rls = [];
     for (let i = z.from; i <= z.to; i++) {
+      rls.push(rolls[at(i)]);
       pts.push(points[at(i)].clone().add(new THREE.Vector3(0, 0.03, 0)));
       rts.push(rights[at(i)]);
     }
@@ -218,7 +247,7 @@ export function buildTrack(def) {
     const material = glow
       ? new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, color: z.type === 'hot' ? new THREE.Color(1.6, 1.3, 1.1) : new THREE.Color(1.4, 1.4, 1.4), toneMapped: false })
       : new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3 });
-    const mesh = new THREE.Mesh(ribbon(pts, rts, pts.length - 1, [[z.l0, 0], [z.l1, 0]], 1 / (pts.length - 1), null, false), material);
+    const mesh = new THREE.Mesh(ribbon(pts, rts, pts.length - 1, [[z.l0, 0], [z.l1, 0]], 1 / (pts.length - 1), null, false, rls), material);
     mesh.receiveShadow = !glow;
     mesh.userData.type = z.type;
     group.add(mesh);
@@ -246,6 +275,7 @@ export function buildTrack(def) {
   }
 
   const _n = new THREE.Vector3();
+  const _tr = new THREE.Vector3();
 
   return {
     def,
@@ -259,6 +289,7 @@ export function buildTrack(def) {
     forwards,
     rights,
     innerSide,
+    rolls,
     turnRadius,
     checkpoints,
     closest,
@@ -306,8 +337,10 @@ export function buildTrack(def) {
       if (a <= hw + curb) {
         const f = forwards[c.index];
         const r = rights[c.index];
-        _n.crossVectors(r, f).normalize();
-        const y = a <= hw ? c.y : c.y + (a - hw < curb * 0.35 ? 0.07 : THREE.MathUtils.lerp(0.07, -0.12, (a - hw - curb * 0.35) / (curb * 0.65)));
+        if (c.roll) _n.crossVectors(_tr.set(r.x, c.roll, r.z), f).normalize();
+        else _n.crossVectors(r, f).normalize();
+        const base = c.y + c.lateral * c.roll;
+        const y = a <= hw ? base : base + (a - hw < curb * 0.35 ? 0.07 : THREE.MathUtils.lerp(0.07, -0.12, (a - hw - curb * 0.35) / (curb * 0.65)));
         const hz = a <= hw && zones.length ? zoneAt(c.index, c.lateral) : null;
         return { y, normal: _n, surface: hz ? hz.surface : a <= hw ? 'road' : 'curb', index: c.index, pathIndex: c.index, shortcut: false, ramp: null, pad: hz?.pad ?? null, speed: hz?.speed ?? null, grip: hz?.grip ?? null, bounce: hz?.bounce ?? 0 };
       }
@@ -364,7 +397,7 @@ export function buildTrack(def) {
 
 // Orta çizgiye paralel şerit. profile: [[yanal ofset, yükseklik], ...] soldan sağa.
 // colorAt verilirse her segment düz renk alır; verilmezse UV üretilir (u: enine, v: segment başına vPerSeg).
-function ribbon(points, rights, segments, profile, vPerSeg, colorAt = null, closed = true) {
+function ribbon(points, rights, segments, profile, vPerSeg, colorAt = null, closed = true, rolls = null) {
   const pos = [];
   const uv = [];
   const col = [];
@@ -373,7 +406,7 @@ function ribbon(points, rights, segments, profile, vPerSeg, colorAt = null, clos
     const p = points[i];
     const r = rights[i];
     const [off, h] = profile[k];
-    return [p.x + r.x * off, p.y + h, p.z + r.z * off];
+    return [p.x + r.x * off, p.y + h + (rolls ? off * rolls[i] : 0), p.z + r.z * off];
   };
   const w0 = profile[0][0];
   const w1 = profile[profile.length - 1][0];
@@ -453,11 +486,11 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
         h = s > 0 ? Math.min(1.1, s * 0.09) + dune(x, z) * smoothstep(0, 30, s) : Math.max(-6, s * 0.2);
       }
       // Yolun yüksekliğine doğru tepecikler
-      h += Math.max(0, c.y - 0.6 - baseH) * smoothstep(90, 20, c.dist) * smoothstep(-5, 10, Math.min(sOuter, sPond));
+      h += Math.max(0, c.y - 0.6 - baseH) * smoothstep(def.hillReach ?? 90, 20, c.dist) * smoothstep(-5, 10, Math.min(sOuter, sPond));
 
       // Yol çevresini yolun yüksekliğine düzle (kenar şeridi)
       const w = 1 - smoothstep(edge + 1.5, edge + 16, c.dist);
-      h = THREE.MathUtils.lerp(h, c.y - 0.15, w);
+      h = THREE.MathUtils.lerp(h, c.y + Math.max(-edge, Math.min(edge, c.lateral)) * c.roll - 0.15, w);
 
       // Ay kraterleri: yola yaklaşmadan önce kaybolan çanak + yükselmiş kenar (def.craters: { x, z, r, depth })
       let craterShade = 0;
@@ -477,7 +510,7 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
       for (const sc of shortcuts) {
         const q = sc.sample(x, z);
         if (!q) continue;
-        h = THREE.MathUtils.lerp(h, q.bed, q.w);
+        h = THREE.MathUtils.lerp(h, q.bed, q.w * smoothstep(edge, edge + 4, c.dist)); // ana yolun kenarını kısayol yatağına gömme
         if (q.path > pathMix) {
           pathMix = q.path;
           pathTint = q.tint;

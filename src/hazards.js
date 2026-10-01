@@ -156,7 +156,7 @@ export function createHazards({ scene, track, fx, quality }) {
     const i = Math.round(d.f * n) % n;
     const c = track.centerline[i];
     const r = track.rights[i];
-    const pos = new THREE.Vector3(c.x + r.x * (d.lateral ?? 0), c.y, c.z + r.z * (d.lateral ?? 0));
+    const pos = new THREE.Vector3(c.x + r.x * (d.lateral ?? 0), c.y + (d.lateral ?? 0) * (track.rolls[i] ?? 0), c.z + r.z * (d.lateral ?? 0));
     const style = STYLE[d.type];
     const h = { d, style, index: i, pos, lateral: d.lateral ?? 0, ballPos: new THREE.Vector3(), radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
 

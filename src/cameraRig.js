@@ -97,7 +97,7 @@ export class CameraRig {
     }
 
     // Hız hissi için FOV
-    const speedRatio = Math.min(1, Math.max(0, kart.speed) / KART.maxSpeed);
+    const speedRatio = Math.min(1.15, Math.max(0, kart.speed) / KART.maxSpeed); // inişte ve turboda sınırı aşar
     this.setFov(CAMERA.baseFov + (CAMERA.maxFov - CAMERA.baseFov) * speedRatio * speedRatio, dt, instant);
   }
 

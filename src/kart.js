@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { KART } from './config.js';
+import { KART, SLOPE } from './config.js';
 import { createKartModel } from './kartModel.js';
 
 // Arcade kart fiziği. Gerçek bir fizik motoru yok: hız vektörü, yön açısı
@@ -11,10 +11,16 @@ const _right = new THREE.Vector3();
 const _q = new THREE.Quaternion();
 const SPIN_INPUT = { throttle: 0, brake: 0, steer: 0, drift: false };
 const _qYaw = new THREE.Quaternion();
+const _probe = new THREE.Vector3();
 
 // Drift kademesi: kıvılcım rengi ve mini-turbo süresi buna göre (0 = yok)
 // Hızı kısan zeminler (hız oranı yüzeyden gelir; yoksa varsayılan)
 const SLOW_SURFACES = new Set(['sand', 'dirt', 'hot', 'mud', 'water', 'honey', 'carpet', 'snowdrift']);
+
+// Eğime (grade, + yokuş) göre hız sınırı çarpanı
+export function slopeSpeedMul(grade) {
+  return grade >= 0 ? Math.max(SLOPE.upMin, 1 - grade * SLOPE.upLoss) : Math.min(SLOPE.downMax, 1 - grade * SLOPE.downGain);
+}
 
 export function driftLevel(driftTime) {
   if (driftTime > KART.miniTurbo[2].after) return 3;
@@ -36,6 +42,8 @@ export class Kart {
     this.surface = 'road';
     this.surfaceSpeed = null; // kısayolun kendi yüzey hız çarpanı (yoksa null)
     this.surfaceGrip = 1; // buzlu zeminde < 1: kart kayar
+    this.grade = 0; // baktığı yöndeki eğim (+ yokuş, - iniş), yumuşatılmış
+    this.crestCool = 0; // tepe atlayışından sonra yeniden havalanmayı engelleyen bekleme
     this.trackIndex = -1; // en yakın orta çizgi örneği (arama ipucu)
     this.pathIndex = -1; // yarış ilerlemesi için örnek (kısayolda sanal, bkz. track.groundAt)
     this.onShortcut = false;
@@ -73,6 +81,8 @@ export class Kart {
     this.pathIndex = -1;
     this.onShortcut = false;
     this.fallTime = 0;
+    this.grade = 0;
+    this.crestCool = 0;
     this.boostTime = this.spinTime = this.shieldTime = 0;
   }
 
@@ -100,6 +110,7 @@ export class Kart {
   step(dt, input, track) {
     this.prevPosition.copy(this.position);
     this.prevHeading = this.heading;
+    this.crestCool = Math.max(0, this.crestCool - dt);
 
     // Savrulurken kontrol yok
     if (this.spinTime > 0) {
@@ -157,7 +168,13 @@ export class Kart {
     // Turbo varken kum yavaşlatmaz
     const offroad = SLOW_SURFACES.has(this.surface);
     const boosting = this.boostTime > 0;
-    const maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : KART.maxSpeed;
+    let maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : KART.maxSpeed;
+
+    // Eğim: yokuşta hız sınırı düşer ve kart geri çekilir; inişte sınır aşılır
+    const n = this.groundNormal;
+    const grade = this.grounded ? -(n.x * _fwd.x + n.z * _fwd.z) / Math.max(0.3, n.y) : 0;
+    this.grade += (grade - this.grade) * Math.min(1, 8 * dt);
+    maxSpeed *= slopeSpeedMul(this.grade);
 
     // İleri/geri ivme
     if (this.grounded) {
@@ -174,6 +191,7 @@ export class Kart {
         forward = Math.abs(forward) <= drag ? 0 : forward - Math.sign(forward) * drag;
       }
       if (boosting && forward < maxSpeed) forward = Math.min(maxSpeed, forward + KART.boostAccel * dt);
+      forward -= this.grade * SLOPE.gravityPull * dt;
       // Hız sınırının üstündeyse (kuma girince, turbo bitince) yumuşakça yavaşla
       if (forward > maxSpeed) forward = Math.max(maxSpeed, forward - KART.offroadDrag * dt);
       forward = Math.max(forward, -KART.maxReverse);
@@ -223,13 +241,33 @@ export class Kart {
   }
 
   updateGround(track) {
+    // Tepe/tümsek: yol, serbest düşüşten hızlı alçalıyorsa (dikey ivme < -g * crestG) kart havalanır.
+    // Yolun yüksekliği kartın önünde ve arkasında örneklenir (groundAt ortak nesne döndürdüğü için asıl sorgudan önce).
+    let lift = -1;
+    if (this.grounded && this.crestCool <= 0 && this.speed > 12) {
+      const d = Math.max(4, this.speed * 0.15);
+      const fx = Math.sin(this.heading) * d;
+      const fz = Math.cos(this.heading) * d;
+      const y0 = track.groundAt(_probe.set(this.position.x, 0, this.position.z), this.trackIndex).y;
+      const yF = track.groundAt(_probe.set(this.position.x + fx, 0, this.position.z + fz), this.trackIndex).y;
+      const yB = track.groundAt(_probe.set(this.position.x - fx, 0, this.position.z - fz), this.trackIndex).y;
+      const accel = ((yF - 2 * y0 + yB) / (d * d)) * this.speed * this.speed;
+      if (accel < -KART.gravity * (track.def?.gravity ?? 1) * SLOPE.crestG) lift = Math.max(0, ((yF - yB) / (2 * d)) * this.speed) + SLOPE.crestHop * Math.min(1, this.speed / 25); // eğri yalnız yüzeyden ayrılmaya yetmez: arcade zıplama payı
+    }
     const g = track.groundAt(this.position, this.trackIndex);
     this.trackIndex = g.index;
     this.pathIndex = g.pathIndex;
     this.onShortcut = g.shortcut;
     const snap = this.grounded ? KART.snapDistance : 0.01;
+    const crest = lift >= 0 && !g.ramp && !g.bounce;
     // Zeminin altına girdiyse (rampa yukarı çıkarken) her durumda yüzeye oturt
-    if (this.position.y <= g.y + snap && (this.velocity.y <= 0.5 || this.position.y < g.y)) {
+    if (crest) {
+      this.position.y = g.y;
+      this.velocity.y = lift;
+      this.grounded = false;
+      this.crestCool = 0.6;
+      this.events.push('crest');
+    } else if (this.position.y <= g.y + snap && (this.velocity.y <= 0.5 || this.position.y < g.y)) {
       this.position.y = g.y;
       // Rampada dikey hız korunur: rampanın ucundan kart eğim kadar yukarı fırlar
       this.velocity.y = g.ramp ? Math.max(0, g.ramp.slope * (this.velocity.x * g.ramp.tx + this.velocity.z * g.ramp.tz)) : 0;

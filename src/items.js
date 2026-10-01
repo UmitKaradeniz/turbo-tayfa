@@ -60,7 +60,7 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
     for (let k = -2; k <= 2; k++) {
       const lateral = k * hw * 0.36;
       const mesh = createItemBox();
-      const pos = p.clone().addScaledVector(r, lateral).setY(p.y + 1.3);
+      const pos = p.clone().addScaledVector(r, lateral).setY(p.y + lateral * (track.rolls[index] ?? 0) + 1.3);
       mesh.position.copy(pos);
       scene.add(mesh);
       boxes.push({ index, lateral, pos, mesh, active: true, respawn: 0 });

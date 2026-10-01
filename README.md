@@ -12,7 +12,8 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
 - 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol
-- 🦖 **Dinozor Vadisi:** devasa dinozorların arasında tarih öncesi vadi; yamaçtan yuvarlanan kayalar, ayak darbeleri, zorunlu bataklık ve yarığı aşan kısayol
+- 🦖 **Dinozor Vadisi:** devasa dinozorların arasında tarih öncesi vadi; yamaçtan yuvarlanan kayalar, ayak darbeleri, zorunlu bataklık ve yarığı aşan kısayol; 15 m'lik **Dev Sırt** tırmanışı, dik iniş, yatık viraj ve atlatan dinozor izi tümsekleri
+- ⛰️ **Eğim fiziği (tüm pistler):** yokuşta hız düşer, inişte hız sınırı aşılır (tek yerde: `SLOPE` in `src/config.js`); pist tanımına `bank` (yatık viraj), `bumps` (tümsek dizisi) ve `hillReach` eklenebilir
 - 👻 **Hayalet Mezarlığı:** sisli gece, mezar taşları, oyulmuş balkabakları; yolu kesen hayaletler, yeşil ruh sütunları ve mezar toprağı yolu
 - 🎡 **Lunapark:** hız treni halkaları, tezgâhlar, konfeti fıskiyeleri ve ray boşluğunu aşan kısayol
 - 🍭 **Şeker Diyarı:** dev kekler, donutlar, lolipoplar; çikolata yol, pembe şeker fıskiyeleri ve çikolata nehrini aşan kısayol
