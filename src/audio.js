@@ -133,7 +133,7 @@ function createEngine() {
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   filter.frequency.value = 900;
-  filter.Q.value = 3;
+  filter.Q.value = 0.8; // düşük rezonans: tiz ıslık yok
   filter.connect(out);
 
   const o1 = ctx.createOscillator();
@@ -148,7 +148,7 @@ function createEngine() {
   const lfo = ctx.createOscillator();
   lfo.frequency.value = 18;
   const lfoGain = ctx.createGain();
-  lfoGain.gain.value = 6;
+  lfoGain.gain.value = 3;
   lfo.connect(lfoGain);
   lfoGain.connect(o1.frequency);
   lfoGain.connect(o2.frequency);
@@ -188,8 +188,8 @@ export function updateEngine(kart, throttle, maxSpeed) {
   const base = 48 + ratio * 95 + boost * 25;
   engine.o1.frequency.setTargetAtTime(base, t, 0.06);
   engine.o2.frequency.setTargetAtTime(base * 0.5, t, 0.06);
-  engine.filter.frequency.setTargetAtTime(500 + ratio * 1400 + throttle * 400 + boost * 800, t, 0.08);
-  engine.out.gain.setTargetAtTime(0.05 + throttle * 0.05 + ratio * 0.05, t, 0.1);
+  engine.filter.frequency.setTargetAtTime(380 + ratio * 650 + throttle * 120 + boost * 300, t, 0.08);
+  engine.out.gain.setTargetAtTime(0.018 + throttle * 0.016 + ratio * 0.02, t, 0.1);
   // Drift ya da kumda kayma
   const sliding = kart.drifting ? 0.12 : (kart.surface === 'sand' || kart.surface === 'dirt') && ratio > 0.2 ? 0.05 : 0;
   engine.skid.gain.setTargetAtTime(sliding, t, 0.06);
