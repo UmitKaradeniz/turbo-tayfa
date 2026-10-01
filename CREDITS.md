@@ -27,6 +27,8 @@ ile yayımlandı: ticari kullanım dahil serbest, atıf zorunlu değil. Yine de 
 | Coaster Kit | 1.0 | https://kenney.nl/assets/coaster-kit | CC0 1.0 | `park-entrance`, `stall-drinks/food/information`, `station-gate`, `ride-entrance`, `coaster-steel/wood/mouse/monorail/flume-looping`, `coaster-steel-straight-hill-complete`, `coaster-train(-wooden)`, `train-monorail`, `tree(-large)`, `flowers`, `grass`, `bench`, `trash` (+ projede duran ama kullanılmayan `support-large`, `coaster-*-straight`, `coaster-steel-corner-large`, `queue-straight`) | Lunapark: giriş, hız treni halkaları, tezgâhlar, trenler, ağaçlar |
 | Graveyard Kit | 1.0 | https://kenney.nl/assets/graveyard-kit | CC0 1.0 | `character-ghost/keeper/skeleton/vampire/zombie`, `crypt(-large/-small)`, `cross(-wood)`, `column-large`, `coffin(-old)`, `fire-basket`, `gravestone-*` (8), `grave`, `lightpost-*`, `lantern-candle`, `pine(-crooked)`, `pumpkin(-carved/-tall-carved)`, `rocks(-tall)`, `urn-round`, `hay-bale`, `altar-stone`, `trunk`, `stone-wall`, `shovel-dirt`, `debris`, `candle-multiple` | Hayalet Mezarlığı: mezar taşları, kriptalar, seyirci karakterler |
 | KayKit Halloween Bits (Kay Lousberg) | 1.0 | https://kaylousberg.itch.io/halloween-bits | CC0 1.0 | `arch`, `arch_gate`, `bench*`, `bone_A`, `candle_triple`, `coffin*`, `crypt`, `fence*`, `grave_A/B`, `gravemarker_A/B`, `gravestone`, `lantern_standing`, `post_lantern`, `pumpkin_*`, `ribcage`, `shrine_candles`, `skull*`, `tree_dead_*`, `tree_pine_orange/yellow_*`, `plaque_candles`, `pillar`, `post_skull` (`.gltf` + `.bin` + `halloweenbits_texture.png`) | Hayalet Mezarlığı: ölü ağaçlar, balkabakları, kemikler |
+| Ultimate Nature Pack (Quaternius) | 2019 | https://quaternius.itch.io/150-lowpoly-nature-models | CC0 1.0 | `CommonTree_1–3`, `PineTree_1–3`, `PalmTree_1–3`, `Willow_1–3`, `Willow_Dead_1–3`, `CommonTree_Dead_1–3`, `BirchTree_1–3`, `Bush_1–2`, `BushBerries_1–2`, `Rock_1–3`, `Rock_Moss_1–3`, `Plant_1–3`, `Grass_2`, `Cactus_1–3` (`.obj` + `.mtl`) | Dinozor Vadisi: bitki örtüsü ve kayalar |
+| Dinosaur Animated Pack (Quaternius) | 2018 | https://quaternius.itch.io/animated-lowpoly-dinosaurs | CC0 1.0 | `Trex`, `Triceratops`, `Stegosaurus`, `Apatosaurus`, `Parasaurolophus`, `Velociraptor` (`.obj` + `.mtl`, hareketsiz duruş) | Dinozor Vadisi: dev dinozorlar |
 
 Not: Racing Kit reklam panolarındaki "TANKCO" logosu Kenney'in paket içindeki hayali markasıdır.
 
@@ -46,7 +48,8 @@ eski iOS Safari için ffmpeg ile üretilmiş MP3 kopyasıyla birlikte duruyor.
 | Happy Adventure (Loop) | fluffrabbit | https://opengameart.org/content/happy-adventure-loop | CC0 1.0 | Oyuncak Odası yarış müziği (`music_toyRoom`) |
 | Honey Bear (loop) | PotatoKing | https://opengameart.org/content/honey-bear | CC0 1.0 | Şeker Diyarı yarış müziği (`music_candyLand`) |
 | Summer Park - 8bit tune (loop) | qubodup | https://opengameart.org/content/summer-park-8bit-tune-loop | CC0 1.0 | Lunapark yarış müziği (`music_funfair`) |
-| Night Prowler (S31) | S31 | https://opengameart.org/content/night-prowler | CC0 1.0 | Hayalet Mezarlığı yarış müziği (`music_graveyard`) |
+| Night Prowler | Snabisch | https://opengameart.org/content/night-prowler | CC0 1.0 | Hayalet Mezarlığı yarış müziği (`music_graveyard`) |
+| Jungleloop | Tozan | https://opengameart.org/content/jungleloop | CC0 1.0 | Dinozor Vadisi yarış müziği (`music_dinoValley`) |
 | Fast Space Tune type | qubodup | https://opengameart.org/content/fast-space-tune-type | CC0 1.0 | Ay Yolu yarış müziği (`music_moon`) |
 | Feel Good Island Loop | AntumDeluge (Brandon Morris'in eserinden) | https://opengameart.org/content/feel-good-island-loop | CC0 1.0 (sayfada OGA-BY 3.0 ile çift lisans; CC0 seçildi) | Menü/lobi müziği (`music_menu`) |
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | Arayüz tıklama/seçim, item kutusu, rulet, tur, kalkan patlaması |
@@ -61,6 +64,7 @@ Motor ve drift kayma sesleri dosya değildir; tarayıcıda WebAudio ile kodla ü
 - Asfalt dokusu, başlangıç çizgisi / grid çıkartması, bordür renkleri: kodla üretilen canvas dokuları (`src/track.js`)
 - Ada zemini, deniz shader'ı, gökyüzü ve bulutlar: kodla üretildi (`src/track.js`, `src/environment.js`)
 - Pist rotaları "Palmiye Koyu" ve "Çam Vadisi": özgün tasarım (`src/tracks/`)
+- Dinozor Vadisi: yuvarlanan kayalar ve ayak darbesi tozu mevcut tehlike sistemiyle (`src/hazards.js`) kodla üretildi
 - Hayalet Mezarlığı: yola çıkan hayaletler (`src/hazards.js` yuvarlanan nesne türünün 'ghost' kılıfı) ve yeşil ruh sütunları kodla üretildi
 - Şeker Diyarı: pembe şeker fıskiyeleri aynı gayzer sisteminin renk paletiyle (`src/hazards.js`) kodla üretildi
 - Oyuncak Odası: yola yuvarlanan dev plaj topu tuzağı (`src/hazards.js`) ve turuncu oyuncak yolu dokusu (`src/track.js`) kodla üretildi

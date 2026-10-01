@@ -12,13 +12,38 @@ export function hasModels(keys) {
   return keys.every((k) => cache.has(k));
 }
 
+// Paket klasörüne göre dosya türü: halloween (KayKit) .gltf, nat2 ve dino (Quaternius) .obj + .mtl, diğerleri .glb
+const FORMAT = { halloween: 'gltf', nat2: 'obj', dino: 'obj' };
+
+async function loadOne(key) {
+  const format = FORMAT[key.split('/')[0]] ?? 'glb';
+  if (format !== 'obj') return loader.loadAsync(`/models/${key}.${format}`);
+  // OBJ yükleyiciler yalnızca bu paketler kullanıldığında indirilir
+  const [{ OBJLoader }, { MTLLoader }] = await Promise.all([import('three/addons/loaders/OBJLoader.js'), import('three/addons/loaders/MTLLoader.js')]);
+  const mtl = await new MTLLoader().loadAsync(`/models/${key}.mtl`);
+  mtl.preload();
+  const scene = await new OBJLoader().setMaterials(mtl).loadAsync(`/models/${key}.obj`);
+  // Phong malzemeleri çizgi film görünümü için düz gölgeli Standard'a çevir
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    // Blender MTL değerleri doğrusal renk; yükleyici sRGB sanıp koyulaştırıyor, geri düzelt
+    const conv = (m) => {
+      const o = {};
+      m.color.getRGB(o, THREE.SRGBColorSpace);
+      return new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(o.r, o.g, o.b, THREE.LinearSRGBColorSpace), roughness: 0.85, metalness: 0, flatShading: true });
+    };
+    o.material = Array.isArray(o.material) ? o.material.map(conv) : conv(o.material);
+  });
+  return { scene, animations: [] };
+}
+
 export async function loadModels(keys, onProgress) {
   let done = 0;
   const todo = [...new Set(keys)].filter((k) => !cache.has(k));
   if (!todo.length) return onProgress?.(1);
   await Promise.all(
     todo.map(async (key) => {
-      const gltf = await loader.loadAsync(`/models/${key}.${key.startsWith('halloween/') ? 'gltf' : 'glb'}`); // KayKit paketi .gltf (dış .bin + doku) gelir
+      const gltf = await loadOne(key);
       gltf.scene.traverse((o) => {
         if (o.isMesh) {
           o.castShadow = true;
