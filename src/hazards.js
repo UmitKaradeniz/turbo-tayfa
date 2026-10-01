@@ -40,22 +40,69 @@ function stripeTexture() {
   return t;
 }
 
-// Dev plaj topu: renkli dilimli küre
-function makeBall(radius) {
-  const c = document.createElement('canvas');
-  c.width = 256;
-  c.height = 128;
-  const g = c.getContext('2d');
-  const cols = ['#ff4b4b', '#ffffff', '#ffd23f', '#ffffff', '#3f8cff', '#ffffff'];
-  cols.forEach((col, i) => {
-    g.fillStyle = col;
-    g.fillRect((i * 256) / cols.length, 0, 256 / cols.length + 1, 128);
-  });
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  const m = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 16), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45 }));
-  m.castShadow = true;
-  return m;
+// Yolu kesen yuvarlanan nesne. skin: 'beach' (dev plaj topu) | 'snow' (çığ topu) | 'rock' (kaya) | 'log' (kütük) | 'car' (trafik arabası)
+// Dönüş: yaw dönen sarmalayıcı grup; userData.roller yuvarlanma eksenindeki (yerel z) iç mesh
+function makeBall(radius, skin = 'beach') {
+  const wrap = new THREE.Group();
+  let mesh;
+  if (skin === 'log') {
+    const g = new THREE.CylinderGeometry(radius * 0.62, radius * 0.62, radius * 2.6, 14);
+    g.rotateX(Math.PI / 2); // eksen yerel z
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 64;
+    const x = c.getContext('2d');
+    x.fillStyle = '#7a4e2c';
+    x.fillRect(0, 0, 128, 64);
+    x.fillStyle = '#5b381d';
+    for (let i = 0; i < 18; i++) x.fillRect(Math.random() * 128, 0, 3, 64);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+  } else if (skin === 'car') {
+    const car = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(radius * 2.6, radius * 0.7, radius * 1.3), new THREE.MeshStandardMaterial({ color: 0xe23b36, roughness: 0.5 }));
+    body.position.y = radius * 0.2;
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(radius * 1.2, radius * 0.6, radius * 1.15), new THREE.MeshStandardMaterial({ color: 0x9fd3ff, roughness: 0.2, metalness: 0.2 }));
+    cabin.position.set(-radius * 0.1, radius * 0.75, 0);
+    const light = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.4, 2.2, 1.4), toneMapped: false });
+    for (const sz of [-1, 1]) {
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.2, radius * 0.22, radius * 0.28), light);
+      h.position.set(radius * 1.31, radius * 0.25, sz * radius * 0.42);
+      car.add(h);
+    }
+    car.add(body, cabin);
+    car.position.y = -radius * 0.2;
+    car.traverse((o) => (o.castShadow = true));
+    wrap.add(car);
+    wrap.userData.roller = new THREE.Group(); // araba yuvarlanmaz
+    return wrap;
+  } else if (skin === 'rock') {
+    const g = new THREE.IcosahedronGeometry(radius, 1);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setXYZ(i, pos.getX(i) * (0.88 + 0.24 * Math.sin(i * 7.3)), pos.getY(i) * (0.88 + 0.24 * Math.cos(i * 5.1)), pos.getZ(i) * (0.88 + 0.24 * Math.sin(i * 3.7)));
+    g.computeVertexNormals();
+    mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x6a5a52, emissive: 0x5c1606, emissiveIntensity: 0.45, flatShading: true, roughness: 1 }));
+  } else if (skin === 'snow') {
+    mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(radius, 1), new THREE.MeshStandardMaterial({ color: 0xf4f9ff, flatShading: true, roughness: 0.9 }));
+  } else {
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 128;
+    const g = c.getContext('2d');
+    const cols = ['#ff4b4b', '#ffffff', '#ffd23f', '#ffffff', '#3f8cff', '#ffffff'];
+    cols.forEach((col, i) => {
+      g.fillStyle = col;
+      g.fillRect((i * 256) / cols.length, 0, 256 / cols.length + 1, 128);
+    });
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 16), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45 }));
+  }
+  mesh.castShadow = true;
+  wrap.add(mesh);
+  wrap.userData.roller = mesh;
+  return wrap;
 }
 
 function ringTexture() {
@@ -114,7 +161,8 @@ export function createHazards({ scene, track, fx, quality }) {
       h.ring.rotation.y = rot;
       h.ring.scale.set(h.span, 1, 2.6);
       h.ring.material.map.repeat.set(h.span / 2.2, 1.4);
-      h.ball = makeBall(h.ballR);
+      h.ball = makeBall(h.ballR, d.skin ?? 'beach');
+      h.roller = h.ball.userData.roller;
       h.ball.visible = false;
       group.add(h.ball);
     } else if (d.type === 'geyser') {
@@ -207,8 +255,8 @@ export function createHazards({ scene, track, fx, quality }) {
             h.ballPos.set(h.pos.x - h.lateral * h.right.x + h.right.x * lat, h.pos.y, h.pos.z - h.lateral * h.right.z + h.right.z * lat);
             h.ball.visible = true;
             h.ball.position.set(h.ballPos.x, h.ballPos.y + h.ballR, h.ballPos.z);
-            h.ball.rotation.z = -lat / h.ballR;
-            h.ball.rotation.y = Math.atan2(-h.right.z, h.right.x);
+            h.roller.rotation.z = -lat / h.ballR;
+            h.ball.rotation.y = Math.atan2(-h.right.z, h.right.x) + (h.d.skin === 'car' && h.dir < 0 ? Math.PI : 0);
             active = true;
           } else if (c >= warnStart) {
             const k = (c - warnStart) / S.warn;

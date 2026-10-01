@@ -71,6 +71,12 @@ export default {
     { type: 'ice', f: [0.845, 0.88], lateral: [-8, 8], grip: 0.3 },
   ],
 
+  // Zirveden inen çığ topları: uyarı şeridi yanıp sönünce kar topu yolu geçer
+  hazards: [
+    { type: 'ball', skin: 'snow', ballRadius: 2.8, f: 0.4, period: 12, offset: 4, dir: -1 },
+    { type: 'ball', skin: 'snow', ballRadius: 2.8, f: 0.93, period: 11, offset: 9, dir: 1 },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen',

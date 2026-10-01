@@ -69,6 +69,12 @@ export default {
     { type: 'boost', f: [0.335, 0.35], lateral: [1.2, 6], color: '#ff3fa4' },
   ],
 
+  // Kavşaklarda yolu kesen trafik: uyarı şeridi yanıp sönünce araba geçer
+  hazards: [
+    { type: 'ball', skin: 'car', ballRadius: 2.4, f: 0.43, period: 10, offset: 2, dir: 1 },
+    { type: 'ball', skin: 'car', ballRadius: 2.4, f: 0.82, period: 11, offset: 6, dir: -1 },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',

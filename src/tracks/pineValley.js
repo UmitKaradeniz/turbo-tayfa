@@ -64,6 +64,12 @@ export default {
     { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
   ],
 
+  // Yamaçtan yuvarlanan kütükler: çizgili uyarı şeridi yanıp sönünce kütük yolu bir yandan öbür yana geçer
+  hazards: [
+    { type: 'ball', skin: 'log', ballRadius: 2.3, f: 0.69, period: 11, offset: 3, dir: 1 },
+    { type: 'ball', skin: 'log', ballRadius: 2.3, f: 0.91, period: 12, offset: 8, dir: -1 },
+  ],
+
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',
