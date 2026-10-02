@@ -19,6 +19,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     <button id="hud-pause" data-go="pause" aria-label="Duraklat"><i></i><i></i></button>
     <div id="hud-item"><div class="slot"><img alt="" /></div><div class="key">E</div></div>
     <div id="hud-toast"></div>
+    <div id="hud-coach"></div>
     <div id="hud-center"></div>
     <div id="hud-wrongway">⟲ TERS YÖN</div>
     <div id="hud-map"></div>
@@ -68,6 +69,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
   const timeEl = $('#hud-lap .time');
   const center = $('#hud-center');
   const toasts = $('#hud-toast');
+  const coachEl = $('#hud-coach');
+  let coachTimer = null;
   const wrongWay = $('#hud-wrongway');
   const speedFg = $('#hud-speed .fg');
   const speedV = $('#hud-speed .v');
@@ -174,6 +177,13 @@ export function createHud({ portraits, minimap, itemIcons }) {
       el.textContent = `Tur ${lap}  ${formatTime(time)}${record ? '  🏆 REKOR' : best ? '  ★' : ''}`;
       toasts.appendChild(el);
       el.addEventListener('animationend', () => el.remove());
+    },
+    // Öğretici ipucu: üstte, yarı saydam, birkaç saniye görünür
+    coach(text, ms = 4500) {
+      coachEl.textContent = text;
+      coachEl.classList.add('show');
+      clearTimeout(coachTimer);
+      coachTimer = setTimeout(() => coachEl.classList.remove('show'), ms);
     },
     // Kısa bildirim ('warn': turuncu)
     toast(text, kind = '') {

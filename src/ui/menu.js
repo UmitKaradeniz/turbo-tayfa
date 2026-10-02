@@ -39,9 +39,12 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   const toastWrap = h('<div class="tt-toast-wrap"></div>');
   document.body.appendChild(toastWrap);
 
-  const toast = (msg) => {
-    const el = h(`<div class="tt-toast">${msg}</div>`);
-    toastWrap.appendChild(el);
+  // top: ekranın üstünde, yarı saydam ve küçük (oyun sırasında tuşların önüne gelmesin)
+  const topToastWrap = h('<div class="tt-toast-wrap top"></div>');
+  document.body.appendChild(topToastWrap);
+  const toast = (msg, { top = false } = {}) => {
+    const el = h(`<div class="tt-toast${top ? ' soft' : ''}">${msg}</div>`);
+    (top ? topToastWrap : toastWrap).appendChild(el);
     el.addEventListener('animationend', () => el.remove());
   };
 

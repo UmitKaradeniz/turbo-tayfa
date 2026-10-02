@@ -14,6 +14,9 @@ const DEFAULTS = {
   autoGas: true, // dokunmatikte otomatik gaz
   track: 'palmCove',
   mode: 'race', // race | cup | timeTrial (Zamana Karşı sadece tek oyunculu)
+  driftTips: 0, // drift ipucunun gösterildiği yarış sayısı (en çok 3)
+  driftShortTips: 0, // 'biraz daha uzun tut' ipucu sayısı (en çok 3)
+  driftLearned: false, // ilk mini-turbo kazanılınca true: ipuçları susar
 };
 
 function load() {

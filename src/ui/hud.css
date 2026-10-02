@@ -146,6 +146,33 @@
 }
 #hud-wrongway.show { display: block; }
 
+/* Öğretici ipucu (drift vb.): üstte, yarı saydam; tuşların ve yolun önünü kapatmaz */
+#hud-coach {
+  position: absolute;
+  left: 50%;
+  top: max(96px, 14vh);
+  transform: translateX(-50%);
+  max-width: min(86vw, 520px);
+  text-align: center;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.3;
+  color: #fff;
+  background: rgba(11, 42, 85, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  padding: 8px 14px;
+  border-radius: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+#hud-coach.show { opacity: 1; }
+@media (pointer: coarse) and (orientation: portrait) {
+  #hud-coach { top: 34vh; } /* mini harita ve emoji şeridinin altı */
+}
+
 /* Tur süresi bildirimi */
 #hud-toast {
   position: absolute;

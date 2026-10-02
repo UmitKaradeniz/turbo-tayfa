@@ -137,6 +137,8 @@ export class Kart {
       if (level > 0) {
         this.boost(KART.miniTurbo[level - 1].boost);
         this.events.push('miniTurbo' + level);
+      } else if (!input.drift && this.grounded && this.driftTime > 0.25) {
+        this.events.push('driftShort'); // çok kısa bırakıldı: nitro yok (oyuncuya ipucu için)
       }
       this.drifting = false;
       this.driftDir = 0;

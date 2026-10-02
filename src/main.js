@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PHYSICS_HZ, KART } from './config.js';
 import { QUALITY } from './quality.js';
 import { createAutoTuner } from './autoQuality.js';
-import { settings, DIFFICULTY } from './settings.js';
+import { settings, saveSettings, DIFFICULTY } from './settings.js';
 import { readInput } from './input.js';
 import { loadModels, hasModels } from './assets.js';
 import { initErrorReports, setReportContext, reportIssue } from './report.js';
@@ -435,7 +435,7 @@ function setupRace(order, laps) {
   autoTuner?.raceReset();
   playMusic('race', trackDef.id);
   touch.show(isTouchDevice);
-  if (isTouchDevice && innerHeight > innerWidth) menu.toast('Daha geniş görüş için telefonu yatay çevir ↻');
+  if (isTouchDevice && innerHeight > innerWidth) menu.toast('Daha geniş görüş için telefonu yatay çevirebilirsin ↻', { top: true });
   updateViewOffset();
   if (rig.mode === 'chase') rig.snapTo(player);
   else rig.transition('chase', 2.2);
@@ -450,6 +450,7 @@ function setupRace(order, laps) {
     hud.go();
     startLights.go();
     play('go');
+    driftCoachOnGo();
     // Başlangıç turbosu: gaza "BAŞLA"dan hemen önce (son 0.6 s) basan roket gibi çıkar
     if (startPress !== null && startPress >= -0.6) {
       player.boost(KART.startBoost);
@@ -1001,7 +1002,9 @@ function frame(now) {
     for (const ev of kart.events) {
       fx.event(kart, ev);
       kartSound(kart, ev);
+      if (kart === player) driftCoach(ev);
     }
+    if (kart === player && kart.drifting && driftPulse) setDriftPulse(false);
     kart.events.length = 0;
   }
   if (race) items.animate(dt, karts);
@@ -1067,6 +1070,33 @@ function botReact(kart, event, delay = 0) {
   if (e < 0) return;
   const r = race;
   setTimeout(() => r === race && sendEmote(kart, e), delay);
+}
+
+// Drift öğretisi: oyuncular driftle nitro kazanmayı bilmiyor. İlk yarışlarda başlangıçta, kısa bırakınca ve
+// ilk nitro kazanılınca kısa ipucu çıkar; nitro kazanılınca (driftLearned) bir daha çıkmaz.
+let driftPulse = false;
+let lastDriftHint = -1e9;
+function setDriftPulse(on) {
+  driftPulse = on;
+  document.querySelector('#touch .drift')?.classList.toggle('hint', on);
+}
+function driftCoachOnGo() {
+  if (settings.driftLearned || settings.driftTips >= 3 || timeTrial) return;
+  saveSettings({ driftTips: settings.driftTips + 1 });
+  hud.coach(isTouchDevice ? '🔥 Virajda DRIFT butonunu basılı tut, bırakınca NİTRO!' : '🔥 Virajda Space ya da Shift tuşunu basılı tut, bırakınca NİTRO!', 5500);
+  if (isTouchDevice) setDriftPulse(true);
+}
+function driftCoach(ev) {
+  if (settings.driftLearned) return;
+  if (ev.startsWith('miniTurbo')) {
+    saveSettings({ driftLearned: true });
+    setDriftPulse(false);
+    hud.coach('✨ Nitro kazandın! Drift ne kadar uzun sürerse nitro o kadar güçlü', 4500);
+  } else if (ev === 'driftShort' && settings.driftShortTips < 3 && performance.now() - lastDriftHint > 20000) {
+    lastDriftHint = performance.now();
+    saveSettings({ driftShortTips: settings.driftShortTips + 1 });
+    hud.coach('Biraz daha uzun tut: kıvılcım mavi olunca bırak = nitro!', 4500);
+  }
 }
 
 // Kart olay sesleri (oyuncu ya da yakındaki kartlar)
