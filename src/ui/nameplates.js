@@ -10,7 +10,7 @@ const FADE_END = 170;
 function makeTexture(text, color) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  const font = '800 44px Nunito, system-ui, sans-serif';
+  const font = '800 44px "Baloo 2", system-ui, sans-serif';
   ctx.font = font;
   const w = Math.ceil(ctx.measureText(text).width) + 56;
   canvas.width = w;

@@ -24,7 +24,7 @@ function getBoxAssets() {
   const q = document.createElement('canvas');
   q.width = q.height = 128;
   const g = q.getContext('2d');
-  g.font = '700 104px "Fredoka", "Arial Black", sans-serif';
+  g.font = '800 104px "Baloo 2", "Arial Black", sans-serif';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.lineJoin = 'round';

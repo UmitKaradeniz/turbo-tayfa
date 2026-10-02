@@ -6,10 +6,11 @@
     <title>Turbo Tayfa</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%230a6fd6'/><text x='32' y='46' font-family='Arial Black,Arial' font-weight='900' font-size='40' text-anchor='middle' fill='%23ffd23f' stroke='%230b2a55' stroke-width='3' paint-order='stroke'>T</text></svg>" />
     <meta name="theme-color" content="#0a6fd6" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preload" href="/fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin />
     <style>
+      /* Baloo 2 (OFL): kendi sunucumuzdan, değişken ağırlık 400-800; Türkçe için latin + latin-ext */
+      @font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 400 800; font-display: swap; ascent-override: 96%; descent-override: 34%; line-gap-override: 0%; src: url(/fonts/baloo2-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+      @font-face { font-family: 'Baloo 2'; font-style: normal; font-weight: 400 800; font-display: swap; ascent-override: 96%; descent-override: 34%; line-gap-override: 0%; src: url(/fonts/baloo2-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
       html, body { margin: 0; height: 100%; overflow: hidden; background: #cdeeff; font-family: system-ui, sans-serif; }
       #app canvas { display: block; }
       #debug {
@@ -20,7 +21,7 @@
       /* Pist modelleri inerken üstte beliren küçük etiket */
       #busy {
         position: fixed; top: 18px; left: 50%; transform: translate(-50%, -80px); z-index: 60; padding: 10px 20px; border-radius: 14px;
-        background: rgba(11, 42, 85, 0.85); color: #fff; font: 800 15px 'Nunito', system-ui, sans-serif; pointer-events: none;
+        background: rgba(11, 42, 85, 0.85); color: #fff; font: 800 15px 'Baloo 2', system-ui, sans-serif; pointer-events: none;
         transition: transform 0.25s;
       }
       #busy.show { transform: translate(-50%, 0); }
@@ -29,7 +30,7 @@
       #loading {
         position: fixed; inset: 0; z-index: 100; overflow: hidden;
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
-        text-align: center; color: #fff; font-family: 'Nunito', system-ui, sans-serif;
+        text-align: center; color: #fff; font-family: 'Baloo 2', system-ui, sans-serif;
         background: radial-gradient(circle at 50% 42%, #3cc8ff 0%, #0a6fd6 55%, #0a3d91 100%);
         transition: opacity 0.6s;
       }
@@ -44,7 +45,7 @@
 
       /* Logo: harfler sırayla zıplayarak düşer, sonra dalgalanır */
       .intro-logo {
-        position: relative; margin: 0; font-family: 'Fredoka', 'Arial Rounded MT Bold', system-ui, sans-serif; font-weight: 700;
+        position: relative; margin: 0; font-family: 'Baloo 2', 'Arial Rounded MT Bold', system-ui, sans-serif; font-weight: 800;
         line-height: 0.9; transform: rotate(-5deg); user-select: none;
       }
       .intro-logo .row { display: block; white-space: nowrap; }
@@ -88,7 +89,7 @@
         font-weight: 800; font-size: 15px; letter-spacing: 0.3px; opacity: 0; animation: tt-fade 0.8s ease 0.6s forwards;
         text-shadow: 0 2px 0 rgba(11, 42, 85, 0.5);
       }
-      #loading .maker b { font-family: 'Fredoka', system-ui, sans-serif; font-weight: 700; font-size: 20px; color: #ffd23f; margin-left: 4px; }
+      #loading .maker b { font-family: 'Baloo 2', system-ui, sans-serif; font-weight: 800; font-size: 20px; color: #ffd23f; margin-left: 4px; }
       @keyframes tt-fade { to { opacity: 0.95; } }
     </style>
   </head>

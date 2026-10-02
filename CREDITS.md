@@ -80,8 +80,7 @@ Google Fonts üzerinden yükleniyor; ikisi de **SIL Open Font License 1.1** (tic
 
 | Yazı tipi | Tasarımcı | Kaynak | Kullanım |
 |---|---|---|---|
-| Fredoka | Milena Brandão, Hafontia (OFL) | https://fonts.google.com/specimen/Fredoka | Başlıklar, sıra, geri sayım |
-| Nunito | Vernon Adams, Cyreal, Jacques Le Bailly | https://fonts.google.com/specimen/Nunito | Arayüz metinleri |
+| Baloo 2 | Ek Type (OFL) | https://fonts.google.com/specimen/Baloo+2 | Başlıklar, sıra, geri sayım ve tüm arayüz metinleri (kendi sunucumuzdan verilir: public/fonts) |
 
 ## Kütüphaneler
 
