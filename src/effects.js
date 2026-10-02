@@ -2,9 +2,15 @@ import * as THREE from 'three';
 import { driftLevel } from './kart.js';
 
 // Basit parçacık sistemi: tek bir THREE.Points, sabit havuz, CPU'da güncelleme.
+// Sprite'lar tek bir atlastan (public/fx/particles.png, Kenney Particle Pack, CC0) gelir: 4x2 hücre.
+export const FRAME = { SMOKE_A: 0, SMOKE_B: 1, DIRT: 2, SPARK_A: 3, SPARK_B: 4, GLOW: 5, FLAME: 6, DOT: 7 };
+const atlas = new THREE.TextureLoader().load('/fx/particles.png');
+atlas.flipY = false; // v=0 görüntünün üstü (gl_PointCoord ile aynı)
+atlas.colorSpace = THREE.NoColorSpace;
 
 export class Particles {
-  constructor(max, { additive = false, gravity = 0, drag = 1.5, sharp = false } = {}) {
+  constructor(max, { additive = false, gravity = 0, drag = 1.5, frames = [FRAME.DOT] } = {}) {
+    this.frames = frames;
     this.max = max;
     this.gravity = gravity;
     this.drag = drag;
@@ -19,36 +25,51 @@ export class Particles {
     this.size0 = new Float32Array(max);
     this.size1 = new Float32Array(max);
     this.alpha0 = new Float32Array(max);
+    this.frame = new Float32Array(max);
+    this.rot = new Float32Array(max);
+    this.rot0 = new Float32Array(max);
+    this.spin = new Float32Array(max);
 
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
     geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3).setUsage(THREE.DynamicDrawUsage));
     geo.setAttribute('alpha', new THREE.BufferAttribute(this.alpha, 1).setUsage(THREE.DynamicDrawUsage));
     geo.setAttribute('size', new THREE.BufferAttribute(this.size, 1).setUsage(THREE.DynamicDrawUsage));
+    geo.setAttribute('frame', new THREE.BufferAttribute(this.frame, 1));
+    geo.setAttribute('rot', new THREE.BufferAttribute(this.rot, 1).setUsage(THREE.DynamicDrawUsage));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
 
     this.material = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending,
-      uniforms: { scale: { value: 500 } },
+      uniforms: { scale: { value: 500 }, atlas: { value: atlas } },
       vertexShader: /* glsl */ `
-        attribute float size; attribute float alpha; attribute vec3 color;
+        attribute float size; attribute float alpha; attribute vec3 color; attribute float frame; attribute float rot;
         uniform float scale;
-        varying float vAlpha; varying vec3 vColor;
+        varying float vAlpha; varying vec3 vColor; varying float vFrame; varying float vRot;
         void main() {
-          vAlpha = alpha; vColor = color;
+          vAlpha = alpha; vColor = color; vFrame = frame; vRot = rot;
           vec4 mv = modelViewMatrix * vec4(position, 1.0);
           gl_PointSize = size * scale / -mv.z;
           gl_Position = projectionMatrix * mv;
         }`,
       fragmentShader: /* glsl */ `
-        varying float vAlpha; varying vec3 vColor;
+        uniform sampler2D atlas;
+        varying float vAlpha; varying vec3 vColor; varying float vFrame; varying float vRot;
         void main() {
-          float d = length(gl_PointCoord - 0.5) * 2.0;
-          float a = ${sharp ? 'pow(max(1.0 - d, 0.0), 2.0)' : 'smoothstep(1.0, 0.2, d)'};
+          vec2 q = gl_PointCoord - 0.5;
+          float cr = cos(vRot), sr = sin(vRot);
+          q = vec2(cr * q.x - sr * q.y, sr * q.x + cr * q.y) + 0.5;
+          if (q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) discard;
+          float col = mod(vFrame, 4.0);
+          float row = floor(vFrame / 4.0);
+          vec2 uv = (vec2(col, row) + clamp(q, 0.01, 0.99)) / vec2(4.0, 2.0);
+          float a = texture2D(atlas, uv).a;
           if (a * vAlpha < 0.01) discard;
-          gl_FragColor = vec4(vColor, a * vAlpha);
+          // Parlak (HDR) renkler beyaza yanmasın: en parlak kanal en çok 1.6, renk tonu korunur
+          vec3 tint = vColor * min(1.0, 1.6 / max(max(vColor.r, max(vColor.g, vColor.b)), 0.001));
+          gl_FragColor = vec4(tint, a * vAlpha);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
         }`,
@@ -58,7 +79,7 @@ export class Particles {
     this.points.renderOrder = 2;
   }
 
-  emit(p, v, { life = 1, size = 1, sizeEnd = size, color, alpha = 1 }) {
+  emit(p, v, { life = 1, size = 1, sizeEnd = size, color, alpha = 1, frame, rot, spin }) {
     const i = this.next;
     this.next = (this.next + 1) % this.max;
     this.pos.set([p.x, p.y, p.z], i * 3);
@@ -68,6 +89,9 @@ export class Particles {
     this.size0[i] = size;
     this.size1[i] = sizeEnd;
     this.alpha0[i] = alpha;
+    this.frame[i] = frame ?? this.frames[Math.floor(Math.random() * this.frames.length)];
+    this.rot0[i] = rot ?? Math.random() * 6.283;
+    this.spin[i] = spin ?? (Math.random() - 0.5) * 3;
   }
 
   update(dt, camera, viewportHeight) {
@@ -89,9 +113,11 @@ export class Particles {
       this.pos[k + 2] += this.vel[k + 2] * dt;
       this.size[i] = this.size0[i] + (this.size1[i] - this.size0[i]) * t;
       this.alpha[i] = this.alpha0[i] * (1 - t) * Math.min(1, t * 8);
+      this.rot[i] = this.rot0[i] + this.spin[i] * t * this.maxLife[i];
     }
     const a = this.points.geometry.attributes;
-    a.position.needsUpdate = a.color.needsUpdate = a.alpha.needsUpdate = a.size.needsUpdate = true;
+    a.position.needsUpdate = a.color.needsUpdate = a.alpha.needsUpdate = a.size.needsUpdate = a.rot.needsUpdate = true;
+    this.points.geometry.attributes.frame.needsUpdate = true;
   }
 }
 
@@ -120,8 +146,8 @@ const ICE_SPARK = new THREE.Color(1.6, 2.2, 3.0);
 
 
 export function createKartEffects(scene, quality) {
-  const smoke = new Particles(Math.round(500 * quality.particles), { drag: 1.2, gravity: -1.2 });
-  const sparks = new Particles(Math.round(300 * quality.particles), { additive: true, gravity: 18, drag: 0.8, sharp: true });
+  const smoke = new Particles(Math.round(500 * quality.particles), { drag: 1.2, gravity: -1.2, frames: [FRAME.SMOKE_A, FRAME.SMOKE_B] });
+  const sparks = new Particles(Math.round(300 * quality.particles), { additive: true, gravity: 18, drag: 0.8, frames: [FRAME.SPARK_A, FRAME.SPARK_B, FRAME.SPARK_A, FRAME.GLOW] });
   scene.add(smoke.points, sparks.points);
 
   const _p = new THREE.Vector3();
@@ -165,7 +191,7 @@ export function createKartEffects(scene, quality) {
           const f = SURF_FX[kart.surface];
           if (Math.random() < f.rate * dt * rate) {
             _v.set((Math.random() - 0.5) * 3, f.up * (0.6 + Math.random() * 0.8), (Math.random() - 0.5) * 3);
-            smoke.emit(_p, _v, { life: 0.7, size: f.size, sizeEnd: f.size * 3, color: f.color, alpha: f.alpha });
+            smoke.emit(_p, _v, { life: 0.7, size: f.size, sizeEnd: f.size * 3, color: f.color, alpha: f.alpha, ...(kart.surface === 'mud' ? { frame: FRAME.DIRT } : {}) });
           }
         } else if (kart.surface === 'ice' && kart.grounded && speed > 6) {
           if (Math.random() < 30 * dt * rate) {
@@ -187,7 +213,7 @@ export function createKartEffects(scene, quality) {
         _p.copy(exhaust);
         kart.model.body.localToWorld(_p);
         _v.set(-Math.sin(kart.heading) * 6 + (Math.random() - 0.5) * 2, 0.5 + Math.random(), -Math.cos(kart.heading) * 6 + (Math.random() - 0.5) * 2);
-        sparks.emit(_p, _v, { life: 0.2 + Math.random() * 0.1, size: 1.15, sizeEnd: 0.25, color: FLAME[i % 2] });
+        sparks.emit(_p, _v, { life: 0.2 + Math.random() * 0.1, size: 1.3, sizeEnd: 0.3, color: FLAME[i % 2], frame: FRAME.FLAME, rot: (Math.random() - 0.5) * 0.5, spin: 0 });
       }
     },
 

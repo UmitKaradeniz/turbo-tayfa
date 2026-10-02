@@ -863,7 +863,7 @@ rig.update(1, focus, true);
 updateViewOffset();
 applyViewOffset(10);
 if (import.meta.env.DEV) {
-  window.__tt = { THREE, renderer, scene, camera, rig, karts, track, env, hud, menu, net, items, QUALITY, autoTuner, get race() { return race; }, get player() { return player; }, get online() { return online; } };
+  window.__tt = { THREE, renderer, scene, camera, rig, karts, track, env, hud, menu, net, items, QUALITY, autoTuner, fx, get race() { return race; }, get player() { return player; }, get online() { return online; } };
 }
 
 // Tüm shader'ları önceden derle, ilk karede takılma olmasın
