@@ -9,6 +9,10 @@ const SOUNDS = [
   'start_boost', 'shield', 'shield_pop', 'throw', 'oil', 'hit', 'spin', 'wall', 'bump', 'lap', 'final_lap',
   'finish_win', 'finish',
 ];
+// Aynı olayın birkaç farklı sesi (Kenney Impact/Interface Sounds): çarpma, duvar, isabet, tıklama her seferinde aynı çıkmasın.
+// İlk varyant dosya adının kendisi, diğerleri <ad>_2, <ad>_3 …
+const VARIANTS = { bump: 3, wall: 3, hit: 3, ui_click: 4, ui_select: 3 };
+const variantNames = (name) => Array.from({ length: VARIANTS[name] ?? 1 }, (_, i) => (i === 0 ? name : `${name}_${i + 1}`));
 const MUSIC = { menu: 'music_menu', race: 'music_race' };
 // Pist başına yarış müziği (dosya: music_<pist>); listede olmayan pist genel yarış müziğini çalar
 const TRACK_MUSIC = new Set(['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon', 'toyRoom', 'candyLand', 'funfair', 'graveyard', 'dinoValley']);
@@ -61,7 +65,7 @@ function unlock() {
   musicGain.connect(master);
   applyVolumes();
   // Kısa efektleri önceden yükle, müziği gerektiğinde
-  SOUNDS.forEach(load);
+  SOUNDS.flatMap(variantNames).forEach(load);
   if (wantedMusic) playMusic(wantedMusic, wantedTrack);
 }
 for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, unlock, { passive: true });
@@ -81,7 +85,15 @@ export function applyVolumes() {
 // Tek seferlik efekt. rate: perde (1 = normal)
 export function play(name, { volume = 1, rate = 1 } = {}) {
   if (!ctx || ctx.state !== 'running') return;
-  const buf = buffers.get(name);
+  let buf = null;
+  if (VARIANTS[name]) {
+    // Yüklenmiş varyantlardan rastgele biri; perdesi hafifçe oynar
+    const ready = variantNames(name).filter((n) => buffers.has(n));
+    if (ready.length) {
+      buf = buffers.get(ready[Math.floor(Math.random() * ready.length)]);
+      rate *= 0.96 + Math.random() * 0.08;
+    }
+  } else buf = buffers.get(name);
   if (!buf) {
     load(name);
     return;

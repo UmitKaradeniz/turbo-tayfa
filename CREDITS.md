@@ -52,8 +52,8 @@ eski iOS Safari için ffmpeg ile üretilmiş MP3 kopyasıyla birlikte duruyor.
 | Jungleloop | Tozan | https://opengameart.org/content/jungleloop | CC0 1.0 | Dinozor Vadisi yarış müziği (`music_dinoValley`) |
 | Fast Space Tune type | qubodup | https://opengameart.org/content/fast-space-tune-type | CC0 1.0 | Ay Yolu yarış müziği (`music_moon`) |
 | Feel Good Island Loop | AntumDeluge (Brandon Morris'in eserinden) | https://opengameart.org/content/feel-good-island-loop | CC0 1.0 (sayfada OGA-BY 3.0 ile çift lisans; CC0 seçildi) | Menü/lobi müziği (`music_menu`) |
-| Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | Arayüz tıklama/seçim, item kutusu, rulet, tur, kalkan patlaması |
-| Impact Sounds | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | Duvar/kart çarpması, isabet, yağ lekesi |
+| Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | Arayüz tıklama/seçim (`click_002–005`, `select_003–005` varyantları), item kutusu, rulet, tur, kalkan patlaması |
+| Impact Sounds | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | Duvar/kart çarpması (`impactSoft_heavy_000/001/003`, `impactPlate_heavy_001/003`), isabet (`impactPunch_heavy_001–003`), yağ lekesi |
 | Digital Audio | Kenney | https://kenney.nl/assets/digital-audio | CC0 1.0 | Geri sayım, BAŞLA, turbo, mini-turbo, roket kalkış, kalkan, fırlatma, savrulma |
 | Music Jingles (Steel serisi) | Kenney | https://kenney.nl/assets/music-jingles | CC0 1.0 | Son tur ve bitiş jingle'ları |
 
