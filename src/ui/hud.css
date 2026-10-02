@@ -256,6 +256,11 @@
 #results li .pos { font-family: var(--tt-font-display); font-weight: 800; font-size: 20px; }
 #results li .time { font-variant-numeric: tabular-nums; font-weight: 700; }
 #results li .time.pending { opacity: 0.5; }
+#results li.settled, #results .step.settled { animation: none; opacity: 1; }
+#results .wait { opacity: 0.6; animation: tt-wait 1.1s ease-in-out infinite; }
+#results .pop { display: inline-block; animation: tt-cellpop 0.5s ease; }
+@keyframes tt-wait { 50% { opacity: 0.2; } }
+@keyframes tt-cellpop { 0% { transform: scale(0.7); } 60% { transform: scale(1.18); } 100% { transform: none; } }
 #results .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 
 @keyframes tt-pop {

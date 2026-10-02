@@ -60,6 +60,18 @@ export function createHud({ portraits, minimap, itemIcons }) {
     if (url) hero.querySelector('img').src = url;
   };
 
+  // Sonuç tablosu yerinde güncellenirken: giriş animasyonu bitince satır "settled" olur (yeniden sıralamada tekrar oynamaz)
+  const popEl = (el) => {
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  };
+  results.addEventListener('animationend', (e) => {
+    const t = e.target;
+    if (e.animationName === 'tt-row' || e.animationName === 'tt-rise') t.classList.add('settled');
+    else if (e.animationName === 'tt-cellpop') t.classList.remove('pop');
+  });
+
   const $ = (s) => root.querySelector(s);
   const pos = $('#hud-position');
   const posNum = pos.querySelector('.num');
@@ -211,17 +223,76 @@ export function createHud({ portraits, minimap, itemIcons }) {
       primary.hidden = !!cup?.next;
       if (cup?.restartLabel) primary.textContent = cup.restartLabel;
       else primary.textContent = primary.dataset.go === 'lobby' ? '⇠ Lobiye Dön' : '↻ Tekrar Yarış';
-      const cell = (r) => r.right ?? (r.time == null ? '—' : formatTime(r.time));
+      // Bitmeyenler "yükleniyor…" gösterir; bitince yalnızca o hücre süreye döner (tablo yeniden çizilmez)
+      const cellOf = (r) => {
+        const v = r.right ?? (r.time == null ? null : formatTime(r.time));
+        return v == null ? '<span class="wait">yükleniyor…</span>' : `${v}${r.sub ? ` <em>${r.sub}</em>` : ''}`;
+      };
+      const pending = (r) => r.right == null && r.time == null;
+      const idsKey = rows.map((r) => r.id).sort().join();
+      if (results.classList.contains('show') && results.dataset.kind === 'race' && results.dataset.ids === idsKey) {
+        // Tablo açık ve aynı yarışçılar: yalnızca değişen parçaları güncelle
+        const set = (el, prop, v) => {
+          if (el[prop] !== v) el[prop] = v;
+        };
+        const podiumEls = results.querySelector('.podium').children;
+        [rows[1], rows[0], rows[2]].forEach((r, k) => {
+          const step = podiumEls[k];
+          if (!r || !step?.classList.contains('step')) return;
+          step.classList.toggle('me', !!r.me);
+          step.dataset.id = r.id;
+          const img = step.querySelector('img');
+          if (img.getAttribute('src') !== portraits[r.id]) img.src = portraits[r.id];
+          set(step.querySelector('.nm'), 'textContent', `${r.name}${r.me ? ' (Sen)' : ''}`);
+          const small = step.querySelector('small');
+          const html = cellOf(r);
+          if (small.innerHTML !== html) {
+            small.innerHTML = html;
+            if (!pending(r)) popEl(small);
+          }
+        });
+        const ol = results.querySelector('ol');
+        const have = new Map([...ol.children].map((li) => [li.dataset.id, li]));
+        const rest = rows.slice(3);
+        const keep = new Set(rest.map((r) => r.id));
+        for (const [id, li] of have) if (!keep.has(id)) li.remove();
+        rest.forEach((r, i) => {
+          let li = have.get(r.id);
+          if (!li) {
+            li = document.createElement('li');
+            li.dataset.id = r.id;
+            li.innerHTML = `<span class="pos"></span><img src="${portraits[r.id]}" alt="" /><span class="name"></span><span class="time"></span>`;
+          }
+          li.classList.toggle('me', !!r.me);
+          set(li.querySelector('.pos'), 'textContent', `${i + 4}.`);
+          const img = li.querySelector('img');
+          if (img.getAttribute('src') !== portraits[r.id]) img.src = portraits[r.id];
+          set(li.querySelector('.name'), 'textContent', `${r.name}${r.me ? ' (Sen)' : ''}`);
+          const t = li.querySelector('.time');
+          t.classList.toggle('pending', pending(r));
+          const html = cellOf(r);
+          if (t.innerHTML !== html) {
+            const wasWaiting = t.querySelector('.wait');
+            t.innerHTML = html;
+            if (wasWaiting && !pending(r)) popEl(t);
+          }
+          if (ol.children[i] !== li) ol.insertBefore(li, ol.children[i] ?? null);
+        });
+        results.querySelector('.subtitle').textContent = subtitle;
+        return;
+      }
+      results.dataset.kind = 'race';
+      results.dataset.ids = idsKey;
       // İlk üç podyumda (2 - 1 - 3 dizilimi)
       const podium = [rows[1], rows[0], rows[2]]
         .map((r, k) => {
           if (!r) return '<div></div>';
           const place = [2, 1, 3][k];
           return `
-            <div class="step s${place}${r.me ? ' me' : ''}" style="animation-delay:${0.1 + [0.25, 0, 0.4][k]}s">
+            <div class="step s${place}${r.me ? ' me' : ''}" data-id="${r.id}" style="animation-delay:${0.1 + [0.25, 0, 0.4][k]}s">
               <img src="${portraits[r.id]}" alt="" />
               <div class="nm">${r.name}${r.me ? ' (Sen)' : ''}</div>
-              <div class="block"><span>${place}</span><small>${cell(r)}${r.sub ? ` <em>${r.sub}</em>` : ''}</small></div>
+              <div class="block"><span>${place}</span><small>${cellOf(r)}</small></div>
             </div>`;
         })
         .join('');
@@ -230,11 +301,11 @@ export function createHud({ portraits, minimap, itemIcons }) {
         .slice(3)
         .map(
           (r, i) => `
-          <li class="${r.me ? 'me' : ''}" style="animation-delay:${0.5 + i * 0.06}s">
+          <li class="${r.me ? 'me' : ''}" data-id="${r.id}" style="animation-delay:${0.5 + i * 0.06}s">
             <span class="pos">${i + 4}.</span>
             <img src="${portraits[r.id]}" alt="" />
             <span class="name">${r.name}${r.me ? ' (Sen)' : ''}</span>
-            <span class="time ${r.time == null && r.right == null ? 'pending' : ''}">${r.right ?? (r.time == null ? 'yarışıyor…' : formatTime(r.time))}${r.sub ? ` <em>${r.sub}</em>` : ''}</span>
+            <span class="time ${pending(r) ? 'pending' : ''}">${cellOf(r)}</span>
           </li>`,
         )
         .join('');
@@ -244,6 +315,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     showTimeTrialResults({ track, preview = null, laps, total, bestTotal, bestLap, newTotal, newLap }) {
       setHero(preview);
       results.querySelector('h2').textContent = 'Zamana Karşı';
+      results.dataset.kind = 'tt';
       results.querySelector('.subtitle').textContent = `${track} · ${laps.length} tur`;
       results.querySelector('.podium').innerHTML = `
         <div class="tt-total${newTotal ? ' record' : ''}">
@@ -264,6 +336,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
       results.classList.add('show');
     },
     hideResults() {
+      delete results.dataset.kind;
+      delete results.dataset.ids;
       results.querySelector('h2').textContent = 'Yarış Bitti!';
       results.querySelector('[data-go="next"]').hidden = true;
       results.querySelector('.actions .primary:not([data-go="next"])').hidden = false;
