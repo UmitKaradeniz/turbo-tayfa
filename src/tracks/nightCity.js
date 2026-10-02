@@ -7,6 +7,8 @@ export default {
   id: 'nightCity',
   name: 'Neon Şehir',
   meta: 'Gece · liman · neon',
+  groundTex: { tex: 'gravel', scale: 0.1, strength: 0.8 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
+  roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
   halfWidth: 8,
   curbWidth: 1,
   shoulder: 5,

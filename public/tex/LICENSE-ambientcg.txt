@@ -1,0 +1,3 @@
+ambientCG (https://ambientcg.com) materials: Asphalt 031, Grass 004, Ground 080, Snow 006, Rock 058, Gravel 043
+License: Creative Commons CC0 1.0 Universal (public domain). https://docs.ambientcg.com/license/
+Files in this folder are downscaled, luminance-normalised detail maps (and one normal map) derived from the 1K-JPG downloads.

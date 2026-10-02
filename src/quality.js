@@ -3,9 +3,9 @@
 // (bkz. autoQuality.js). Elle seçilen seviye hiç değiştirilmez.
 
 const PRESETS = {
-  low: { name: 'low', pixelRatio: 1, shadows: false, shadowSize: 0, bloom: false, msaa: 0, decor: 0.45, particles: 0.5, sky: false },
-  medium: { name: 'medium', pixelRatio: 1.5, shadows: true, shadowSize: 1024, bloom: true, msaa: 2, decor: 0.75, particles: 0.8, sky: true },
-  high: { name: 'high', pixelRatio: 2, shadows: true, shadowSize: 2048, bloom: true, msaa: 4, decor: 1, particles: 1, sky: true },
+  low: { name: 'low', pixelRatio: 1, shadows: false, shadowSize: 0, bloom: false, msaa: 0, decor: 0.45, particles: 0.5, sky: false, detailRoad: false, detailGround: false },
+  medium: { name: 'medium', pixelRatio: 1.5, shadows: true, shadowSize: 1024, bloom: true, msaa: 2, decor: 0.75, particles: 0.8, sky: true, detailRoad: true, detailGround: false },
+  high: { name: 'high', pixelRatio: 2, shadows: true, shadowSize: 2048, bloom: true, msaa: 4, decor: 1, particles: 1, sky: true, detailRoad: true, detailGround: true },
 };
 export const TIERS = ['low', 'medium', 'high'];
 
@@ -54,6 +54,8 @@ if (params.get('bloom') === '0') QUALITY.bloom = false;
 if (params.get('shadows') === '0') QUALITY.shadows = false;
 if (params.get('sky') === '1') QUALITY.sky = true; // tanı: Düşük kalitede de gerçek gökyüzü
 if (params.get('sky') === '0') QUALITY.sky = false;
+if (params.get('tex') === '1') QUALITY.detailRoad = QUALITY.detailGround = true; // tanı: Düşük kalitede de detay dokuları
+if (params.get('tex') === '0') QUALITY.detailRoad = QUALITY.detailGround = false;
 
 export function saveQuality(name) {
   try {

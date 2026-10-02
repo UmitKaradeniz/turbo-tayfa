@@ -12,6 +12,8 @@ export default {
   id: 'graveyard',
   name: 'Hayalet Mezarlığı',
   meta: 'Gece · sis · hayalet',
+  groundTex: { tex: 'gravel', scale: 0.11, strength: 0.9 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
+  roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
   halfWidth: 8,
   curbWidth: 1,
   shoulder: 5,

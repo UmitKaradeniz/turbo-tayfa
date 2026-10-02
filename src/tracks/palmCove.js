@@ -10,6 +10,8 @@ export default {
   sky: { top: 0x3d9df2, horizon: 0xcdeeff, fog: 0xc4e8fb },
   skyTex: { id: 'kloofendal_48d_partly_cloudy_puresky', az: 0.5983, mix: 0.3 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0x3fe0d0, deep: 0x1673c9 },
+  groundTex: { tex: 'sand', scale: 0.14, strength: 0.9 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
+  roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
   halfWidth: 8,
   curbWidth: 1,
   shoulder: 5, // bordür ile bariyer arasındaki kum şeridi

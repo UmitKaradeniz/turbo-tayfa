@@ -9,6 +9,7 @@ export default {
   id: 'moon',
   name: 'Ay Yolu',
   meta: 'Düşük yerçekimi · meteor',
+  groundTex: { tex: 'gravel', rock: 'rock', scale: 0.09, strength: 1.0 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   halfWidth: 8,
   curbWidth: 1,
   shoulder: 5,

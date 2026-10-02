@@ -114,6 +114,19 @@ Poly Haven ([polyhaven.com](https://polyhaven.com)) HDRI'ları CC0 1.0'dır (at�
 | Kloppenheim 07 (Pure Sky) | Greg Zaal, Jarod Guest | https://polyhaven.com/a/kloppenheim_07_puresky | Hayalet Mezarlığı (karartılmış, mor tonlu) |
 | Wasteland Clouds (Pure Sky) | Jarod Guest, Sergej Majboroda | https://polyhaven.com/a/wasteland_clouds_puresky | Volkan Adası (kızıl tonlu) |
 
+## Yüzey detay dokuları (ambientCG, CC0)
+
+ambientCG ([ambientcg.com](https://ambientcg.com)) malzemeleri CC0 1.0'dır. 1K-JPG indirmelerinden 512 px'e küçültülmüş, parlaklığı normalize edilmiş detay haritaları (ve asfalt için normal haritası) üretildi (`public/tex/`).
+
+| Malzeme | Kaynak | Kullanım |
+|---|---|---|
+| Asphalt 031 | https://ambientcg.com/view?id=Asphalt031 | Yol normal haritası (7 pist) |
+| Grass 004 | https://ambientcg.com/view?id=Grass004 | Çam Vadisi ve Dinozor Vadisi zemini |
+| Ground 080 | https://ambientcg.com/view?id=Ground080 | Palmiye Koyu kumu |
+| Snow 006 | https://ambientcg.com/view?id=Snow006 | Kar Zirvesi |
+| Rock 058 | https://ambientcg.com/view?id=Rock058 | Dik yamaçlarda kaya detayı |
+| Gravel 043 | https://ambientcg.com/view?id=Gravel043 | Neon Şehir, Volkan, Ay Yolu, Mezarlık zemini |
+
 ## Yordamsal (kendi ürettiğimiz) içerik
 
 Neon tabelalar, sokak lambaları, kar yağışı, yıldızlı gökyüzü, hız tahtaları ve pencere ışıması kodla üretilir (src/city.js, src/environment.js, src/shortcut.js, src/assets.js).

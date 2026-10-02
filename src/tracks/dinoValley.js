@@ -12,6 +12,8 @@ export default {
   id: 'dinoValley',
   name: 'Dinozor Vadisi',
   meta: 'Tarih öncesi · bataklık · kaya',
+  groundTex: { tex: 'grass', rock: 'rock', scale: 0.13, strength: 1.0 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
+  roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
   halfWidth: 8,
   curbWidth: 1,
   shoulder: 5,

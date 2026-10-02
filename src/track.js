@@ -38,7 +38,7 @@ export function trackOutline(def) {
   return { centerline, rights, length: curve.getLength() };
 }
 
-export function buildTrack(def) {
+export function buildTrack(def, detail = {}) {
   const hw = def.halfWidth;
   const curb = def.curbWidth;
   const edge = hw + curb + def.shoulder; // bariyerin iç yüzü
@@ -171,7 +171,7 @@ export function buildTrack(def) {
       [-hw, 0],
       [hw, 0],
     ], segLen / 16, null, true, rolls),
-    new THREE.MeshStandardMaterial({ map: asphaltTexture(def.roadStyle), roughness: 0.92 }),
+    new THREE.MeshStandardMaterial({ map: asphaltTexture(def.roadStyle), roughness: 0.92, ...(detail.detailRoad && def.roadTex ? { normalMap: tileTexture(def.roadTex, [(2 * hw) / 3, 16 / 3]), normalScale: new THREE.Vector2(0.6, 0.6) } : {}) }),
   );
   road.receiveShadow = true;
   group.add(road);
@@ -272,7 +272,7 @@ export function buildTrack(def) {
   const shortcuts = (def.shortcuts ?? []).map((sd, k) => buildShortcut(sd, k, { closest, edge, count }));
 
   // --- Ada zemini (yükseklik ızgarası) ---
-  const terrain = buildTerrain(def, { closest, insideLoop, edge, count, shortcuts });
+  const terrain = buildTerrain(def, { closest, insideLoop, edge, count, shortcuts, detail: detail.detailGround ? def.groundTex : null });
   group.add(terrain.mesh);
   for (const sc of shortcuts) {
     sc.terrain = terrain;
@@ -454,7 +454,7 @@ function ribbon(points, rights, segments, profile, vPerSeg, colorAt = null, clos
 }
 
 // --- Ada zemini ---
-function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] }) {
+function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [], detail = null }) {
   const size = def.terrainSize;
   const res = 200;
   const n = res + 1;
@@ -557,7 +557,9 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
   for (let k = 0; k < p.count; k++) p.setY(k, heights[k]);
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
+  const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
+  if (detail) addGroundDetail(terrainMat, detail);
+  const mesh = new THREE.Mesh(geo, terrainMat);
   mesh.receiveShadow = true;
 
   const sample = (arr, x, z) => {
@@ -588,6 +590,51 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [] })
       const hz = sample(heights, x, z + e) - sample(heights, x, z - e);
       return out.set(-hx, 2 * e, -hz).normalize();
     },
+  };
+}
+
+// --- Detay dokuları (public/tex/, ambientCG CC0): orta gri = nötr, parlaklık çarpanı olarak biner ---
+const texCache = new Map();
+function tileTexture(name, repeat = [1, 1], { color = false } = {}) {
+  const key = `${name}|${repeat}`;
+  if (!texCache.has(key)) {
+    const tex = new THREE.TextureLoader().load(`/tex/${name}.jpg`);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(repeat[0], repeat[1]);
+    tex.anisotropy = 4;
+    if (!color) tex.colorSpace = THREE.NoColorSpace;
+    texCache.set(key, tex);
+  }
+  return texCache.get(key);
+}
+
+// Arazi: dünya XZ düzleminde iki ölçekte tile'lanan detay parlaklığı + dik yamaçlarda kaya detayı.
+// cfg: { tex: 'grass'|'sand'|..., rock?: 'rock', scale (1/metre), strength, rockStrength }
+function addGroundDetail(material, cfg) {
+  const detail = tileTexture(`detail_${cfg.tex}`);
+  const rock = cfg.rock ? tileTexture(`detail_${cfg.rock}`) : null;
+  const scale = cfg.scale ?? 0.12;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uDetail = { value: detail };
+    shader.uniforms.uRock = { value: rock ?? detail };
+    shader.uniforms.uScale = { value: scale };
+    shader.uniforms.uStrength = { value: cfg.strength ?? 0.9 };
+    shader.uniforms.uRockStrength = { value: rock ? (cfg.rockStrength ?? 1.4) : 0 };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos; uniform sampler2D uDetail; uniform sampler2D uRock; uniform float uScale; uniform float uStrength; uniform float uRockStrength;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        {
+          vec2 duv = vWPos.xz * uScale;
+          float det = texture2D(uDetail, duv).r + texture2D(uDetail, duv * 0.29 + 0.37).r - 1.0;
+          diffuseColor.rgb *= 1.0 + det * uStrength;
+          vec3 fn = normalize(cross(dFdx(vWPos), dFdy(vWPos)));
+          float steep = smoothstep(0.45, 0.8, 1.0 - abs(fn.y));
+          float rd = texture2D(uRock, vWPos.xz * uScale * 0.5 + vWPos.y * 0.07).r + texture2D(uRock, vWPos.zx * uScale * 0.5).r - 1.0;
+          diffuseColor.rgb *= 1.0 + rd * uRockStrength * steep;
+        }`);
   };
 }
 

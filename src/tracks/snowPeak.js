@@ -8,6 +8,8 @@ export default {
   id: 'snowPeak',
   name: 'Kar Zirvesi',
   meta: 'Kış dağı · kar yağışı',
+  groundTex: { tex: 'snow', rock: 'rock', scale: 0.12, strength: 0.8 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
+  roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
   halfWidth: 8,
   curbWidth: 1,
   shoulder: 5,
