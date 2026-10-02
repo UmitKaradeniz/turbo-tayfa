@@ -66,6 +66,7 @@ export class Kart {
     this.visualTilt = new THREE.Quaternion();
     this.visualDriftYaw = 0;
 
+    this.bodyOverride = null;
     this.vehicle = defaultVehicleFor(character);
     this.stats = this.vehicle.stats; // araç sınıfı çarpanları (bkz. vehicles.js)
     this.model = createKartModel(character, this.vehicle.body);
@@ -76,7 +77,13 @@ export class Kart {
     if (!vehicle || vehicle === this.vehicle) return;
     this.vehicle = vehicle;
     this.stats = vehicle.stats;
-    this.model.setBody(vehicle.body);
+    this.model.setBody(this.bodyOverride ?? vehicle.body);
+  }
+
+  // Pistin özel kart gövdesi (örn. Ay Yolu): seçilen araç sınıfının görünümünü geçersiz kılar, istatistikler kalır
+  setBodyOverride(path) {
+    this.bodyOverride = path ?? null;
+    this.model.setBody(this.bodyOverride ?? this.vehicle.body);
   }
 
   reset(position, heading) {

@@ -259,6 +259,7 @@ function buildTrackNow(def) {
     hazards?.dispose();
   }
   trackDef = def;
+  for (const k of karts) k.setBodyOverride(def.kartBody); // pistin özel kart gövdesi (yoksa seçilen araç sınıfının gövdesi)
   track = buildTrack(def, { detailRoad: QUALITY.detailRoad, detailGround: QUALITY.detailGround });
   scene.add(track.group);
   decor = buildDecor(track, (ctx) => def.decorate(ctx), QUALITY.decor);

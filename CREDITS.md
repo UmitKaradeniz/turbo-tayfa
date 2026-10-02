@@ -64,6 +64,7 @@ Motor ve drift kayma sesleri dosya değildir; tarayıcıda WebAudio ile kodla ü
 - Asfalt dokusu, başlangıç çizgisi / grid çıkartması, bordür renkleri: kodla üretilen canvas dokuları (`src/track.js`)
 - Ada zemini, deniz shader'ı, gökyüzü ve bulutlar: kodla üretildi (`src/track.js`, `src/environment.js`)
 - Pist rotaları "Palmiye Koyu" ve "Çam Vadisi": özgün tasarım (`src/tracks/`)
+- Ay Yolu kart gövdesi (`public/models/karts/kart-moon-balanced.glb`): proje için özgün üretildi, üretici betik `tools/gen_kart_moon.py` (vertex renkli, doku yok)
 - Dinozor Vadisi: yuvarlanan kayalar ve ayak darbesi tozu mevcut tehlike sistemiyle (`src/hazards.js`) kodla üretildi
 - Hayalet Mezarlığı: yola çıkan hayaletler (`src/hazards.js` yuvarlanan nesne türünün 'ghost' kılıfı) ve yeşil ruh sütunları kodla üretildi
 - Şeker Diyarı: pembe şeker fıskiyeleri aynı gayzer sisteminin renk paletiyle (`src/hazards.js`) kodla üretildi

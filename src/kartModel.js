@@ -44,6 +44,9 @@ export const KART_MODELS = [...new Set(CHARACTERS.flatMap((c) => [c.pet, c.kart]
 
 const KART_SCALE = 2.0; // Car Kit kartı ~1.4 m → ~2.9 m
 const PET_SCALE = 0.62;
+// Özel gövdeler: ölçek ve tekerlek yarıçapı (Kenney dışı modeller kendi boyutlarında gelir)
+const BODY_SPECS = { 'karts/kart-moon-balanced': { scale: 1.7, wheel: 0.2 } };
+const specOf = (path) => BODY_SPECS[path] ?? { scale: KART_SCALE, wheel: 0.21 };
 
 // Hiyerarşi: root (dünya konumu + zemin eğimi) → body (yatma, drift açısı) → kart modeli
 export function createKartModel(character, bodyPath = character.kart) {
@@ -67,8 +70,11 @@ export function createKartModel(character, bodyPath = character.kart) {
     if (path === bodyId) return;
     bodyId = path;
     if (kart) body.remove(kart); // hayvan eski gövdenin çocuğuydu; yenisine taşınır
+    const spec = specOf(path);
     kart = cloneModel(path).scene;
-    kart.scale.setScalar(KART_SCALE);
+    kart.scale.setScalar(spec.scale);
+    pet.scale.setScalar(PET_SCALE); // sürücü gövdeye göre ölçülür (kokpit hayvan genişliğine göre tasarlandı)
+    api.wheelRadius = spec.wheel * spec.scale;
     body.add(kart);
     wheels.length = steerWheels.length = 0;
     kart.traverse((o) => {
@@ -82,8 +88,6 @@ export function createKartModel(character, bodyPath = character.kart) {
     seat.visible = false;
     kart.add(pet);
   };
-  setBody(bodyPath);
-
   const mixer = new THREE.AnimationMixer(pet);
   const clip = (name) => animations.find((a) => a.name === name);
   let current = null;
@@ -98,7 +102,7 @@ export function createKartModel(character, bodyPath = character.kart) {
   };
   play('idle', 0);
 
-  return {
+  const api = {
     root,
     body,
     pet,
@@ -111,4 +115,6 @@ export function createKartModel(character, bodyPath = character.kart) {
       mixer.update(dt);
     },
   };
+  setBody(bodyPath);
+  return api;
 }

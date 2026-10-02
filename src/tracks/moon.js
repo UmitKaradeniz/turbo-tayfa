@@ -97,8 +97,11 @@ export default {
     { type: 'bounce', f: [0.6, 0.615], lateral: [-3.2, 3.2], color: '#6fd0ff' },
   ],
 
+  // Bu pistte tüm kartlar özel Ay kartı gövdesini kullanır (tools/gen_kart_moon.py ile üretildi)
+  kartBody: 'karts/kart-moon-balanced',
+
   models: [
-    'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
+    'karts/kart-moon-balanced', 'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['rock', 'rock_largeA', 'rock_largeB', 'rocks_smallA', 'rocks_smallB', 'rock_crystals', 'rock_crystalsLargeA', 'rock_crystalsLargeB',
       'crater', 'craterLarge', 'meteor', 'meteor_detailed', 'meteor_half', 'hangar_largeA', 'hangar_largeB', 'hangar_roundA', 'hangar_smallA',
