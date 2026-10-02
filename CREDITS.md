@@ -80,7 +80,7 @@ Google Fonts üzerinden yükleniyor; ikisi de **SIL Open Font License 1.1** (tic
 
 | Yazı tipi | Tasarımcı | Kaynak | Kullanım |
 |---|---|---|---|
-| Lilita One | Juan Montoreano | https://fonts.google.com/specimen/Lilita+One | Başlıklar, sıra, geri sayım |
+| Fredoka | Milena Brandão, Hafontia (OFL) | https://fonts.google.com/specimen/Fredoka | Başlıklar, sıra, geri sayım |
 | Nunito | Vernon Adams, Cyreal, Jacques Le Bailly | https://fonts.google.com/specimen/Nunito | Arayüz metinleri |
 
 ## Kütüphaneler

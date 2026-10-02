@@ -22,7 +22,7 @@ function neonTexture(word, color) {
   g.shadowColor = color;
   g.shadowBlur = 14;
   g.stroke();
-  g.font = "48px 'Lilita One', 'Arial Black', sans-serif";
+  g.font = "700 48px 'Fredoka', 'Arial Black', sans-serif";
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.fillStyle = '#fff';

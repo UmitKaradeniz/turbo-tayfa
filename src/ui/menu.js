@@ -102,10 +102,10 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       <div class="left">
         <div class="tt-card enter">
           <h3>Karakterini seç</h3>
+          <div class="tt-char-info"><span class="swatch"></span><div><div class="name"></div><div class="desc"></div></div></div>
           <div class="tt-chars">${characters
             .map((c) => `<button class="tt-char" data-char="${c.id}" title="${c.name}"><img src="${portraits[c.id]}" alt="${c.name}" draggable="false" />${c.name}<span class="taken"></span></button>`)
             .join('')}</div>
-          <div class="tt-char-info"><span class="swatch"></span><div><div class="name"></div><div class="desc"></div></div></div>
         </div>
         <div class="tt-card enter">
           <h3>Aracını seç</h3>
