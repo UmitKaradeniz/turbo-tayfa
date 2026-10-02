@@ -19,6 +19,7 @@ export default {
   roadStyle: { base: '#4a4f63', blotchDark: '30,34,52', blotchLight: '120,126,150', line: '#ffd23f', curbs: [0xffd23f, 0xff4f9a] },
   dust: [0.85, 0.82, 0.7],
   sky: { top: 0x5f9cff, horizon: 0xfff0cc, fog: 0xfff0d4 },
+  skyTex: { id: 'sunflowers_puresky', az: 0.6473, mix: 0.3 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0xfff0cc, deep: 0xffe0a8 },
   light: { hemiSky: 0xfff3dc, hemiGround: 0x8fbf6a, hemi: 1.05, sun: 0xfff1d6, sunI: 2.9, sunDir: [-0.5, 0.6, 0.45], glow: 0xffedc4, fogNear: 220, fogFar: 760 },
   control: [

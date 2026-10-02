@@ -23,6 +23,11 @@ export function createEnvironment(scene, quality) {
         horizon: { value: SKY_HORIZON },
         sunDir: { value: SUN_DIR },
         glow: { value: SUN_GLOW },
+        skyTex: { value: null }, // Poly Haven gökyüzü (public/sky/*.jpg), yoksa gradyan
+        useTex: { value: 0 },
+        texMix: { value: 0.3 },
+        texDim: { value: 1 },
+        texRot: { value: 0 },
       },
       vertexShader: /* glsl */ `
         varying vec3 vDir;
@@ -32,12 +37,22 @@ export function createEnvironment(scene, quality) {
         }`,
       fragmentShader: /* glsl */ `
         uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; uniform vec3 glow;
+        uniform sampler2D skyTex; uniform float useTex; uniform float texMix; uniform float texDim; uniform float texRot;
         varying vec3 vDir;
         void main() {
           float h = max(vDir.y, 0.0);
           vec3 col = mix(horizon, top, pow(h, 0.55));
+          if (useTex > 0.5) {
+            // Ekvirektangüler gökyüzü: güneşi pistin ışık yönüne döndür, ufuk bandını sis rengine karıştır, palete yaklaştır
+            float a = atan(vDir.z, vDir.x) - texRot;
+            float el = asin(clamp(vDir.y, -1.0, 1.0));
+            vec2 uv = vec2(a / 6.2831853 + 0.5, clamp((0.5 - el / 3.14159265) / 0.56, 0.0, 1.0));
+            vec3 t = texture2D(skyTex, uv).rgb * texDim;
+            t = mix(t, col, texMix);
+            col = mix(col, t, smoothstep(0.0, 0.3, vDir.y));
+          }
           float sun = max(dot(vDir, sunDir), 0.0);
-          col += glow * (pow(sun, 350.0) * 3.0 + pow(sun, 12.0) * 0.18);
+          col += glow * (pow(sun, 350.0) * 3.0 + pow(sun, 12.0) * 0.18) * (1.0 - 0.75 * useTex);
           gl_FragColor = vec4(col, 1.0);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
@@ -67,6 +82,9 @@ export function createEnvironment(scene, quality) {
   scene.add(hemi);
 
   const sun = new THREE.DirectionalLight(0xfff0d8, 3.1);
+  const skyU = sky.material.uniforms;
+  const skyCache = new Map();
+  let skyWanted = null;
   sun.castShadow = quality.shadows;
   if (quality.shadows) {
     sun.shadow.mapSize.set(quality.shadowSize, quality.shadowSize);
@@ -81,6 +99,30 @@ export function createEnvironment(scene, quality) {
 
   // --- Su (pist değişince yeniden kurulur) ---
   let water = null;
+
+  function loadSky(id) {
+    if (!skyCache.has(id)) {
+      skyCache.set(
+        id,
+        new Promise((resolve) => {
+          new THREE.TextureLoader().load(
+            `/sky/${id}.jpg`,
+            (tex) => {
+              tex.colorSpace = THREE.SRGBColorSpace;
+              tex.flipY = false;
+              tex.wrapS = THREE.RepeatWrapping;
+              tex.generateMipmaps = false;
+              tex.minFilter = THREE.LinearFilter;
+              resolve(tex);
+            },
+            undefined,
+            () => resolve(null),
+          );
+        }),
+      );
+    }
+    return skyCache.get(id);
+  }
 
   return {
     sun,
@@ -112,6 +154,21 @@ export function createEnvironment(scene, quality) {
       scene.fog.near = L.fogNear ?? 160;
       scene.fog.far = L.fogFar ?? 620;
       clouds.visible = !def.night && !def.noClouds && !def.space;
+      // Gerçek gökyüzü dokusu (Orta/Yüksek kalite): yüklenince gradyanın yerini alır, yapay bulutlar gizlenir
+      skyU.useTex.value = 0;
+      skyWanted = quality.sky && def.skyTex ? def.skyTex : null;
+      if (skyWanted) {
+        const want = skyWanted;
+        loadSky(want.id).then((tex) => {
+          if (skyWanted !== want || !tex) return;
+          skyU.skyTex.value = tex;
+          skyU.texMix.value = want.mix ?? 0.3;
+          skyU.texDim.value = want.dim ?? 1;
+          skyU.texRot.value = Math.atan2(SUN_DIR.z, SUN_DIR.x) - want.az;
+          skyU.useTex.value = 1;
+          clouds.visible = false;
+        });
+      }
       earth.visible = !!def.space;
       if (water) water.visible = !def.noWater;
       stars.visible = !!def.night || !!def.space;

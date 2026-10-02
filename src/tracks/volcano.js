@@ -22,6 +22,7 @@ export default {
   embers: true,
   noClouds: true,
   sky: { top: 0x32121a, horizon: 0xff6f30, fog: 0x5b2419 },
+  skyTex: { id: 'wasteland_clouds_puresky', az: 0.6228, mix: 0.55, dim: 0.6 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { lava: true, shallow: 0xffa624, deep: 0xc42a08 },
   light: { hemiSky: 0xff9d78, hemiGround: 0x3a1a14, hemi: 0.95, sun: 0xff9a55, sunI: 2.1, sunDir: [-0.5, 0.32, 0.6], glow: 0xff7a30, fogNear: 90, fogFar: 500 },
   volcano: { x: 0, z: 0, radius: 68, height: 75, y: -1.5, period: 12 },

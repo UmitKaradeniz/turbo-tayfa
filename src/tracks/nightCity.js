@@ -17,6 +17,7 @@ export default {
   dust: [0.5, 0.52, 0.62],
   night: true,
   sky: { top: 0x030720, horizon: 0x1d2b66, fog: 0x0e1639 },
+  skyTex: { id: 'kloppenheim_02_puresky', az: 0.6228, mix: 0.7, dim: 0.35 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0x1f4a99, deep: 0x050c30 },
   light: { hemiSky: 0x6478c0, hemiGround: 0x232848, hemi: 1.0, sun: 0xa9bdff, sunI: 1.7, sunDir: [-0.35, 0.55, -0.6], glow: 0xd6e2ff, fogNear: 70, fogFar: 430 },
   control: [

@@ -26,6 +26,7 @@ export default {
   roadStyle: { base: '#4a4152', blotchDark: '24,18,32', blotchLight: '120,104,146', line: '#c9b8ff', curbs: [0xc9b8ff, 0x4a2f7a] },
   dust: [0.5, 0.5, 0.6],
   sky: { top: 0x080414, horizon: 0x4a3377, fog: 0x1e1638 },
+  skyTex: { id: 'kloppenheim_07_puresky', az: 0.6657, mix: 0.6, dim: 0.3 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0x2a2347, deep: 0x120c24 },
   light: { hemiSky: 0x8a78d8, hemiGround: 0x22302a, hemi: 1.0, sun: 0xb9c6ff, sunI: 1.7, sunDir: [-0.4, 0.6, 0.35], glow: 0xcfd8ff, fogNear: 70, fogFar: 380 },
   control: [

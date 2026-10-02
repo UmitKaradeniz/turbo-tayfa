@@ -24,6 +24,7 @@ export default {
   roadStyle: { base: '#8c6a47', blotchDark: '62,40,22', blotchLight: '178,136,92', line: '#f3e6c3', curbs: [0xf3e6c3, 0x8a5a2e] },
   dust: [0.78, 0.66, 0.46],
   sky: { top: 0x5aa8e4, horizon: 0xffe8b4, fog: 0xf1e2b6 },
+  skyTex: { id: 'qwantani_late_afternoon_puresky', az: 0.6289, mix: 0.45 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0x7ee0b8, deep: 0x2a8f7e },
   light: { hemiSky: 0xfff0d0, hemiGround: 0x7a9a50, hemi: 1.05, sun: 0xfff0d6, sunI: 2.8, sunDir: [-0.45, 0.65, 0.4], glow: 0xffe9bc, fogNear: 200, fogFar: 740 },
   control: [

@@ -99,6 +99,21 @@ Google Fonts üzerinden yükleniyor; ikisi de **SIL Open Font License 1.1** (tic
 |---|---|---|---|---|---|
 | Particle Pack | Kenney | https://kenney.nl/assets/particle-pack | CC0 1.0 | `smoke_04`, `smoke_07`, `dirt_01`, `star_05`, `star_06`, `star_09`, `flame_05`, `circle_05` (tek atlas: `public/fx/particles.png`) | Drift dumanı ve kıvılcımı, toz, çamur, turbo alevi, gayzer/meteor/yanardağ efektleri |
 
+## Gökyüzü (Poly Haven, CC0)
+
+Poly Haven ([polyhaven.com](https://polyhaven.com)) HDRI'ları CC0 1.0'dır (atıf zorunlu değil, teşekkür amacıyla yazıldı). 1k .hdr dosyaları ton eşlemeyle küçük JPG'lere çevrildi (`public/sky/`); sadece Orta/Yüksek grafik kalitesinde kullanılır.
+
+| Gökyüzü | Yapımcılar | Kaynak | Pist |
+|---|---|---|---|
+| Kloofendal 48d Partly Cloudy (Pure Sky) | Greg Zaal, Jarod Guest | https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky | Palmiye Koyu |
+| Kloofendal 38d Partly Cloudy (Pure Sky) | Greg Zaal, Jarod Guest | https://polyhaven.com/a/kloofendal_38d_partly_cloudy_puresky | Çam Vadisi |
+| Snow Field 2 (Pure Sky) | Jarod Guest, Sergej Majboroda | https://polyhaven.com/a/snow_field_2_puresky | Kar Zirvesi |
+| Sunflowers (Pure Sky) | Jarod Guest, Sergej Majboroda | https://polyhaven.com/a/sunflowers_puresky | Lunapark |
+| Qwantani Late Afternoon (Pure Sky) | Greg Zaal, Jarod Guest | https://polyhaven.com/a/qwantani_late_afternoon_puresky | Dinozor Vadisi |
+| Kloppenheim 02 (Pure Sky) | Greg Zaal, Jarod Guest | https://polyhaven.com/a/kloppenheim_02_puresky | Neon Şehir (karartılmış) |
+| Kloppenheim 07 (Pure Sky) | Greg Zaal, Jarod Guest | https://polyhaven.com/a/kloppenheim_07_puresky | Hayalet Mezarlığı (karartılmış, mor tonlu) |
+| Wasteland Clouds (Pure Sky) | Jarod Guest, Sergej Majboroda | https://polyhaven.com/a/wasteland_clouds_puresky | Volkan Adası (kızıl tonlu) |
+
 ## Yordamsal (kendi ürettiğimiz) içerik
 
 Neon tabelalar, sokak lambaları, kar yağışı, yıldızlı gökyüzü, hız tahtaları ve pencere ışıması kodla üretilir (src/city.js, src/environment.js, src/shortcut.js, src/assets.js).

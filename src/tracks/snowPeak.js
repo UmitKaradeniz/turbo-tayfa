@@ -20,6 +20,7 @@ export default {
   dust: [0.92, 0.95, 1.0],
   snow: true,
   sky: { top: 0x5d8dc2, horizon: 0xe4eef8, fog: 0xd8e5f1 },
+  skyTex: { id: 'snow_field_2_puresky', az: 0.6964, mix: 0.45 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0xc6edf8, deep: 0x72b8de },
   light: { hemiSky: 0xe0eeff, hemiGround: 0xbccadc, hemi: 1.05, sun: 0xf4f7ff, sunI: 2.5, sunDir: [-0.4, 0.5, 0.6], glow: 0xe2ecff, fogNear: 100, fogFar: 540 },
   control: [

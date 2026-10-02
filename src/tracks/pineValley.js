@@ -19,6 +19,7 @@ export default {
   palette: { base: 0x7cc452, shore: 0x8a6a45, patch: 0x5a9e3c, patchDark: 0x467f2f, shoulder: 0xa8825a, cliff: 0x9aa0a8 },
   dust: [0.62, 0.5, 0.36],
   sky: { top: 0x4a8fd6, horizon: 0xd9eef8, fog: 0xcfe6f2 },
+  skyTex: { id: 'kloofendal_38d_partly_cloudy_puresky', az: 0.6289, mix: 0.35 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0x5cc9bd, deep: 0x1d5f8c },
   control: [
     [-60, -112, 1.4], // başlangıç düzlüğü (göl kıyısı)

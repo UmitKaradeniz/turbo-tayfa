@@ -8,6 +8,7 @@ export default {
   meta: 'Tropikal sahil · lagün',
   dust: [0.93, 0.82, 0.6],
   sky: { top: 0x3d9df2, horizon: 0xcdeeff, fog: 0xc4e8fb },
+  skyTex: { id: 'kloofendal_48d_partly_cloudy_puresky', az: 0.5983, mix: 0.3 }, // Poly Haven (CC0) gökyüzü; Düşük kalitede kapalı
   water: { shallow: 0x3fe0d0, deep: 0x1673c9 },
   halfWidth: 8,
   curbWidth: 1,
