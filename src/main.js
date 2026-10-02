@@ -29,10 +29,10 @@ import { createMinimap } from './ui/minimap.js';
 import { createNameplates } from './ui/nameplates.js';
 import { createHazards } from './hazards.js';
 import { createVolcanoShow } from './volcano.js';
-import { renderPortraits, renderIcons } from './ui/portraits.js';
+import { renderPortraits } from './ui/portraits.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
 import { createItemSystem } from './items.js';
-import { ITEM_ICON_MODELS } from './itemModels.js';
+import { ITEM_ICONS } from './itemIcons.js';
 import { play, playMusic, updateEngine, applyVolumes } from './audio.js';
 import { TRACKS, TRACK_IDS, CUP_SETS } from './tracks/index.js';
 
@@ -99,8 +99,7 @@ let booted = false; // menü kurulurken (henüz pist yokken) sahne işlemleri at
 
 // --- Arayüz ---
 const portraits = renderPortraits(renderer, CHARACTERS);
-const itemIcons = renderIcons(renderer, ITEM_ICON_MODELS);
-const hud = createHud({ portraits, minimap: null, itemIcons });
+const hud = createHud({ portraits, minimap: null, itemIcons: ITEM_ICONS });
 const touch = createTouchControls();
 const net = new Net();
 

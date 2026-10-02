@@ -11,6 +11,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🎁 Itemler: Turbo Şişesi, Balon Kalkan, Hindistan Cevizi, Yağ Lekesi
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
 - 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
+- 🎁 **Item simgeleri:** HUD yuvası ve rulet şeridinde düz vektör, iki tonlu gölgeli simgeler (`src/itemIcons.js`, SVG; her çözünürlükte keskin)
 - 🏁 **Canlı sonuç tablosu:** yarışçılar bitirdikçe tablo yeniden çizilmez; bitmeyenin süresi "yükleniyor…" gösterir, bitince yalnızca o hücre süreye döner ve satırlar yerinde sıralanır
 - 🪜 **Adım adım yarış hazırlığı:** 1 Karakter → 2 Araç → 3 Pist ve mod → 4 Hazır (pilotlar, sohbet, YARIŞA BAŞLA); altta sabit ileri/geri çubuğu, telefonda iç içe kaydırma yok; çevrimiçi odada da aynı adımlar (misafirde pist adımı kilitli)
 - 🔤 **Okunaklı arayüz:** tüm yazılar Türkçe harflerle (ş ğ ı İ ç ö ü) uyumlu **Baloo 2** fontuyla ve oyunla birlikte kendi sunucumuzdan yüklenir (Google'a bağımlı değil); "Karakterini seç" kartında 24 karakterin hepsi görünür

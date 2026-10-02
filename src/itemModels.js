@@ -238,22 +238,3 @@ export function createBubble() {
   m.renderOrder = 3;
   return m;
 }
-
-// HUD ikonları için modeller (portre çizici ile resme çevrilir)
-export const ITEM_ICON_MODELS = {
-  turbo: () => createBottle(),
-  shield: () => {
-    const b = createBubble();
-    b.scale.setScalar(0.25);
-    b.position.y = 0.5;
-    const g = new THREE.Group();
-    g.add(b);
-    return g;
-  },
-  coconut: () => {
-    const c = createCoconut();
-    c.position.y = 0.5;
-    return c;
-  },
-  oil: () => createDrop(),
-};
