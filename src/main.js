@@ -1134,8 +1134,13 @@ let slowTime = 0;
 let fastTime = 0;
 let ratioCeiling = basePixelRatio;
 function adaptResolution(fps) {
-  if (!race || paused || document.hidden) return;
-  if (race.started) autoTuner?.raceSample(fps, pixelRatio, basePixelRatio);
+  // Geri sayımda ve "BAŞLA"dan sonraki ilk 2 sn'de ayar yapma: ilk karelerde doku/shader yüklemesi FPS'i geçici düşürür,
+  // çözünürlüğü değiştirmek ise tüm render hedeflerini yeniden kurar ve geri sayımı dondurur.
+  if (!race || paused || document.hidden || !race.started || race.clock < 2) {
+    slowTime = fastTime = 0;
+    return;
+  }
+  autoTuner?.raceSample(fps, pixelRatio, basePixelRatio);
   slowTime = fps < 48 ? slowTime + 0.5 : 0;
   fastTime = fps > 58 ? fastTime + 0.5 : 0;
   let next = pixelRatio;
