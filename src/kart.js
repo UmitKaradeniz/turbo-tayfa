@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { KART, SLOPE } from './config.js';
 import { createKartModel } from './kartModel.js';
+import { defaultVehicleFor } from './vehicles.js';
 
 // Arcade kart fiziği. Gerçek bir fizik motoru yok: hız vektörü, yön açısı
 // ve pistten sorgulanan zemin yüksekliği yeterli. heading = 0 iken kart +Z yönüne bakar.
@@ -65,8 +66,17 @@ export class Kart {
     this.visualTilt = new THREE.Quaternion();
     this.visualDriftYaw = 0;
 
-    this.model = createKartModel(character);
+    this.vehicle = defaultVehicleFor(character);
+    this.stats = this.vehicle.stats; // araç sınıfı çarpanları (bkz. vehicles.js)
+    this.model = createKartModel(character, this.vehicle.body);
     this.object = this.model.root;
+  }
+
+  setVehicle(vehicle) {
+    if (!vehicle || vehicle === this.vehicle) return;
+    this.vehicle = vehicle;
+    this.stats = vehicle.stats;
+    this.model.setBody(vehicle.body);
   }
 
   reset(position, heading) {
@@ -158,7 +168,7 @@ export class Kart {
     const lowSpeedFactor = Math.max(pedal ? KART.minSteer : 0, Math.min(1, absSpeed / KART.steerFullSpeed));
     const highSpeedFactor = THREE.MathUtils.lerp(1, KART.highSpeedSteer, Math.min(1, absSpeed / KART.maxSpeed));
     const direction = this.speed >= 0 ? 1 : -1;
-    this.heading += turn * KART.steerRate * lowSpeedFactor * highSpeedFactor * direction * control * dt;
+    this.heading += turn * KART.steerRate * this.stats.handling * lowSpeedFactor * highSpeedFactor * direction * control * dt;
 
     // Hızı yeni yöne göre ileri ve yan bileşenlere ayır
     _fwd.set(Math.sin(this.heading), 0, Math.cos(this.heading));
@@ -170,7 +180,8 @@ export class Kart {
     // Turbo varken kum yavaşlatmaz
     const offroad = SLOW_SURFACES.has(this.surface);
     const boosting = this.boostTime > 0;
-    let maxSpeed = boosting ? KART.maxSpeed * KART.boostSpeed : offroad ? KART.maxSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : KART.maxSpeed;
+    const topSpeed = KART.maxSpeed * this.stats.speed;
+    let maxSpeed = boosting ? topSpeed * KART.boostSpeed : offroad ? topSpeed * (this.surfaceSpeed ?? (this.surface === 'dirt' ? KART.dirtSpeed : KART.offroadSpeed)) : topSpeed;
 
     // Eğim: yokuşta hız sınırı düşer ve kart geri çekilir; inişte sınır aşılır
     const n = this.groundNormal;
@@ -181,7 +192,7 @@ export class Kart {
     // İleri/geri ivme
     if (this.grounded) {
       if (input.throttle > 0 && forward >= -0.5) {
-        if (forward < maxSpeed) forward = Math.min(maxSpeed, forward + KART.accel * input.throttle * dt);
+        if (forward < maxSpeed) forward = Math.min(maxSpeed, forward + KART.accel * this.stats.accel * input.throttle * dt);
       } else if (input.brake > 0 && forward > 0.5) {
         forward -= KART.brake * input.brake * dt;
       } else if (input.brake > 0) {
@@ -201,7 +212,7 @@ export class Kart {
       // Yan kaymayı sönümle (drift'te daha az). Sönen yan hızın çoğu ileri hıza
       // aktarılır; böylece virajda ve drift'te kart hızını kaybetmez (arcade hissi).
       const before = lateral;
-      lateral *= Math.exp(-(this.drifting ? KART.driftGrip : KART.grip) * this.surfaceGrip * dt);
+      lateral *= Math.exp(-(this.drifting ? KART.driftGrip : KART.grip) * (1 + (this.stats.handling - 1) * 0.5) * this.surfaceGrip * dt);
       if (forward > 0) {
         const gained = (before * before - lateral * lateral) * KART.slideKeep;
         forward = Math.min(Math.max(maxSpeed, forward), Math.sqrt(forward * forward + gained));
@@ -345,7 +356,7 @@ export function resolveKartCollisions(karts, onHit, movable = () => true) {
       const nx = dx / d;
       const nz = dz / d;
       // İtme payı: ikisi de hareketliyse yarı yarıya, değilse hepsi hareketli olana
-      const wa = ma && mb ? 0.5 : ma ? 1 : 0;
+      const wa = ma && mb ? (b.stats?.weight ?? 1) / ((a.stats?.weight ?? 1) + (b.stats?.weight ?? 1)) : ma ? 1 : 0; // ağır kart daha az itilir
       const wb = 1 - wa;
       const overlap = minDist - d;
       a.position.x -= nx * overlap * wa;

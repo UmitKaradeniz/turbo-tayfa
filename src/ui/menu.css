@@ -138,6 +138,12 @@
 .tt-char.on img { animation: tt-hop 0.45s ease; }
 .tt-char .taken { position: absolute; inset: 0; border-radius: 14px; background: rgba(11, 42, 85, 0.45); display: none; }
 @keyframes tt-hop { 40% { transform: translateY(-8px) scale(1.1); } }
+.tt-veh button { flex: 1; padding: 8px 2px; font-size: 14px; }
+.tt-veh-desc { margin: 8px 0 6px; font-weight: 700; font-size: 13px; opacity: 0.65; min-height: 2.6em; }
+.tt-stats .row { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.tt-stats .row span { width: 62px; opacity: 0.6; }
+.tt-stats i { flex: 1; height: 9px; border-radius: 6px; background: var(--tt-soft); overflow: hidden; }
+.tt-stats b { display: block; height: 100%; border-radius: 6px; background: var(--tt-blue); transition: width 0.25s; }
 .tt-char-info { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
 .tt-char-info .name { font-family: var(--tt-font-display); font-size: 26px; color: var(--tt-navy); }
 .tt-char-info .desc { font-weight: 700; font-size: 13px; opacity: 0.65; }

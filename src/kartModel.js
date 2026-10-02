@@ -46,34 +46,43 @@ const KART_SCALE = 2.0; // Car Kit kartı ~1.4 m → ~2.9 m
 const PET_SCALE = 0.62;
 
 // Hiyerarşi: root (dünya konumu + zemin eğimi) → body (yatma, drift açısı) → kart modeli
-export function createKartModel(character) {
+export function createKartModel(character, bodyPath = character.kart) {
   const root = new THREE.Group();
   const body = new THREE.Group();
   root.add(body);
 
-  const { scene: kart } = cloneModel(character.kart);
-  kart.scale.setScalar(KART_SCALE);
-  body.add(kart);
-
-  const seat = kart.getObjectByName('character');
-  const wheels = [];
+  const wheels = []; // gövde değişince yerinde yenilenir (dışarıdan aynı dizi kullanılır)
   const steerWheels = [];
-  kart.traverse((o) => {
-    if (!o.name.startsWith('wheel-')) return;
-    o.rotation.order = 'YXZ'; // önce direksiyon (Y), sonra dönme (X)
-    wheels.push(o);
-    if (o.name.includes('front')) steerWheels.push(o);
-  });
 
   // Sürücü: kaskı gizle, yerine hayvanı oturt (bacaklar kartın içinde kalsın diye gizli)
   const { scene: pet, animations } = cloneModel(character.pet);
-  pet.position.copy(seat.position).add(new THREE.Vector3(0, 0.02, 0.04));
   pet.scale.setScalar(PET_SCALE);
-  seat.visible = false;
   pet.traverse((o) => {
     if (o.name.startsWith('leg-')) o.visible = false;
   });
-  kart.add(pet);
+
+  let kart = null;
+  let bodyId = null;
+  const setBody = (path) => {
+    if (path === bodyId) return;
+    bodyId = path;
+    if (kart) body.remove(kart); // hayvan eski gövdenin çocuğuydu; yenisine taşınır
+    kart = cloneModel(path).scene;
+    kart.scale.setScalar(KART_SCALE);
+    body.add(kart);
+    wheels.length = steerWheels.length = 0;
+    kart.traverse((o) => {
+      if (!o.name.startsWith('wheel-')) return;
+      o.rotation.order = 'YXZ'; // önce direksiyon (Y), sonra dönme (X)
+      wheels.push(o);
+      if (o.name.includes('front')) steerWheels.push(o);
+    });
+    const seat = kart.getObjectByName('character');
+    pet.position.copy(seat.position).add(new THREE.Vector3(0, 0.02, 0.04));
+    seat.visible = false;
+    kart.add(pet);
+  };
+  setBody(bodyPath);
 
   const mixer = new THREE.AnimationMixer(pet);
   const clip = (name) => animations.find((a) => a.name === name);
@@ -96,6 +105,7 @@ export function createKartModel(character) {
     wheels,
     steerWheels,
     wheelRadius: 0.21 * KART_SCALE,
+    setBody,
     play,
     update(dt) {
       mixer.update(dt);

@@ -3,8 +3,8 @@ import crypto from 'node:crypto';
 // Oda / lobi / yarış yönetimi. Tek süreç, bellekte; veritabanı yok.
 //
 // Mesajlar JSON: { type, ... }. İstemci → sunucu:
-//   create {name, character}          join {code, name, character}
-//   resume {code, token}              character {character}
+//   create {name, character, vehicle}  join {code, name, character, vehicle}
+//   resume {code, token}              character {character}   vehicle {vehicle}
 //   settings {laps, difficulty, track, mode}   ready {ready}
 //   start {trackCount | trackCounts}  nextRace (kupa)   state {s: {...}, bots: [{id, s}]}
 //   finish {id, time}                 backToLobby
@@ -72,6 +72,7 @@ function roomView(room) {
       id: p.id,
       name: p.name,
       character: p.character,
+      vehicle: p.vehicle,
       ready: p.ready,
       connected: !!p.ws,
     })),
@@ -86,12 +87,16 @@ function freeCharacter(room, wanted, exceptId) {
   return CHARACTERS.find((c) => !taken.has(c));
 }
 
-function addPlayer(room, ws, name, character) {
+const VEHICLES = ['balanced', 'agile', 'rocket', 'heavy', 'sprint'];
+const cleanVehicle = (v) => (VEHICLES.includes(v) ? v : null); // null = istemci karakterin varsayılan aracını kullanır
+
+function addPlayer(room, ws, name, character, vehicle) {
   const p = {
     id: crypto.randomUUID().slice(0, 8),
     token: crypto.randomUUID(),
     name: cleanName(name),
     character: freeCharacter(room, character, null),
+    vehicle: cleanVehicle(vehicle),
     ready: false,
     ws,
     leftAt: 0,
@@ -171,7 +176,7 @@ function startRace(room, trackCount) {
   }
   const bots = botChars.filter((c) => !taken.has(c)).map((c) => ({ id: `bot-${c}`, character: c }));
   room.entrants = [
-    ...order.map((p) => ({ id: p.id, character: p.character, name: p.name, bot: false })),
+    ...order.map((p) => ({ id: p.id, character: p.character, vehicle: p.vehicle, name: p.name, bot: false })),
     ...bots.map((b) => ({ id: b.id, character: b.character, name: null, bot: true })),
   ];
   room.botState = new Map(); // bot id → {state, progress, finished}
@@ -286,7 +291,7 @@ export function handleMessage(ws, raw) {
       const code = newCode();
       const r = { code, hostId: null, phase: 'lobby', settings: { laps: 3, difficulty: 'normal', track: 'palmCove', mode: 'race' }, players: new Map(), emptySince: 0 };
       rooms.set(code, r);
-      const me = addPlayer(r, ws, msg.name, msg.character);
+      const me = addPlayer(r, ws, msg.name, msg.character, msg.vehicle);
       r.hostId = me.id;
       syncRoom(r);
       return;
@@ -298,7 +303,7 @@ export function handleMessage(ws, raw) {
       if (!r) return send(ws, { type: 'error', code: 'no-room', msg: 'Bu kodla bir oda bulunamadı.' });
       if (r.phase !== 'lobby') return send(ws, { type: 'error', code: 'in-race', msg: 'Bu odada yarış sürüyor. Bitince tekrar dene.' });
       if (r.players.size >= MAX_PLAYERS) return send(ws, { type: 'error', code: 'full', msg: 'Oda dolu (en fazla 8 oyuncu).' });
-      const joined = addPlayer(r, ws, msg.name, msg.character);
+      const joined = addPlayer(r, ws, msg.name, msg.character, msg.vehicle);
       if (!r.hostId) pickHost(r);
       send(ws, { type: 'chatHistory', list: r.chat ?? [] });
       systemChat(r, `${joined.name} odaya katıldı`);
@@ -343,6 +348,12 @@ export function handleMessage(ws, raw) {
     case 'character':
       if (room.phase !== 'lobby') return;
       p.character = freeCharacter(room, msg.character, p.id);
+      syncRoom(room);
+      return;
+
+    case 'vehicle':
+      if (room.phase !== 'lobby') return;
+      p.vehicle = cleanVehicle(msg.vehicle);
       syncRoom(room);
       return;
 

@@ -100,11 +100,11 @@ export function driveInput(driver, kart, track, dt, ctx = null) {
   // Viraj keskinliği (önümüzdeki en dar nokta)
   let radius = Infinity;
   if (!scTarget) for (let k = 2; k <= look + 6; k += 2) radius = Math.min(radius, track.turnRadius[(idx + k) % n]);
-  const cornerLimit = Math.min(1, radius / 40 + 0.55);
+  const cornerLimit = Math.min(1, (radius / 40) * kart.stats.handling + 0.55); // iyi tutuşlu araç virajı daha hızlı alır
   // Uykucu: ilk turlarda yavaş, son turda uyanır
   const skill = p.sleepy ? driver.skill + (progress < 0.34 ? -0.05 : progress > 0.66 ? 0.05 : 0) : driver.skill;
   const downhill = kart.grade < -0.04;
-  const target = KART.maxSpeed * skill * cornerLimit * (downhill ? 1 : slopeSpeedMul(kart.grade));
+  const target = KART.maxSpeed * kart.stats.speed * skill * cornerLimit * (downhill ? 1 : slopeSpeedMul(kart.grade));
 
   // Drift: keskin virajda viraj yönüne drift at, viraj bitince bırak (mini-turbo)
   const turnDir = Math.sign(err) || 1;

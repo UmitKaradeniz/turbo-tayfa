@@ -6,6 +6,7 @@ import { pickRivals } from '../kartModel.js';
 import { formatTime } from './hud.js';
 import { QUALITY, saveQuality } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
+import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
 // Oyun mantığı bilmez; seçimleri geri çağrılarla (handlers) bildirir.
@@ -107,6 +108,12 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           <div class="tt-char-info"><span class="swatch"></span><div><div class="name"></div><div class="desc"></div></div></div>
         </div>
         <div class="tt-card enter">
+          <h3>Aracını seç</h3>
+          <div class="tt-seg tt-veh">${VEHICLES.map((v) => `<button data-veh="${v.id}">${v.name}</button>`).join('')}</div>
+          <p class="tt-veh-desc"></p>
+          <div class="tt-stats">${[['speed', 'Hız'], ['accel', 'İvme'], ['handling', 'Tutuş'], ['weight', 'Ağırlık']].map(([k, l]) => `<div class="row"><span>${l}</span><i><b data-stat="${k}"></b></i></div>`).join('')}</div>
+        </div>
+        <div class="tt-card enter">
           <h3>Pilotlar <small class="count"></small><button class="tt-btn light icon reroll" data-go="reroll" aria-label="Rakipleri değiştir" title="Rakipleri değiştir">🔀</button></h3>
           <ul class="tt-slots"></ul>
         </div>
@@ -167,6 +174,13 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     setup.querySelector('.count').textContent = `${room.players.length} oyuncu + ${botCount} bot`;
   };
 
+  const renderVehicle = () => {
+    const v = vehicleOf(settings.vehicle, byId[settings.character]);
+    setup.querySelectorAll('[data-veh]').forEach((b) => b.classList.toggle('on', b.dataset.veh === v.id));
+    setup.querySelector('.tt-veh-desc').textContent = v.desc;
+    for (const [k, val] of Object.entries(v.stats)) setup.querySelector(`[data-stat="${k}"]`).style.width = `${Math.round(statBar(val) * 100)}%`;
+  };
+
   const renderCharacter = (id) => {
     const c = byId[id];
     setup.querySelectorAll('.tt-char').forEach((b) => b.classList.toggle('on', b.dataset.char === id));
@@ -175,6 +189,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     setup.querySelector('.tt-char-info .swatch').style.background = c.color;
     main.querySelector('.bubble .bn').textContent = c.name;
     main.querySelector('.bubble .bd').textContent = c.desc;
+    renderVehicle();
   };
 
   const selectCharacter = (id, notify = true) => {
@@ -236,6 +251,13 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     renderTracks();
   });
   segSyncs.push(renderTracks);
+  setup.querySelector('.tt-veh').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-veh]');
+    if (!b) return;
+    saveSettings({ vehicle: b.dataset.veh });
+    renderVehicle();
+    handlers.vehicle(b.dataset.veh);
+  });
   setup.querySelector('.tt-chars').addEventListener('click', (e) => {
     const b = e.target.closest('[data-char]');
     if (!b || b.classList.contains('is-taken')) return;

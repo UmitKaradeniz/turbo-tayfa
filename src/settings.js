@@ -5,6 +5,7 @@ const KEY = 'tt-settings';
 const DEFAULTS = {
   name: '',
   character: 'fox',
+  vehicle: '', // boşsa karakterin varsayılan aracı (bkz. vehicles.js)
   laps: 3,
   difficulty: 'normal', // easy | normal | hard
   shake: true,

@@ -8,6 +8,7 @@ import { loadModels, hasModels } from './assets.js';
 import { initErrorReports, setReportContext, reportIssue } from './report.js';
 import { Kart, resolveKartCollisions } from './kart.js';
 import { CHARACTERS, KART_MODELS, pickRivals } from './kartModel.js';
+import { defaultVehicleFor, vehicleOf } from './vehicles.js';
 import { CameraRig } from './cameraRig.js';
 import { buildTrack, trackOutline } from './track.js';
 import { buildDecor } from './decor.js';
@@ -85,6 +86,10 @@ const karts = CHARACTERS.map((c) => {
   return kart;
 });
 const kartOf = (id) => karts.find((k) => k.character.id === id) ?? karts[0];
+// Seçilen araç yalnız oyuncunun (menüde odaktaki) kartına uygulanır; diğerleri karakterin varsayılan aracını kullanır
+const syncVehicles = (mine) => {
+  for (const k of karts) k.setVehicle(k === mine ? vehicleOf(settings.vehicle, k.character) : defaultVehicleFor(k.character));
+};
 // Kadro 24 kişi; sahada her zaman en çok 8 sürücü var. Sahada olmayanlar pasif (gizli) kalır.
 const setField = (list) => {
   for (const k of karts) k.active = list.includes(k);
@@ -134,11 +139,17 @@ const menu = createMenu({
     screen: (name) => setMenuView(name),
     character: (id) => {
       focus = kartOf(id);
+      syncVehicles(focus);
       if (track) showMenuField();
       focus.model.play('gesture-positive');
       setTimeout(() => focus.model.play('idle'), 1400);
       play('ui_select');
       if (online) net.send({ type: 'character', character: id });
+    },
+    vehicle: (id) => {
+      syncVehicles(focus);
+      play('ui_select');
+      if (online) net.send({ type: 'vehicle', vehicle: id });
     },
     track: (id) => loadTrack(id),
     start: (config) => {
@@ -154,11 +165,11 @@ const menu = createMenu({
     // Çevrimiçi
     host: () => {
       online = newOnline();
-      net.send({ type: 'create', name: playerName(), character: settings.character });
+      net.send({ type: 'create', name: playerName(), character: settings.character, vehicle: settings.vehicle || null });
     },
     join: (code) => {
       online = newOnline();
-      net.send({ type: 'join', code, name: playerName(), character: settings.character });
+      net.send({ type: 'join', code, name: playerName(), character: settings.character, vehicle: settings.vehicle || null });
     },
     leaveRoom: () => leaveRoom(),
     lobbyButton: (action) => {
@@ -304,6 +315,7 @@ function nearVolume(kart) {
 let race = null;
 let player = null;
 let focus = kartOf(settings.character);
+syncVehicles(focus);
 let drivers = new Map();
 let timeTrial = false; // Zamana Karşı modu (tek oyunculu, botsuz, itemsiz)
 let ghost = null; // rekor turun hayaleti
@@ -403,6 +415,7 @@ function endRaceLocal() {
   touch.show(false);
   playMusic('menu');
   focus = kartOf(settings.character);
+  syncVehicles(focus);
   showMenuField();
   rig.transition('orbit', 1.5);
 }
@@ -511,6 +524,7 @@ async function startOfflineRace(config) {
   await loadTrack(cup ? cup.tracks[cup.round] : settings.track); // pist modelleri inmediyse bekle
   lastConfig = config;
   player = kartOf(config.character);
+  syncVehicles(player);
   timeTrial = config.mode === 'timeTrial';
   const bots = (config.rivals ?? pickRivals(config.character)).map(kartOf).filter((k) => k !== player).slice(0, 7);
   // Oyuncu ortalarda (5.) başlar; önünde geçilecek rakipler olsun. Zamana Karşı: tek başına
@@ -671,6 +685,7 @@ async function startOnlineRace(msg) {
   online.buffers.clear();
   const order = msg.entrants.map((e) => {
     const kart = kartOf(e.character);
+    kart.setVehicle(vehicleOf(e.vehicle, kart.character)); // botlarda e.vehicle yok → karakterin varsayılanı
     online.kartById.set(e.id, kart);
     online.idByKart.set(kart, e.id);
     online.buffers.set(kart, new RemoteBuffer());
@@ -733,6 +748,7 @@ net.on('room', (msg) => {
   const mine = msg.players.find((p) => p.id === net.id);
   if (!race && mine && focus !== kartOf(mine.character)) {
     focus = kartOf(mine.character);
+    syncVehicles(focus);
     if (track) showMenuField();
   }
   const nowHost = msg.hostId === net.id;
