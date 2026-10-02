@@ -44,9 +44,8 @@ export const KART_MODELS = [...new Set(CHARACTERS.flatMap((c) => [c.pet, c.kart]
 
 const KART_SCALE = 2.0; // Car Kit kartı ~1.4 m → ~2.9 m
 const PET_SCALE = 0.62;
-// Özel gövdeler: ölçek ve tekerlek yarıçapı (Kenney dışı modeller kendi boyutlarında gelir)
-const BODY_SPECS = { 'karts/kart-moon-balanced': { scale: 1.7, wheel: 0.2 } };
-const specOf = (path) => BODY_SPECS[path] ?? { scale: KART_SCALE, wheel: 0.21 };
+// Haritaya özel gövdeler (karts/kart-<pist>) Car Kit kartından ~%18 büyük üretildi; dünyada aynı boyda görünsün diye küçültülür
+const specOf = (path) => ({ scale: path.startsWith('karts/kart-oo') ? KART_SCALE : KART_SCALE * 0.85, wheel: 0.21 });
 
 // Hiyerarşi: root (dünya konumu + zemin eğimi) → body (yatma, drift açısı) → kart modeli
 export function createKartModel(character, bodyPath = character.kart) {

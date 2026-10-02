@@ -7,6 +7,7 @@ import { placePieces, cottagePieces } from '../props.js';
 export default {
   id: 'pineValley',
   name: 'Çam Vadisi',
+  kartBody: 'karts/kart-pineValley', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Orman · göl · tepe',
   groundTex: { tex: 'grass', rock: 'rock', scale: 0.13, strength: 1.0 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite

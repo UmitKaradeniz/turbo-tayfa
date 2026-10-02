@@ -9,6 +9,7 @@ import { buildVolcano } from '../volcano.js';
 export default {
   id: 'volcano',
   name: 'Volkan Adası',
+  kartBody: 'karts/kart-volcano', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Lav · kül · gayzer',
   groundTex: { tex: 'gravel', rock: 'rock', scale: 0.11, strength: 1.1 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite

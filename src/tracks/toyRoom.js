@@ -5,6 +5,7 @@
 export default {
   id: 'toyRoom',
   name: 'Oyuncak Odası',
+  kartBody: 'karts/kart-toyRoom', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Dev oda · oyuncaklar · top',
   halfWidth: 8,
   curbWidth: 1,

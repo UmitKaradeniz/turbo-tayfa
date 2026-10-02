@@ -7,6 +7,7 @@ import { placePieces, cabinPieces } from '../props.js';
 export default {
   id: 'snowPeak',
   name: 'Kar Zirvesi',
+  kartBody: 'karts/kart-snowPeak', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Kış dağı · kar yağışı',
   groundTex: { tex: 'snow', rock: 'rock', scale: 0.12, strength: 0.8 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite

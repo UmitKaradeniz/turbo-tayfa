@@ -5,6 +5,7 @@
 export default {
   id: 'funfair',
   name: 'Lunapark',
+  kartBody: 'karts/kart-funfair', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Hız treni · tezgâh · konfeti',
   halfWidth: 8,
   curbWidth: 1,

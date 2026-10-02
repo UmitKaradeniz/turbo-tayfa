@@ -73,8 +73,8 @@ export function createGhostRecorder() {
 }
 
 // Hayalet kart: kayıtlı turu yarı saydam bir kartla oynatır
-export function createGhost(scene, character, ghost) {
-  const model = createKartModel(character);
+export function createGhost(scene, character, ghost, bodyPath) {
+  const model = createKartModel(character, bodyPath);
   model.root.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = false;

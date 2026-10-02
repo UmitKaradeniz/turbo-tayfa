@@ -5,6 +5,7 @@
 export default {
   id: 'candyLand',
   name: 'Şeker Diyarı',
+  kartBody: 'karts/kart-candyLand', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Şeker · pasta · fıskiye',
   halfWidth: 8,
   curbWidth: 1,

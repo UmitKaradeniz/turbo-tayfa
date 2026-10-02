@@ -15,6 +15,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🏁 **Canlı sonuç tablosu:** yarışçılar bitirdikçe tablo yeniden çizilmez; bitmeyenin süresi "yükleniyor…" gösterir, bitince yalnızca o hücre süreye döner ve satırlar yerinde sıralanır
 - 🪜 **Adım adım yarış hazırlığı:** 1 Karakter → 2 Araç → 3 Pist ve mod → 4 Hazır (pilotlar, sohbet, YARIŞA BAŞLA); altta sabit ileri/geri çubuğu, telefonda iç içe kaydırma yok; çevrimiçi odada da aynı adımlar (misafirde pist adımı kilitli)
 - 🔤 **Okunaklı arayüz:** tüm yazılar Türkçe harflerle (ş ğ ı İ ç ö ü) uyumlu **Baloo 2** fontuyla ve oyunla birlikte kendi sunucumuzdan yüklenir (Google'a bağımlı değil); "Karakterini seç" kartında 24 karakterin hepsi görünür
+- 🚗 **Haritaya özel araçlar:** her pistin kendi araç tasarımı var (pist tanımında `kartBody`, `public/models/karts/kart-<pist>.glb`); araç sınıfı seçimi hız, ivme, tutuş ve ağırlığı belirler
 - 🏎️ **Araç sınıfları:** karakterden bağımsız 5 araç (Dengeli, Çevik, Roket, Ağır, Atak); hız, ivme, tutuş ve ağırlık farklı, seçim ekranında çubuklarla gösterilir; botlar da farklı sınıflarla yarışır, çevrimiçide herkesin aracı herkese görünür
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol
 - 🦖 **Dinozor Vadisi:** devasa dinozorların arasında tarih öncesi vadi; yamaçtan yuvarlanan kayalar, ayak darbeleri, zorunlu bataklık ve yarığı aşan kısayol; 15 m'lik **Dev Sırt** tırmanışı, dik iniş, yatık viraj ve atlatan dinozor izi tümsekleri
@@ -28,7 +29,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🎡 **Lunapark:** hız treni halkaları, tezgâhlar, konfeti fıskiyeleri ve ray boşluğunu aşan kısayol
 - 🍭 **Şeker Diyarı:** dev kekler, donutlar, lolipoplar; çikolata yol, pembe şeker fıskiyeleri ve çikolata nehrini aşan kısayol
 - 🧸 **Oyuncak Odası:** dev bir odada kanepeler, kitaplıklar, blok kuleleri; yolu kesen dev plaj topları ve kutulardan geçen kısayol
-- 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol; bu pistte tüm kartlar özel **Ay kartı** gövdesini kullanır (pist tanımında `kartBody`; araç sınıfı istatistikleri aynen geçerli)
+- 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
 - 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 11 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
 - 🪵 Hareketli tehlikeler: yuvarlanan kütükler (Çam Vadisi), çığ topları (Kar Zirvesi), yolu kesen trafik (Neon Şehir), dev plaj topları (Oyuncak Odası)

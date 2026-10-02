@@ -5,6 +5,7 @@
 export default {
   id: 'palmCove',
   name: 'Palmiye Koyu',
+  kartBody: 'karts/kart-palmCove', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Tropikal sahil · lagün',
   dust: [0.93, 0.82, 0.6],
   sky: { top: 0x3d9df2, horizon: 0xcdeeff, fog: 0xc4e8fb },

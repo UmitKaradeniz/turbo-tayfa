@@ -71,7 +71,9 @@ const autoTuner = QUALITY.auto ? createAutoTuner({ canReload: () => !race && !on
 
 // --- Yükleme: karakterler + seçili pistin modelleri (diğer pistler seçilince yüklenir) ---
 const loadingBar = document.querySelector('#loading .bar > div');
-const firstModels = [...new Set([...KART_MODELS, ...(TRACKS[settings.track] ?? TRACKS.palmCove).models])];
+// Pistin modelleri + haritaya özel araç gövdesi
+const modelsOf = (def) => (def.kartBody ? [...def.models, def.kartBody] : def.models);
+const firstModels = [...new Set([...KART_MODELS, ...modelsOf(TRACKS[settings.track] ?? TRACKS.palmCove)])];
 await loadModels(firstModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
 
 const env = createEnvironment(scene, QUALITY);
@@ -215,7 +217,7 @@ function loadTrack(id) {
   const def = TRACKS[id] ?? TRACKS.palmCove;
   wantedDef = def;
   // Modeller hazırsa ve bekleyen yükleme yoksa hemen (eşzamanlı) kur
-  if (!pendingLoads && hasModels(def.models)) {
+  if (!pendingLoads && hasModels(modelsOf(def))) {
     buildTrackNow(def);
     return trackReady;
   }
@@ -227,11 +229,12 @@ function loadTrack(id) {
 async function buildWanted() {
   const def = wantedDef;
   if (!def || trackDef === def) return;
-  if (!hasModels(def.models)) {
+  const need = modelsOf(def);
+  if (!hasModels(need)) {
     const busy = document.getElementById('busy');
     busy?.classList.add('show');
     try {
-      await loadModels(def.models);
+      await loadModels(need);
     } catch (err) {
       reportIssue('models', `${def.id}: ${err?.message ?? err}`);
     }
@@ -259,7 +262,7 @@ function buildTrackNow(def) {
     hazards?.dispose();
   }
   trackDef = def;
-  for (const k of karts) k.setBodyOverride(def.kartBody); // pistin özel kart gövdesi (yoksa seçilen araç sınıfının gövdesi)
+  for (const k of karts) k.setBodyOverride(def.kartBody ?? null); // haritaya özel araç (yoksa seçilen araç sınıfının gövdesi)
   track = buildTrack(def, { detailRoad: QUALITY.detailRoad, detailGround: QUALITY.detailGround });
   scene.add(track.group);
   decor = buildDecor(track, (ctx) => def.decorate(ctx), QUALITY.decor);
@@ -537,7 +540,7 @@ async function startOfflineRace(config) {
   ghost?.dispose();
   ghost = null;
   const rec = recordOf(trackDef.id);
-  if (timeTrial && rec?.ghost) ghost = createGhost(scene, CHARACTERS.find((c) => c.id === rec.ghost.char) ?? player.character, rec.ghost);
+  if (timeTrial && rec?.ghost) ghost = createGhost(scene, CHARACTERS.find((c) => c.id === rec.ghost.char) ?? player.character, rec.ghost, trackDef.kartBody);
   setupRace(order, config.laps);
   if (timeTrial && !rec?.ghost) menu.toast('İlk turunu at: en iyi turun hayalet olarak kaydedilecek 👻');
 }

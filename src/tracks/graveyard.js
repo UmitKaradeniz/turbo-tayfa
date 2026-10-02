@@ -11,6 +11,7 @@ const PUMPKINS = ['graveyard/pumpkin-carved', 'graveyard/pumpkin-tall-carved', '
 export default {
   id: 'graveyard',
   name: 'Hayalet Mezarlığı',
+  kartBody: 'karts/kart-graveyard', // haritaya özel araç gövdesi (tools/gen_kart.py)
   meta: 'Gece · sis · hayalet',
   groundTex: { tex: 'gravel', scale: 0.11, strength: 0.9 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
