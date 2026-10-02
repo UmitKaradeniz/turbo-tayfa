@@ -17,7 +17,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🏎️ **Araç sınıfları:** karakterden bağımsız 5 araç (Dengeli, Çevik, Roket, Ağır, Atak); hız, ivme, tutuş ve ağırlık farklı, seçim ekranında çubuklarla gösterilir; botlar da farklı sınıflarla yarışır, çevrimiçide herkesin aracı herkese görünür
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol
 - 🦖 **Dinozor Vadisi:** devasa dinozorların arasında tarih öncesi vadi; yamaçtan yuvarlanan kayalar, ayak darbeleri, zorunlu bataklık ve yarığı aşan kısayol; 15 m'lik **Dev Sırt** tırmanışı, dik iniş, yatık viraj ve atlatan dinozor izi tümsekleri
-- ✨ **Gerçek parçacık sprite'ları:** duman, kıvılcım, toz ve turbo alevi Kenney Particle Pack (CC0) dokularıyla çiziliyor (`public/fx/particles.png`).
+- ✨ **Parçacıklar:** duman, toz ve çamur Kenney Particle Pack (CC0) dokularıyla çiziliyor (`public/fx/particles.png`); nitro alevi ve kıvılcımlar parlak (HDR) yuvarlak noktalarla çiziliyor, bloom ile parlıyor.
 - ☁️ **Gerçek gökyüzü:** 8 pistte Poly Haven (CC0) gökyüzü; güneş pistin ışık yönüne döndürülür, ufuk sis rengine karışır. Orta/Yüksek kalitede; Düşük'te eski gradyan gökyüzü (hız için). Tanı: adrese `?sky=1` / `?sky=0`.
 - 🧱 **Yüzey detayı:** yollara asfalt normal haritası (Orta/Yüksek), araziye dünya koordinatlı çim/kum/kar/çakıl/kaya detay dokusu (sadece Yüksek); ambientCG (CC0). Tanı: adrese `?tex=1` / `?tex=0`.
 - 🔊 **Ses çeşitliliği:** çarpma, duvar, isabet ve menü tıklama/seçme sesleri 3–4 farklı varyanttan rastgele çalar (hafif perde oynaması ile).

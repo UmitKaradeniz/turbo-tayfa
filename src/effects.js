@@ -9,7 +9,8 @@ atlas.flipY = false; // v=0 görüntünün üstü (gl_PointCoord ile aynı)
 atlas.colorSpace = THREE.NoColorSpace;
 
 export class Particles {
-  constructor(max, { additive = false, gravity = 0, drag = 1.5, frames = [FRAME.DOT] } = {}) {
+  // soft: 'sharp' → sprite yerine v1.32.0'daki yuvarlak parlak nokta (HDR renkler kısılmaz: nitro/kıvılcım parlaması bloom ile güzel görünür)
+  constructor(max, { additive = false, gravity = 0, drag = 1.5, frames = [FRAME.DOT], soft = null } = {}) {
     this.frames = frames;
     this.max = max;
     this.gravity = gravity;
@@ -54,7 +55,18 @@ export class Particles {
           gl_PointSize = size * scale / -mv.z;
           gl_Position = projectionMatrix * mv;
         }`,
-      fragmentShader: /* glsl */ `
+      fragmentShader: soft
+        ? /* glsl */ `
+        varying float vAlpha; varying vec3 vColor; varying float vFrame; varying float vRot;
+        void main() {
+          float d = length(gl_PointCoord - 0.5) * 2.0;
+          float a = pow(max(1.0 - d, 0.0), 2.0);
+          if (a * vAlpha < 0.01) discard;
+          gl_FragColor = vec4(vColor, a * vAlpha);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`
+        : /* glsl */ `
         uniform sampler2D atlas;
         varying float vAlpha; varying vec3 vColor; varying float vFrame; varying float vRot;
         void main() {
@@ -147,7 +159,7 @@ const ICE_SPARK = new THREE.Color(1.6, 2.2, 3.0);
 
 export function createKartEffects(scene, quality) {
   const smoke = new Particles(Math.round(500 * quality.particles), { drag: 1.2, gravity: -1.2, frames: [FRAME.SMOKE_A, FRAME.SMOKE_B] });
-  const sparks = new Particles(Math.round(300 * quality.particles), { additive: true, gravity: 18, drag: 0.8, frames: [FRAME.SPARK_A, FRAME.SPARK_B, FRAME.SPARK_A, FRAME.GLOW] });
+  const sparks = new Particles(Math.round(300 * quality.particles), { additive: true, gravity: 18, drag: 0.8, soft: 'sharp' }); // nitro alevi + kıvılcımlar: eski parlak görünüm
   scene.add(smoke.points, sparks.points);
 
   const _p = new THREE.Vector3();
@@ -213,7 +225,7 @@ export function createKartEffects(scene, quality) {
         _p.copy(exhaust);
         kart.model.body.localToWorld(_p);
         _v.set(-Math.sin(kart.heading) * 6 + (Math.random() - 0.5) * 2, 0.5 + Math.random(), -Math.cos(kart.heading) * 6 + (Math.random() - 0.5) * 2);
-        sparks.emit(_p, _v, { life: 0.2 + Math.random() * 0.1, size: 1.3, sizeEnd: 0.3, color: FLAME[i % 2], frame: FRAME.FLAME, rot: (Math.random() - 0.5) * 0.5, spin: 0 });
+        sparks.emit(_p, _v, { life: 0.2 + Math.random() * 0.1, size: 1.15, sizeEnd: 0.25, color: FLAME[i % 2] });
       }
     },
 

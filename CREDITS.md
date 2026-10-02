@@ -96,7 +96,7 @@ Google Fonts üzerinden yükleniyor; ikisi de **SIL Open Font License 1.1** (tic
 
 | Paket | Yapımcı | Kaynak | Lisans | Kullanılan dosyalar | Nerede |
 |---|---|---|---|---|---|
-| Particle Pack | Kenney | https://kenney.nl/assets/particle-pack | CC0 1.0 | `smoke_04`, `smoke_07`, `dirt_01`, `star_05`, `star_06`, `star_09`, `flame_05`, `circle_05` (tek atlas: `public/fx/particles.png`) | Drift dumanı ve kıvılcımı, toz, çamur, turbo alevi, gayzer/meteor/yanardağ efektleri |
+| Particle Pack | Kenney | https://kenney.nl/assets/particle-pack | CC0 1.0 | `smoke_04`, `smoke_07`, `dirt_01`, `star_05`, `star_06`, `star_09`, `flame_05`, `circle_05` (tek atlas: `public/fx/particles.png`) | Drift dumanı, toz, çamur, gayzer/meteor/yanardağ dumanı (nitro alevi ve kıvılcımlar sprite değil, kodla çizilir) |
 
 ## Gökyüzü (Poly Haven, CC0)
 
