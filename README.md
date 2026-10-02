@@ -11,6 +11,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🎁 Itemler: Turbo Şişesi, Balon Kalkan, Hindistan Cevizi, Yağ Lekesi
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
 - 💬 Lobide sohbet, yarışta emojiyle hızlı tepkiler (👏😂😡😱🔥👋)
+- 🪜 **Adım adım yarış hazırlığı:** 1 Karakter → 2 Araç → 3 Pist ve mod → 4 Hazır (pilotlar, sohbet, YARIŞA BAŞLA); altta sabit ileri/geri çubuğu, telefonda iç içe kaydırma yok; çevrimiçi odada da aynı adımlar (misafirde pist adımı kilitli)
 - 🔤 **Okunaklı arayüz:** başlıklar Türkçe harflerle (ş ğ ı İ ç ö ü) uyumlu **Fredoka** fontuyla; "Karakterini seç" kartında 24 karakterin hepsi iç kaydırma olmadan görünür, sayfa kayar
 - 🏎️ **Araç sınıfları:** karakterden bağımsız 5 araç (Dengeli, Çevik, Roket, Ağır, Atak); hız, ivme, tutuş ve ağırlık farklı, seçim ekranında çubuklarla gösterilir; botlar da farklı sınıflarla yarışır, çevrimiçide herkesin aracı herkese görünür
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol

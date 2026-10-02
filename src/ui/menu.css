@@ -103,20 +103,31 @@
   font-size: clamp(28px, 4vw, 40px);
   text-shadow: 0 3px 0 var(--tt-navy);
 }
-#screen-setup .left,
-#screen-setup .right {
+/* Adımlı hazırlık: bir adımda yalnız o adımın kartları görünür (1 karakter · 2 araç · 3 pist · 4 hazır) */
+#screen-setup .wiz {
   position: absolute;
+  left: 18px;
   top: 88px;
-  bottom: 18px;
-  width: min(360px, 32vw);
+  bottom: 96px;
+  width: min(540px, 44vw);
   display: flex;
   flex-direction: column;
   gap: 14px;
-  overflow: auto;
+  overflow-y: auto;
   padding: 4px 4px 10px;
 }
-#screen-setup .left { left: 18px; }
-#screen-setup .right { right: 18px; }
+#screen-setup .wiz[data-cur="1"] > :not([data-step="1"]),
+#screen-setup .wiz[data-cur="2"] > :not([data-step="2"]),
+#screen-setup .wiz[data-cur="3"] > :not([data-step="3"]),
+#screen-setup .wiz[data-cur="4"] > :not([data-step="4"]) { display: none !important; }
+#screen-setup .room-card { order: -1; }
+#screen-setup .host-note { margin: 0 0 10px; font-weight: 800; font-size: 13px; color: var(--tt-blue); }
+#screen-setup .wiz-bar { position: absolute; left: 18px; bottom: 18px; width: min(540px, 44vw); display: flex; gap: 10px; }
+#screen-setup .wiz-bar .tt-btn { flex: 1; }
+#screen-setup .wiz-bar [data-go="wiz-prev"] { flex: 0 0 auto; }
+.wiz-dots { display: flex; gap: 6px; margin-left: auto; }
+.wiz-dots i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); transition: background 0.2s, transform 0.2s; }
+.wiz-dots i.on { background: #ffd23f; transform: scale(1.15); }
 
 .tt-chars { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
 .tt-char {
@@ -163,7 +174,6 @@
 .tt-slots li.me { background: var(--tt-yellow); }
 .tt-slots li.me .tag { background: #fff; }
 
-#screen-setup .start-wrap { margin-top: auto; }
 
 /* ---------- Duraklatma ---------- */
 #pause .tt-card { width: min(380px, 100%); }
@@ -182,11 +192,16 @@
   #screen-main .tt-tagline { text-align: center; }
   #screen-main .bubble { display: none; }
   #screen-setup { overflow: auto; }
-  #screen-setup .left,
-  #screen-setup .right { position: static; width: auto; overflow: visible; padding: 0 16px; }
   #screen-setup .topbar { position: static; padding: 16px; }
-  #screen-setup .left { margin-top: 38vh; }
-  #screen-setup .right { padding-bottom: 24px; margin-top: 14px; }
+  /* Telefon: tek kaydırma = sayfa; adım 1-2'de üstte 3B kart önizlemesi için boşluk, alt çubuk ekrana sabit */
+  #screen-setup .wiz { position: static; width: auto; overflow: visible; padding: 0 16px 120px; margin-top: 30vh; }
+  #screen-setup[data-step="3"] .wiz,
+  #screen-setup[data-step="4"] .wiz { margin-top: 6px; }
+  #screen-setup .wiz-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; width: auto; z-index: 5;
+    padding: 24px 16px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(0deg, rgba(6, 50, 120, 0.9) 55%, rgba(6, 50, 120, 0));
+  }
 }
 @media (max-height: 520px) and (min-width: 821px) {
   .tt-logo .l1 { font-size: 54px; }
