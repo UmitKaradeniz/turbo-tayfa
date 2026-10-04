@@ -1,5 +1,5 @@
 // Pist önizleme resmi (public/previews/<pist>.jpg, 640x360): headless Chrome + CDP, pistin başından yukarı bakan kamera.
-// Kullanım: node cdp-preview.mjs <pist> [f0=0.08] [f1=0.14] [yukseklik=14] [bakisYuksekligi=22]
+// Kullanım: [Q=medium] node cdp-preview.mjs <pist> [f0=0.08] [f1=0.14] [yukseklik=14] [bakisYuksekligi=22]
 import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -25,7 +25,7 @@ ws.on('message', (d) => { const m = JSON.parse(d); if (m.id && pending.has(m.id)
 const send = (method, params = {}) => new Promise((res) => { const i = ++id; pending.set(i, res); ws.send(JSON.stringify({ id: i, method, params })); });
 await send('Page.enable'); await send('Runtime.enable');
 await send('Emulation.setDeviceMetricsOverride', { width: 412, height: 820, deviceScaleFactor: 1, mobile: true });
-await send('Page.navigate', { url: 'http://localhost:3000/?q=low&nopause' });
+await send('Page.navigate', { url: `http://localhost:3000/?q=${process.env.Q ?? 'low'}&nopause` });
 await sleep(9000);
 const r = await send('Runtime.evaluate', { awaitPromise: true, returnByValue: true, expression: `(async()=>{
   const sl=(ms)=>new Promise(r=>setTimeout(r,ms)); const T=window.__tt;

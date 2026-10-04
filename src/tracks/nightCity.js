@@ -112,6 +112,7 @@ export default {
       ctx.place('racing/grandStandCovered', g.x, g.z, g.faceTrackY, 10);
       ctx.reserve(g.x, g.z, 12);
     }
+    ctx.crowdRow(-12, 18, outerSide * (edge + 2.2), { every: 2, rows: 2, rowGap: 1.6, scale: 2.4 });
     for (let k = -26; k <= 26; k += 8) {
       if (Math.abs(k) < 4) continue;
       const b = ctx.along(k, innerSide * (edge + 2.5));

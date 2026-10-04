@@ -117,6 +117,8 @@ export default {
       ctx.place('racing/grandStandCovered', g.x, g.z, g.faceTrackY, 10);
       ctx.reserve(g.x, g.z, 12);
     }
+    // Seyirciler: bariyerin hemen arkasında iki sıra, kol sallarlar
+    ctx.crowdRow(-24, 24, landSide * (edge + 2.2), { every: 2, rows: 2, rowGap: 1.6, scale: 2.4 });
     // Çadırlar tribünlerin iki ucunda
     for (const k of [-16, 16]) {
       const t = ctx.along(k, landSide * (edge + 8));

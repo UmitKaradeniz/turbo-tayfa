@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { instancedModel } from './assets.js';
+import { buildCrowd } from './crowd.js';
 
 // Pist dekoru: modeller önce "yerleşim listesine" eklenir, sonunda her model
 // için tek bir InstancedMesh grubu üretilir (yüzlerce palmiye = birkaç çizim çağrısı).
@@ -13,6 +14,7 @@ export function buildDecor(track, decorate, density = 1) {
   const glow = new Map(); // model → ışıma şiddeti (gece pencereleri)
   const tint = new Map(); // model → { color, emissive, intensity } (volkan kayaları)
   const extras = [];
+  const crowd = []; // seyirciler (crowd.js)
   const reserved = [];
   const { terrain } = track;
   let seed = 20260929;
@@ -59,6 +61,20 @@ export function buildDecor(track, decorate, density = 1) {
     // Hazır bir 3B nesneyi (bina, tabela vb.) dekora ekle
     addObject(obj) {
       extras.push(obj);
+    },
+
+    // Seyirci sırası: i0..i1 örnekleri arası, lateral (m) ofsette; kol sallayan küp kafalı figürler piste dönük.
+    // Düşük kalitede (density < 0.5) eklenmez.
+    crowdRow(i0, i1, lateral, { every = 2, rows = 2, rowGap = 1.3, scale = 2.2 } = {}) {
+      if (density < 0.5) return;
+      const side = Math.sign(lateral) || 1;
+      for (let i = i0; i <= i1; i += every) {
+        for (let r = 0; r < rows; r++) {
+          const p = ctx.along(i + (r % 2) * every * 0.5, lateral + side * r * rowGap);
+          const jx = (((i * 7 + r * 3) % 5) - 2) * 0.12;
+          crowd.push({ x: p.x + jx, y: terrain.heightAt(p.x, p.z), z: p.z - jx, rot: p.faceTrackY, scale: scale * (0.92 + ((i + r) % 4) * 0.05) });
+        }
+      }
     },
 
     // Bu çemberin içine rastgele dekor koyma
@@ -128,6 +144,7 @@ export function buildDecor(track, decorate, density = 1) {
     group.add(g);
   }
   for (const o of extras) group.add(o);
+  if (crowd.length) group.add(buildCrowd(crowd));
   return group;
 }
 
