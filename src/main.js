@@ -1144,30 +1144,47 @@ function kartSound(kart, ev) {
   else if (ev === 'bounce') play('item_land', { volume: vol * 0.8, rate: 1.3 });
 }
 
-// Dinamik çözünürlük: FPS düşükse piksel oranını azalt, yüksekse geri artır.
-// Yavaş kalınan seviyenin üstüne bir daha çıkılmaz (tavan) → sürekli gidip gelme olmaz.
+// Dinamik çözünürlük: FPS kalıcı olarak düşükse piksel oranını azalt. Her değişim render hedeflerini yeniden kurar (kısa takılma),
+// bu yüzden seyrek ve büyük adımla yapılır: 3 sn kalıcı düşüş → FPS oranına göre tek hamlede hedefe in, 6 sn bekle, yarışta en çok 3 kez.
+// Yukarı çıkış yok (gidip gelme yaratırdı); kalıcı yavaşlıkta kalite seviyesini autoQuality sonraki yarışlar için düşürür.
+const RATIO_FLOOR = 0.8;
 let slowTime = 0;
-let fastTime = 0;
-let ratioCeiling = basePixelRatio;
+let slowSum = 0;
+let ratioCooldown = 0;
+let ratioChanges = 0;
+let ratioRace = null;
 function adaptResolution(fps) {
-  // Geri sayımda ve "BAŞLA"dan sonraki ilk 2 sn'de ayar yapma: ilk karelerde doku/shader yüklemesi FPS'i geçici düşürür,
-  // çözünürlüğü değiştirmek ise tüm render hedeflerini yeniden kurar ve geri sayımı dondurur.
-  if (!race || paused || document.hidden || !race.started || race.clock < 2) {
-    slowTime = fastTime = 0;
+  // Geri sayımda ve "BAŞLA"dan sonraki ilk 6 sn'de ayar yapma: doku/shader ısınması FPS'i geçici düşürür
+  if (!race || paused || document.hidden || !race.started || race.clock < 6) {
+    slowTime = slowSum = 0;
     return;
   }
+  if (ratioRace !== race) {
+    ratioRace = race;
+    ratioChanges = 0;
+    ratioCooldown = 0;
+  }
   autoTuner?.raceSample(fps, pixelRatio, basePixelRatio);
-  slowTime = fps < 48 ? slowTime + 0.5 : 0;
-  fastTime = fps > 58 ? fastTime + 0.5 : 0;
-  let next = pixelRatio;
-  if (slowTime >= 2 && pixelRatio > 0.6) {
-    if (pixelRatio <= 0.9) reportIssue('perf', 'düşük FPS: çözünürlük 0.9 altına indi');
-    ratioCeiling = Math.min(ratioCeiling, pixelRatio - 0.05);
-    next = Math.max(0.6, pixelRatio - 0.15);
-  } else if (fastTime >= 8 && pixelRatio < ratioCeiling) next = Math.min(ratioCeiling, pixelRatio + 0.1);
-  if (Math.abs(next - pixelRatio) > 1e-3) {
+  if (ratioCooldown > 0) {
+    ratioCooldown -= 0.5;
+    slowTime = slowSum = 0;
+    return;
+  }
+  if (fps < 45) {
+    slowTime += 0.5;
+    slowSum += fps;
+  } else slowTime = slowSum = 0;
+  const floor = Math.min(RATIO_FLOOR, basePixelRatio);
+  if (slowTime >= 3 && ratioChanges < 3 && pixelRatio > floor + 0.05) {
+    const avg = slowSum / (slowTime * 2); // 0.5 sn'lik örnekler
+    // Piksel sayısı ~ oran²: hedef 55 FPS'e orantıyla in, 0.05'e yuvarla
+    const target = Math.round((pixelRatio * Math.sqrt(Math.min(1, avg / 55)) * 0.97) / 0.05) * 0.05;
+    const next = Math.max(floor, Math.min(pixelRatio - 0.1, target));
+    if (pixelRatio <= 1) reportIssue('perf', 'düşük FPS: çözünürlük 1.0 altına indi');
     pixelRatio = next;
-    slowTime = fastTime = 0;
+    ratioChanges++;
+    ratioCooldown = 6;
+    slowTime = slowSum = 0;
     ratioDirty = true; // uygulama bir sonraki karede, çizimden ÖNCE (aşağıda)
   }
 }
