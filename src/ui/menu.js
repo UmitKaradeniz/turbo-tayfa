@@ -99,7 +99,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       <div class="topbar">
         <button class="tt-btn ghost icon" data-go="back" aria-label="Geri">←</button>
         <h1>Yarış Hazırlığı</h1>
-        <div class="wiz-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="wiz-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       </div>
       <div class="wiz" data-cur="1">
         <div class="tt-card enter" data-step="1">
@@ -115,11 +115,11 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           <p class="tt-veh-desc"></p>
           <div class="tt-stats">${[['speed', 'Hız'], ['accel', 'İvme'], ['handling', 'Tutuş'], ['weight', 'Ağırlık']].map(([k, l]) => `<div class="row"><span>${l}</span><i><b data-stat="${k}"></b></i></div>`).join('')}</div>
         </div>
-        <div class="tt-card enter" data-step="4">
+        <div class="tt-card enter" data-step="5">
           <h3>Pilotlar <small class="count"></small><button class="tt-btn light icon reroll" data-go="reroll" aria-label="Rakipleri değiştir" title="Rakipleri değiştir">🔀</button></h3>
           <ul class="tt-slots"></ul>
         </div>
-        <div class="tt-card room-card enter" data-step="4" hidden>
+        <div class="tt-card room-card enter" data-step="5" hidden>
           <div class="room-row">
             <div><div class="tt-label" style="margin:0">Oda kodu</div><div class="room-code"></div></div>
             <button class="tt-btn light icon" data-go="copy-code" aria-label="Kodu kopyala" title="Kodu kopyala">⧉</button>
@@ -128,9 +128,13 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           <p class="room-hint">Arkadaşların ana menüde <b>Odaya Katıl</b>'a bu kodu yazsın ya da linki açsın.</p>
         </div>
         <div class="tt-card enter" data-step="3">
-          <h3>Pist ve mod</h3>
-          <p class="host-note" hidden>Pisti ve modu oda sahibi seçer.</p>
+          <h3>Pist seç</h3>
+          <p class="host-note" hidden>Pisti oda sahibi seçer.</p>
           <div class="tt-tracks">${tracks.map((t) => `<button class="tt-track" data-track="${t.id}"><span class="th"><img class="pv" src="${t.preview}" alt="" loading="lazy" /><img class="mm" src="${t.thumb}" alt="" /></span><div><div class="t">${t.name}</div><div class="m">${t.meta}</div><div class="rec"></div></div></button>`).join('')}</div>
+        </div>
+        <div class="tt-card enter" data-step="4">
+          <h3>Yarış ayarları</h3>
+          <p class="host-note" hidden>Ayarları oda sahibi seçer.</p>
           <div class="tt-label">Mod</div>
           <div class="tt-seg" data-seg="mode"><button data-v="race">Yarış</button><button data-v="cup">🏆 Kupa</button><button data-v="bigCup">🏆 Büyük Kupa</button><button data-v="timeTrial">Zamana Karşı</button></div>
           <p class="cup-note" hidden></p>
@@ -148,7 +152,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     </section>`);
   document.body.appendChild(setup);
   if (chatPanel) {
-    chatPanel.dataset.step = '4';
+    chatPanel.dataset.step = '5';
     setup.querySelector('.wiz').appendChild(chatPanel);
   }
 
@@ -272,24 +276,24 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     selectCharacter(b.dataset.char);
   });
 
-  // ---------- Adımlar: 1 karakter · 2 araç · 3 pist ve mod · 4 hazır (pilotlar, sohbet, başlat) ----------
-  const STEP_TITLES = ['Karakter', 'Araç', 'Pist ve mod', 'Hazır!'];
-  const NEXT_LABELS = ['Aracı seç ▶', 'Pist ve mod ▶', 'Son adım ▶'];
+  // ---------- Adımlar: 1 karakter · 2 araç · 3 pist · 4 mod/tur/zorluk · 5 hazır (pilotlar, sohbet, başlat) ----------
+  const STEP_TITLES = ['Karakter', 'Araç', 'Pist', 'Mod ve ayarlar', 'Hazır!'];
+  const NEXT_LABELS = ['Aracı seç ▶', 'Pist seç ▶', 'Mod ve ayarlar ▶', 'Son adım ▶'];
   const wiz = setup.querySelector('.wiz');
   let step = 1;
   const renderStep = () => {
     wiz.dataset.cur = step;
     setup.dataset.step = step;
-    setup.querySelector('.topbar h1').textContent = step === 4 && online ? 'Oda Lobisi' : `${step}/4 ${STEP_TITLES[step - 1]}`;
+    setup.querySelector('.topbar h1').textContent = step === 5 && online ? 'Oda Lobisi' : `${step}/5 ${STEP_TITLES[step - 1]}`;
     setup.querySelectorAll('.wiz-dots i').forEach((d, i) => d.classList.toggle('on', i < step));
     setup.querySelector('[data-go="wiz-prev"]').hidden = step === 1;
     const next = setup.querySelector('[data-go="wiz-next"]');
-    next.hidden = step === 4;
+    next.hidden = step === 5;
     next.textContent = NEXT_LABELS[step - 1] ?? '';
-    setup.querySelector('[data-go="start"]').hidden = step !== 4;
+    setup.querySelector('[data-go="start"]').hidden = step !== 5;
   };
   const setStep = (n) => {
-    step = Math.max(1, Math.min(4, n));
+    step = Math.max(1, Math.min(5, n));
     renderStep();
     setup.scrollTop = 0;
     wiz.scrollTop = 0;
@@ -322,7 +326,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   // Lobi görünümünü güncelle (oda mesajı her geldiğinde ve mod değişince)
   const renderOnline = () => {
     renderStep();
-    setup.querySelector('.host-note').hidden = !(online && !isHost());
+    setup.querySelectorAll('.host-note').forEach((n) => (n.hidden = !(online && !isHost())));
     const card = setup.querySelector('.room-card');
     card.hidden = !online;
     if (online) {

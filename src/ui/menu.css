@@ -119,7 +119,8 @@
 #screen-setup .wiz[data-cur="1"] > :not([data-step="1"]),
 #screen-setup .wiz[data-cur="2"] > :not([data-step="2"]),
 #screen-setup .wiz[data-cur="3"] > :not([data-step="3"]),
-#screen-setup .wiz[data-cur="4"] > :not([data-step="4"]) { display: none !important; }
+#screen-setup .wiz[data-cur="4"] > :not([data-step="4"]),
+#screen-setup .wiz[data-cur="5"] > :not([data-step="5"]) { display: none !important; }
 #screen-setup .room-card { order: -1; }
 #screen-setup .host-note { margin: 0 0 10px; font-weight: 800; font-size: 13px; color: var(--tt-blue); }
 #screen-setup .wiz-bar { position: absolute; left: 18px; bottom: 18px; width: min(540px, 44vw); display: flex; gap: 10px; }
@@ -196,7 +197,8 @@
   /* Telefon: tek kaydırma = sayfa; adım 1-2'de üstte 3B kart önizlemesi için boşluk, alt çubuk ekrana sabit */
   #screen-setup .wiz { position: static; width: auto; overflow: visible; padding: 0 16px 120px; margin-top: 30vh; }
   #screen-setup[data-step="3"] .wiz,
-  #screen-setup[data-step="4"] .wiz { margin-top: 6px; }
+  #screen-setup[data-step="4"] .wiz,
+  #screen-setup[data-step="5"] .wiz { margin-top: 6px; }
   #screen-setup .wiz-bar {
     position: fixed; left: 0; right: 0; bottom: 0; width: auto; z-index: 5;
     padding: 24px 16px calc(14px + env(safe-area-inset-bottom));

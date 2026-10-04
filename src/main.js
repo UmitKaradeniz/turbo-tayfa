@@ -678,7 +678,7 @@ function backToLobby() {
   if (!online) return;
   net.send({ type: 'backToLobby' });
   endRaceLocal();
-  menu.showLobby(4); // yarıştan sonra doğrudan son adım (pilotlar, sohbet, hazırım)
+  menu.showLobby(5); // yarıştan sonra doğrudan son adım (pilotlar, sohbet, hazırım)
 }
 
 async function startOnlineRace(msg) {
