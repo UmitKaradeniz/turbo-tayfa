@@ -203,7 +203,15 @@ export function updateEngine(kart, throttle, maxSpeed) {
   engine.filter.frequency.setTargetAtTime(380 + ratio * 650 + throttle * 120 + boost * 300, t, 0.08);
   engine.out.gain.setTargetAtTime(0.018 + throttle * 0.016 + ratio * 0.02, t, 0.1);
   // Drift ya da kumda kayma
+  const plank = kart.surface === 'boardwalk' && kart.grounded && ratio > 0.1;
   const sliding = kart.drifting ? 0.12 : (kart.surface === 'sand' || kart.surface === 'dirt') && ratio > 0.2 ? 0.05 : 0;
+  if (plank && !kart.drifting) {
+    // Ahşap iskele: tahta aralığında (~3 m) kısa tıkırtı darbeleri
+    const tick = (performance.now() * 0.001 * Math.abs(kart.speed) / 3) % 1 < 0.3;
+    engine.skid.gain.setTargetAtTime(tick ? 0.11 : 0, t, 0.012);
+    engine.band.frequency.setTargetAtTime(1300 + ratio * 500, t, 0.02);
+    return;
+  }
   engine.skid.gain.setTargetAtTime(sliding, t, 0.06);
   engine.band.frequency.setTargetAtTime(kart.drifting ? 1900 + ratio * 600 : 700, t, 0.1);
 }

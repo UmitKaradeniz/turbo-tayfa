@@ -67,6 +67,7 @@ export default {
   // Dekor listesindeki tüm modeller (yükleme ekranı bunları önceden yükler)
   // Zemin bölgeleri: sığ su geçidi (yavaşlatır, sıçratır) ve ortada hız şeridi
   zones: [
+    { type: 'boardwalk', f: [0.015, 0.095], lateral: [-8.2, 8.2] }, // başlangıç düzlüğü ahşap iskele
     { type: 'water', f: [0.67, 0.715], lateral: [-8, 8] },
     { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
   ],

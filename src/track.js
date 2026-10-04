@@ -227,6 +227,7 @@ export function buildTrack(def, detail = {}) {
     snow: { surface: 'snowdrift', speed: 0.62, bad: true },
     ice: { surface: 'ice', speed: 1, grip: 0.2, bad: true },
     wet: { surface: 'ice', speed: 1, grip: 0.45, bad: true },
+    boardwalk: { surface: 'boardwalk', speed: 1, bad: false }, // ahşap iskele: yavaşlatmaz, tıkırtı sesi (audio.js)
     boost: { surface: 'road', pad: { boost: 0.9 }, bad: false },
     bounce: { surface: 'road', bounce: 11, bad: false },
   };
@@ -890,6 +891,25 @@ function zoneTexture(z, width, length) {
       g.arc(w / 2, h / 2, r * k, 0, Math.PI * 2);
       g.stroke();
     }
+  }
+  if (z.type === 'boardwalk') {
+    // Yola dik tahtalar (her biri ~3 m), koyu aralıklar, çivi sırası; kenarları keskin (yumuşak maske yok)
+    const plank = 30;
+    const base = ['#b98a55', '#c39560', '#ad7f4b', '#bf8f5a'];
+    for (let y = 0; y < h; y += plank) {
+      g.fillStyle = base[Math.floor(rnd() * base.length)];
+      g.fillRect(0, y, w, plank);
+      g.fillStyle = 'rgba(70,42,20,0.35)';
+      for (let k = 0; k < 5; k++) g.fillRect(rnd() * w, y + 3 + rnd() * (plank - 8), 20 + rnd() * 60, 1.5); // damar
+      g.fillStyle = 'rgba(40,24,10,0.85)';
+      g.fillRect(0, y, w, 2.5); // aralık
+      g.fillStyle = 'rgba(50,34,20,0.9)';
+      for (const x of [7, w - 7]) g.fillRect(x, y + plank / 2 - 1.5, 3, 3); // çiviler
+    }
+    const wood = new THREE.CanvasTexture(canvas);
+    wood.colorSpace = THREE.SRGBColorSpace;
+    wood.anisotropy = 8;
+    return wood;
   }
   // Kenarlar yumuşakça kaybolsun
   g.globalCompositeOperation = 'destination-in';
