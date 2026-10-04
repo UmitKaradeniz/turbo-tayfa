@@ -81,6 +81,7 @@ export default {
   bumps: [{ f: [0.875, 0.925], amp: 0.3, period: 16 }],
 
   models: [
+    'tayfa/alphabet_block', 'tayfa/rubber_duck', 'tayfa/spinning_top', 'tayfa/toy_train',
     'racing/barrierRed', 'racing/barrierWhite', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['gate-finish', 'item-cone', 'vehicle-drag-racer', 'vehicle-monster-truck', 'vehicle-racer', 'vehicle-racer-low', 'vehicle-speedster', 'vehicle-suv', 'vehicle-truck', 'vehicle-vintage-racer', 'track-road-narrow-looping', 'supports'].map((k) => `toy/${k}`),
     ...['bear', 'books', 'pillow', 'pillowBlue', 'pillowLong', 'bookcaseClosed', 'bookcaseOpen', 'bookcaseClosedWide', 'bedSingle', 'bedDouble', 'bedBunk', 'loungeSofa', 'loungeSofaLong', 'loungeDesignSofa', 'loungeChair', 'tableRound', 'table', 'tableCoffee', 'desk', 'chair', 'lampRoundFloor', 'lampSquareFloor', 'lampRoundTable', 'plantSmall1', 'pottedPlant', 'radio', 'speaker', 'televisionVintage', 'televisionModern', 'cardboardBoxClosed', 'cardboardBoxOpen', 'rugRound', 'rugRectangle', 'rugSquare', 'cabinetTelevision', 'sideTable', 'stoolBar'].map((k) => `furniture/${k}`),
@@ -213,5 +214,11 @@ export default {
     ctx.place('toy/track-road-narrow-looping', lp.x, lp.z, lp.faceTrackY, 13);
     ctx.reserve(lp.x, lp.z, 32);
     ctx.noShadow('furniture/rugRound', 'furniture/rugRectangle', 'furniture/rugSquare');
+
+    // --- Özel props (public/models/tayfa, tools/gen_props.py) ---
+    put(['tayfa/alphabet_block'], [20, 26], 0.8, off, 150, 8);
+    put(['tayfa/rubber_duck'], [20, 26], 0.8, off, 150, 5, { face: true });
+    put(['tayfa/spinning_top'], [20, 26], 0.5, off, 150, 6);
+    put(['tayfa/toy_train'], [20, 26], 0.8, off, 150, 4);
   },
 };

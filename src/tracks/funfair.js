@@ -83,6 +83,7 @@ export default {
   ],
 
   models: [
+    'tayfa/ferris_wheel', 'tayfa/popcorn_cart', 'tayfa/balloon_bunch',
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['park-entrance', 'stall-drinks', 'stall-food', 'stall-information', 'station-gate', 'ride-entrance', 'coaster-steel-looping', 'coaster-steel-straight-hill-complete', 'coaster-wood-looping', 'coaster-mouse-looping', 'coaster-train', 'coaster-train-wooden', 'train-monorail', 'tree', 'tree-large', 'flowers', 'grass', 'bench', 'trash', 'support-large', 'coaster-steel-straight', 'coaster-wood-straight', 'coaster-monorail-looping', 'coaster-flume-looping'].map((k) => `coaster/${k}`),
   ],
@@ -168,5 +169,10 @@ export default {
     put(['coaster/tree-large', 'coaster/tree'], [11, 15], 0.4, off - 4, 140, 40);
     put(['coaster/flowers', 'coaster/grass'], [8, 12], 0.5, off - 6, 130, 18);
     ctx.noShadow('coaster/flowers', 'coaster/grass');
+
+    // --- Özel props (public/models/tayfa, tools/gen_props.py) ---
+    put(['tayfa/ferris_wheel'], [22, 26], 0.5, off + 30, 150, 2);
+    put(['tayfa/popcorn_cart'], [6, 8], 0.6, off - 2, 120, 8);
+    put(['tayfa/balloon_bunch'], [7, 10], 0.5, off - 4, 120, 14);
   },
 };

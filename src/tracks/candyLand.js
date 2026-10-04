@@ -80,6 +80,7 @@ export default {
   bumps: [{ f: [0.48, 0.55], amp: 0.35, period: 18 }],
 
   models: [
+    'tayfa/candy_cane', 'tayfa/swirl_lollipop', 'tayfa/gumdrop_cluster',
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...['cupcake', 'muffin', 'donut', 'donut-sprinkles', 'donut-chocolate', 'ice-cream', 'ice-cream-cup', 'sundae', 'lollypop', 'cake', 'cake-birthday', 'cookie', 'cookie-chocolate', 'candy-bar', 'popsicle', 'popsicle-chocolate', 'ginger-bread', 'strawberry', 'cherries', 'watermelon', 'pie', 'waffle', 'pancakes', 'pudding'].map((k) => `food/${k}`),
   ],
@@ -166,5 +167,10 @@ export default {
     put(['food/waffle', 'food/pancakes', 'food/cookie', 'food/cookie-chocolate', 'food/ginger-bread'], [40, 60], 0.17, off, 130, 12);
     put(['food/strawberry', 'food/cherries'], [90, 120], 0.07, off, 130, 10);
     put(['food/watermelon', 'food/candy-bar'], [44, 56], 0.14, off, 140, 8);
+
+    // --- Özel props (public/models/tayfa, tools/gen_props.py) ---
+    put(['tayfa/candy_cane'], [16, 22], 0.4, off, 130, 12);
+    put(['tayfa/swirl_lollipop'], [16, 22], 0.5, off, 130, 12);
+    put(['tayfa/gumdrop_cluster'], [14, 20], 0.5, off, 130, 10);
   },
 };

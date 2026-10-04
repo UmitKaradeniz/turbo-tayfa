@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Podyum sahnesi + kupa puan tablosu; Kapadokya ve Çöl Kanyonu pistleri; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.43.0 süs propları (`public/models/tayfa`, 6 pistin `decorate` sonunda; kullanılmayan: start_arch, trophy_cup, finish_podium, chevron_sign, flag_pole)
 - v1.42.0 tehlike GLB'leri (`public/models/hazard`, `hazards.js` `HAZARD_MODEL`, yüklenmezse kodlu mesh yedek; volcano skin `lava`)
 - v1.41.0 her pist kendi donanımı (kemer/bayrak/kule/bariyer/tribün: `public/models/kits/<pist>`, `assets.js` `setKit`)
 - v1.40.0 her pist kendi araç modelini kullanır

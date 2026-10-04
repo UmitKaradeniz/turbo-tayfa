@@ -72,6 +72,7 @@ export default {
   ],
 
   models: [
+    'tayfa/palm_tropic', 'tayfa/beach_umbrella', 'tayfa/rock_boulder_a', 'tayfa/rock_boulder_b', 'tayfa/rock_boulder_c',
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',
     'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/lightPostModern',
     'racing/billboard', 'racing/tent', 'racing/tentClosedLong',
@@ -244,5 +245,10 @@ export default {
     ctx.scatter({ keys: ['nature/plant_bushLarge', 'nature/plant_bush'], count: 260, scale: [6, 9], where: (s, d) => s > 12 && off(d, 3) });
     ctx.scatter({ keys: ['nature/grass_large', 'nature/grass'], count: 520, scale: [5, 8], where: (s, d) => s > 5 && off(d, 1.5) });
     ctx.scatter({ keys: ['nature/flower_redA', 'nature/flower_yellowA'], count: 300, scale: [4, 6], where: (s, d) => s > 16 && off(d, 3) });
+
+    // --- Özel props (public/models/tayfa, tools/gen_props.py) ---
+    ctx.scatter({ keys: ['tayfa/palm_tropic'], count: 130, scale: [9, 13], where: (s, d) => s > 1.5 && s < 45 && off(d, 5) });
+    ctx.scatter({ keys: ['tayfa/beach_umbrella'], count: 40, scale: [5, 6.5], where: (s, d) => s > 0.3 && s < 3 && off(d, 5) });
+    ctx.scatter({ keys: ['tayfa/rock_boulder_a', 'tayfa/rock_boulder_b', 'tayfa/rock_boulder_c'], count: 60, scale: [6, 12], where: (s, d) => s > -5 && s < 2 && off(d, 4) });
   },
 };

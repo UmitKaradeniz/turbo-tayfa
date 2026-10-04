@@ -84,6 +84,7 @@ export default {
   ],
 
   models: [
+    'tayfa/neon_billboard', 'tayfa/street_lamp_neon', 'tayfa/vending_machine', 'tayfa/traffic_cone', 'tayfa/tire_stack', 'tayfa/tire_wall',
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered',
     'racing/bannerTowerRed', 'racing/bannerTowerGreen', 'racing/tentClosedLong',
     'nature/tree_detailed', 'nature/tree_cone', 'nature/plant_bushLarge', 'nature/plant_bush', 'nature/platform_beach', 'nature/canoe',
@@ -152,5 +153,29 @@ export default {
     // Birkaç park ağacı ve çalı (yola yakın, bina olmayan yerlerde)
     ctx.scatter({ keys: ['nature/tree_detailed', 'nature/tree_cone'], count: 60, scale: [7, 10], where: (s, d) => s > 6 && d > edge + 4 && d < edge + 30 });
     ctx.scatter({ keys: ['nature/plant_bushLarge', 'nature/plant_bush'], count: 90, scale: [6, 9], where: (s, d) => s > 6 && d > edge + 3 && d < edge + 40 });
+
+    // --- Özel props (public/models/tayfa, tools/gen_props.py) ---
+    ctx.tint({ emissive: 0xff66dd, intensity: 0.8 }, 'tayfa/neon_billboard');
+    ctx.tint({ emissive: 0x66ddff, intensity: 0.7 }, 'tayfa/street_lamp_neon');
+    for (let k = 0; k < 8; k++) {
+      const i = Math.round(n * (0.07 + k * 0.115));
+      const side = k % 2 ? 1 : -1;
+      const b = ctx.along(i, side * (edge + 10));
+      ctx.place('tayfa/neon_billboard', b.x, b.z, b.faceTrackY, 9);
+      const v = ctx.along(i + 14, -side * (edge + 4));
+      ctx.place('tayfa/vending_machine', v.x, v.z, v.faceTrackY, 3.6);
+      const l = ctx.along(i + 7, side * (edge + 4));
+      ctx.place('tayfa/street_lamp_neon', l.x, l.z, l.faceTrackY, 9);
+    }
+    for (let k = 0; k < 12; k++) {
+      const i = Math.round(n * (0.03 + k * 0.08));
+      const side = k % 2 ? 1 : -1;
+      for (let j = 0; j < 3; j++) {
+        const c = ctx.along(i + j * 2, side * (edge + 2));
+        ctx.place('tayfa/traffic_cone', c.x, c.z, ctx.rng() * 6.28, 3.2);
+      }
+      const t = ctx.along(i + 8, side * (edge + 2.5));
+      ctx.place(k % 3 ? 'tayfa/tire_stack' : 'tayfa/tire_wall', t.x, t.z, t.faceTrackY, k % 3 ? 4 : 5);
+    }
   },
 };
