@@ -1073,7 +1073,7 @@ function frame(now) {
     const ping = online && net.connected ? ` · ${Math.round(net.rtt)} ms` : '';
     const fps = fpsFrames / fpsTime;
     lastFps = fps;
-    const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · msaa ${QUALITY.bloom ? QUALITY.msaa : 'yok'}`;
+    const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · ${QUALITY.fxaa ? 'fxaa' : 'msaa yok'}`;
     debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}`;
     adaptResolution(fps);
     fpsFrames = 0;

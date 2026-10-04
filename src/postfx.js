@@ -4,6 +4,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
 // Bloom öncesi güvenlik: tek bir NaN/sonsuz piksel bile bloom'un bulanıklaştırma
 // katmanlarında büyüyüp ekranda yanıp sönen koyu dikdörtgenlere dönüşür (bazı
@@ -45,11 +46,29 @@ export function createPostFX(renderer, scene, camera, quality) {
   const bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), 0.55, 0.45, 1.0);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  // HDR hedefte MSAA pahalı (4x ≈ 12 ms, iGPU'da ölçüldü): kenar yumuşatma son aşamada FXAA ile (≈1 ms)
+  let fxaa = null;
+  if (quality.fxaa) {
+    fxaa = new ShaderPass(FXAAShader);
+    composer.addPass(fxaa);
+  }
+  const syncFxaa = () => {
+    if (!fxaa) return;
+    const px = renderer.getDrawingBufferSize(new THREE.Vector2());
+    fxaa.material.uniforms.resolution.value.set(1 / px.x, 1 / px.y);
+  };
+  syncFxaa();
   return {
     render: () => composer.render(),
-    setSize: (w, h) => composer.setSize(w, h),
+    setSize: (w, h) => {
+      composer.setSize(w, h);
+      syncFxaa();
+    },
     // Dinamik çözünürlük: composer'ın iç görüntüleri de yeni piksel oranıyla boyutlansın
-    setPixelRatio: (pr) => composer.setPixelRatio(pr),
+    setPixelRatio: (pr) => {
+      composer.setPixelRatio(pr);
+      syncFxaa();
+    },
     sanitize, // geliştirme/test için erişim
   };
 }

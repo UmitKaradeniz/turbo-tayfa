@@ -7,9 +7,9 @@ const PRESETS = {
   low: { name: 'low', pixelRatio: 1, shadows: false, shadowSize: 0, bloom: false, msaa: 0, decor: 0.45, particles: 0.5, sky: false, detailRoad: false, detailGround: false, beams: false },
   lowplus: { name: 'lowplus', pixelRatio: 1.25, shadows: false, shadowSize: 0, bloom: false, msaa: 0, decor: 0.6, particles: 0.6, sky: false, detailRoad: false, detailGround: false, beams: false },
   medlow: { name: 'medlow', pixelRatio: 1.25, shadows: true, shadowSize: 1024, bloom: false, msaa: 0, decor: 0.75, particles: 0.8, sky: true, detailRoad: true, detailGround: false, beams: true },
-  medium: { name: 'medium', pixelRatio: 1.5, shadows: true, shadowSize: 1024, bloom: true, msaa: 2, decor: 0.75, particles: 0.8, sky: true, detailRoad: true, detailGround: false, beams: true },
-  highlow: { name: 'highlow', pixelRatio: 1.75, shadows: true, shadowSize: 2048, bloom: true, msaa: 2, decor: 1, particles: 1, sky: true, detailRoad: true, detailGround: true, beams: true },
-  high: { name: 'high', pixelRatio: 2, shadows: true, shadowSize: 2048, bloom: true, msaa: 4, decor: 1, particles: 1, sky: true, detailRoad: true, detailGround: true, beams: true },
+  medium: { name: 'medium', pixelRatio: 1.5, shadows: true, shadowSize: 1024, bloom: true, msaa: 0, fxaa: true, decor: 0.75, particles: 0.8, sky: true, detailRoad: true, detailGround: false, beams: true },
+  highlow: { name: 'highlow', pixelRatio: 1.75, shadows: true, shadowSize: 2048, bloom: true, msaa: 0, fxaa: true, decor: 1, particles: 1, sky: true, detailRoad: true, detailGround: true, beams: true },
+  high: { name: 'high', pixelRatio: 2, shadows: true, shadowSize: 2048, bloom: true, msaa: 0, fxaa: true, decor: 1, particles: 1, sky: true, detailRoad: true, detailGround: true, beams: true },
 };
 export const TIERS = ['low', 'lowplus', 'medlow', 'medium', 'highlow', 'high'];
 
