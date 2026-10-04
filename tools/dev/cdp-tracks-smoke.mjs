@@ -31,7 +31,8 @@ await send('Page.enable'); await send('Runtime.enable'); await send('Profiler.en
 await send('Emulation.setDeviceMetricsOverride', { width: 412, height: 820, deviceScaleFactor: 1, mobile: true });
 if (cpu > 1) await send('Emulation.setCPUThrottlingRate', { rate: cpu });
 await send('Page.navigate', { url: 'http://localhost:3000/?q=low&nopause' });
-await sleep(9000);
+for (let i = 0; i < 120; i++) { if (await ev(`!!(window.__tt?.track && document.querySelector('.tt-track'))`)) break; await sleep(500); }
+await sleep(500);
 await send('Profiler.start'); const profT0=Date.now();
 
 
