@@ -30,6 +30,7 @@ import { createNameplates } from './ui/nameplates.js';
 import { createHazards, hazardModelKeys } from './hazards.js';
 import { createVolcanoShow } from './volcano.js';
 import { renderPortraits } from './ui/portraits.js';
+import { PODIUM_MODELS } from './ui/podium3d.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
 import { createItemSystem } from './items.js';
 import { ITEM_ICONS } from './itemIcons.js';
@@ -73,7 +74,7 @@ const autoTuner = QUALITY.auto ? createAutoTuner({ canReload: () => !race && !on
 const loadingBar = document.querySelector('#loading .bar > div');
 // Pistin modelleri + haritaya özel araç gövdesi
 const modelsOf = (def) => [...def.models, ...(def.kartBody ? [def.kartBody] : []), ...kitModels(def.id), ...hazardModelKeys(def)];
-const firstModels = [...new Set([...KART_MODELS, ...modelsOf(TRACKS[settings.track] ?? TRACKS.palmCove)])];
+const firstModels = [...new Set([...KART_MODELS, ...PODIUM_MODELS,...modelsOf(TRACKS[settings.track] ?? TRACKS.palmCove)])];
 await loadModels(firstModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
 
 const env = createEnvironment(scene, QUALITY);

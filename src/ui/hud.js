@@ -1,5 +1,8 @@
 import './base.css';
 import './hud.css';
+import { hasModels } from '../assets.js';
+import { CHARACTERS } from '../kartModel.js';
+import { createPodium3d, PODIUM_MODELS } from './podium3d.js';
 
 // Yarış içi arayüz (DOM). Oyun mantığından sadece okur; olaylarla güncellenir.
 
@@ -54,10 +57,21 @@ export function createHud({ portraits, minimap, itemIcons }) {
   document.body.appendChild(results);
 
   // Pist önizlemesi (sonuç panelinin üst şeridi)
-  const setHero = (url) => {
-    const hero = results.querySelector('.hero');
-    hero.hidden = !url;
-    if (url) hero.querySelector('img').src = url;
+  // Yarış sonucunda şerit 3B podyum olur (rows verilirse); modeller yoksa ya da Zamana Karşı'da pist resmi
+  const heroEl = results.querySelector('.hero');
+  const stage = createPodium3d(heroEl);
+  const setHero = (url, rows = null) => {
+    const top = rows && hasModels(PODIUM_MODELS) ? rows.slice(0, 3).map((r) => CHARACTERS.find((c) => c.id === r.id)) : null;
+    heroEl.classList.toggle('stage', !!top);
+    results.querySelector('.podium').classList.toggle('has3d', !!top);
+    if (top) {
+      heroEl.hidden = false;
+      stage.show(top);
+      return;
+    }
+    stage.stop();
+    heroEl.hidden = !url;
+    if (url) heroEl.querySelector('img').src = url;
   };
 
   // Sonuç tablosu yerinde güncellenirken: giriş animasyonu bitince satır "settled" olur (yeniden sıralamada tekrar oynamaz)
@@ -212,7 +226,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     // rows: [{ id, name, time|null, me, right?, sub? }]  (right: sağdaki metin, yoksa süre; sub: altındaki küçük yazı)
     // cup: kupa sonucu { title, next: 'go' | 'wait' | null, waitText }
     showResults(rows, subtitle, preview = null, cup = null) {
-      setHero(preview);
+      setHero(preview, rows);
       results.querySelector('h2').textContent = cup?.title ?? 'Yarış Bitti!';
       results.querySelector('.subtitle').textContent = subtitle;
       const primary = results.querySelector('.actions .primary:not([data-go="next"])');
@@ -336,6 +350,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
       results.classList.add('show');
     },
     hideResults() {
+      stage.stop();
       delete results.dataset.kind;
       delete results.dataset.ids;
       results.querySelector('h2').textContent = 'Yarış Bitti!';

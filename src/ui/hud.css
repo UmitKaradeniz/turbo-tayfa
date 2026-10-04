@@ -369,6 +369,11 @@
 /* Sonuç paneli: pist önizleme şeridi */
 #results .hero { position: relative; height: 104px; margin: -6px -6px 8px; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 0 rgba(11, 42, 85, 0.12); }
 #results .hero[hidden] { display: none; }
+#results .hero.stage { height: 210px; background: linear-gradient(180deg, #bfe6ff, #f3fbff 85%); overflow: visible; }
+#results .hero.stage::after { display: none; }
+#results .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: 16px; }
+#results .podium.has3d .step img { display: none; }
+@media (max-height: 560px) { #results .hero.stage { height: 130px; } }
 #results .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #results .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(255, 255, 255, 0.92)); }
 @media (max-height: 560px) { #results .hero { height: 64px; } }
