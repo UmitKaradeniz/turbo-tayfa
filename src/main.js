@@ -1063,6 +1063,7 @@ function frame(now) {
   updateEngine(race && !paused ? player : null, throttle, KART.maxSpeed);
   if (isTouchDevice && race) touch.show(!pauseOpen && !hud.resultsOpen);
 
+  applyPixelRatio();
   postfx.render();
 
   if (autoTuner && !race) autoTuner.menuFrame(dt, now, !paused && !online && !document.querySelector('.tt-modal.show'));
@@ -1167,10 +1168,18 @@ function adaptResolution(fps) {
   if (Math.abs(next - pixelRatio) > 1e-3) {
     pixelRatio = next;
     slowTime = fastTime = 0;
-    renderer.setPixelRatio(pixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    postfx.setPixelRatio(pixelRatio);
+    ratioDirty = true; // uygulama bir sonraki karede, çizimden ÖNCE (aşağıda)
   }
+}
+
+// Çizimden sonra setSize yapmak tuvali temizler ve sunulmadan önce boş (beyaz) kare görünür: yalnızca çizimden önce uygula.
+let ratioDirty = false;
+function applyPixelRatio() {
+  if (!ratioDirty) return;
+  ratioDirty = false;
+  renderer.setPixelRatio(pixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  postfx.setPixelRatio(pixelRatio);
 }
 
 function updateHud(dt) {

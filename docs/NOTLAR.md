@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Çok bölgeli tek pist (liman→şehir→sahil→orman; mimari pist başına tek tema, büyük refaktör); Orman Geçidi pisti (çamur, kristalli mağara tüneli, çıkışta güneş patlaması beyazlaması); köprüde uçarak geçme; Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.54.2 beyaz ekran parlaması: `adaptResolution` setSize'ı çizimden sonra yapıyordu (tuval temizlenir, boş kare görünür; masaüstünde yüksek pixelRatio ile ilk 10 sn art arda düşüş). Artık `ratioDirty` + `applyPixelRatio()` çizimden önce
 - v1.54.1 geri sayım takılması: yarış müziği (43 MB PCM) `preloadMusic` ile pist seçilirken çözülür; `buildTrackNow` sonunda `renderer.compile` + `initTexture` (menüde ısınma). Ölçüm: `cdp-countdown.mjs` (yazılım GL kare süresi güvenilmez, `ev` içinde `decoded` olayı artık geri sayımda yok)
 - v1.54.0 açılan köprü kaldırıldı (kullanıcı: görünüşü içinden geçiliyormuş gibi, güvenilmez); `bridge` tipi ve `makeBridge` silindi, Palmiye Koyu'nda 2 yengeç kaldı
 - v1.53.0 açılan köprü tehlikesi (`hazards.js` tip `bridge`, `makeBridge`, zamana bağlı: uyarı 2 sn → kalkar → bekler → iner; kanat >0.5 rad iken dikdörtgen alanda `spinOut`; botlar kaçmaz; Palmiye Koyu f 0.93, grid arkasında; dev `__tt.hazards`). Gerçek 'uçarak geçme' yok. Paket C bitti
