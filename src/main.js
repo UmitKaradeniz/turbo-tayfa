@@ -1072,7 +1072,8 @@ function frame(now) {
   fpsFrames++;
   fpsTime += dt;
   if (fpsTime >= 0.5) {
-    const ping = online && net.connected ? ` · ${Math.round(net.rtt)} ms` : '';
+    const ns = online && net.connected ? net.statsInfo() : null;
+    const ping = online && net.connected ? ` · ${Math.round(net.rtt)} ms${ns ? ` · yayın ${ns.hz}/sn (sunucu ≤${ns.srvMax} ağ ≤${ns.arrMax} ms)` : ''}` : '';
     const fps = fpsFrames / fpsTime;
     lastFps = fps;
     const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · ${QUALITY.fxaa ? 'fxaa' : 'msaa yok'}`;

@@ -16,6 +16,31 @@ export class Net {
     this.code = null;
     this.token = null;
     this.queue = [];
+    this.wsKey = null; // bağlantının hangi odaya açıldığı (Cloudflare'de oda başına ayrı sunucu)
+    this.pendingKey = null;
+    this.st = { last: 0, lastSrv: 0, gaps: [], win: [] }; // durum yayını ölçümü
+  }
+
+  // Ağ teşhisi: son ~3 sn'de 'states' yayınları (sunucu zaman damgası ile varış aralığı)
+  noteStates(msg) {
+    const a = performance.now();
+    const st = this.st;
+    if (st.last) st.win.push({ a, arr: a - st.last, srv: msg.server - st.lastSrv });
+    st.last = a;
+    st.lastSrv = msg.server;
+    while (st.win.length && a - st.win[0].a > 3000) st.win.shift();
+  }
+
+  // { hz, srvMax, arrMax } ya da null (yeterli veri yok)
+  statsInfo() {
+    const w = this.st.win;
+    if (w.length < 5 || performance.now() - this.st.last > 1500) return null;
+    const span = (w[w.length - 1].a - w[0].a) / 1000 || 1;
+    return {
+      hz: Math.round((w.length - 1) / span),
+      srvMax: Math.round(Math.max(...w.map((x) => x.srv))),
+      arrMax: Math.round(Math.max(...w.map((x) => x.arr))),
+    };
   }
 
   on(type, fn) {
@@ -48,9 +73,14 @@ export class Net {
   connect() {
     this.wanted = true;
     if (this.ws && this.ws.readyState <= 1) return;
-    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
+    // Oda anahtarı: odadaysak onun kodu, katılırken girilen kod, yoksa yeni oda ('new')
+    const key = this.code || this.pendingKey || 'new';
+    const q = key === 'new' ? 'create=1' : `c=${encodeURIComponent(key)}`;
+    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?${q}`;
     const ws = new WebSocket(url);
     this.ws = ws;
+    this.wsKey = key;
+    this.st = { last: 0, lastSrv: 0, gaps: [], win: [] };
     ws.onopen = () => {
       this.connected = true;
       this.retry = 0;
@@ -68,6 +98,7 @@ export class Net {
         return;
       }
       if (msg.type === 'pong') return this.onPong(msg);
+      if (msg.type === 'states') this.noteStates(msg);
       if (msg.type === 'welcome') {
         this.id = msg.id;
         this.code = msg.code;
@@ -94,6 +125,17 @@ export class Net {
 
   // Oda ile ilgili mesajlar bağlantı yoksa kuyruğa alınır
   send(msg) {
+    if (msg.type === 'join' || msg.type === 'create') {
+      const key = msg.type === 'join' ? String(msg.code ?? '').toUpperCase() : 'new';
+      this.pendingKey = key;
+      // Başka bir odaya açık bağlantı varsa kapat (oda sunucuları ayrı olabilir)
+      if (this.ws && this.wsKey !== key && !this.code) {
+        this.ws.onclose = null;
+        this.ws.close();
+        this.ws = null;
+        this.connected = false;
+      }
+    }
     if (this.connected) this.sendNow(msg);
     else {
       this.queue.push(msg);
