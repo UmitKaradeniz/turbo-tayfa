@@ -73,6 +73,7 @@ function roomView(room) {
     phase: room.phase,
     settings: room.settings,
     cup: room.cup ? { round: room.cup.round, total: room.cup.tracks.length } : null,
+    botHostId: room.phase === 'racing' ? room.botHostId ?? null : null,
     players: [...room.players.values()].map((p) => ({
       id: p.id,
       name: p.name,
@@ -161,12 +162,34 @@ function removePlayer(room, p) {
     rooms.delete(room.code);
     return;
   }
-  if (room.phase === 'racing') checkRaceOver(room);
+  if (room.phase === 'racing') {
+    if (room.botHostId === p.id) room.botHostId = chooseBotHost(room, null);
+    checkRaceOver(room);
+  }
   syncRoom(room);
 }
 
 // --- Yarış ---
+// Botları kimin cihazı sürsün? İstemcilerin bildirdiği FPS + ping'e göre en iyisi; yarış başlarken seçilir,
+// yarış ortasında yalnızca bot sürücüsü ayrılırsa devredilir (sürekli el değiştirme botları sıçratır).
+function perfScore(p) {
+  const fps = p.perf?.fps > 0 ? Math.min(60, p.perf.fps) : 40;
+  const rtt = Number.isFinite(p.perf?.rtt) ? p.perf.rtt : 80;
+  return fps - rtt / 4;
+}
+
+function chooseBotHost(room, keepId) {
+  const cands = [...room.players.values()].filter((p) => p.ws);
+  if (!cands.length) return null;
+  const best = cands.reduce((a, b) => (perfScore(b) > perfScore(a) ? b : a));
+  const cur = cands.find((p) => p.id === keepId);
+  // Mevcut aday yeterince iyiyse ya da fark küçükse değişmez
+  if (cur && (perfScore(cur) >= 40 || perfScore(best) - perfScore(cur) < 12)) return cur.id;
+  return best.id;
+}
+
 function startRace(room, trackCount) {
+  room.botHostId = chooseBotHost(room, room.hostId);
   room.trackCount = trackCount;
   const humans = [...room.players.values()].filter((p) => p.ws);
   // İnsanlar karışık sırayla önde, botlar arkada
@@ -198,7 +221,7 @@ function startRace(room, trackCount) {
     p.progress = null;
     p.finished = false;
   }
-  broadcast(room, { type: 'start', goAt: room.goAt, laps: room.settings.laps, difficulty: room.settings.difficulty, track: room.settings.track, entrants: room.entrants });
+  broadcast(room, { type: 'start', goAt: room.goAt, laps: room.settings.laps, difficulty: room.settings.difficulty, track: room.settings.track, entrants: room.entrants, botHostId: room.botHostId });
   syncRoom(room);
 }
 
@@ -221,7 +244,7 @@ function acceptProgress(holder, progress, t) {
 // Bu oyuncu bu kartı (kendisi ya da oda sahibiyse bot) yönetebilir mi?
 function controls(room, p, kartId) {
   if (kartId === p.id) return true;
-  return room.hostId === p.id && room.entrants?.some((e) => e.id === kartId && e.bot);
+  return room.botHostId === p.id && room.entrants?.some((e) => e.id === kartId && e.bot);
 }
 
 function recordFinish(room, id, time) {
@@ -290,6 +313,8 @@ function handleMessage(ws, raw) {
 
   switch (msg.type) {
     case 'ping':
+      // İstemci FPS ve ping'ini bildirir (bot sürücüsü seçimi için)
+      if (p && Number.isFinite(msg.fps) && Number.isFinite(msg.rtt)) p.perf = { fps: Math.max(0, Math.min(240, msg.fps)), rtt: Math.max(0, Math.min(5000, msg.rtt)) };
       send(ws, { type: 'pong', t: msg.t, server: now() });
       return;
 
@@ -343,6 +368,7 @@ function handleMessage(ws, raw) {
           difficulty: r.settings.difficulty,
           track: r.settings.track,
           entrants: r.entrants,
+          botHostId: r.botHostId,
           resume: old.lastState,
           bots: [...r.botState].filter(([, b]) => b.state).map(([id, b]) => ({ id, s: b.state })),
           finishes: r.finishOrder,
@@ -424,8 +450,8 @@ function handleMessage(ws, raw) {
       if (room.phase !== 'racing' || !msg.s) return;
       const t = now();
       if (acceptProgress(p, msg.s.pr, t)) p.lastState = msg.s;
-      // Botları sadece oda sahibi gönderebilir
-      if (room.hostId === p.id && Array.isArray(msg.bots)) {
+      // Botları sadece bot sürücüsü (en iyi cihaz) gönderebilir
+      if (room.botHostId === p.id && Array.isArray(msg.bots)) {
         for (const b of msg.bots.slice(0, MAX_PLAYERS)) {
           if (!room.entrants.some((e) => e.id === b.id && e.bot)) continue;
           let holder = room.botState.get(b.id);
@@ -494,7 +520,7 @@ function handleMessage(ws, raw) {
       if (room.phase !== 'racing') return;
       const id = msg.id ?? p.id;
       const isMe = id === p.id;
-      const isBot = room.hostId === p.id && room.entrants.some((e) => e.id === id && e.bot);
+      const isBot = room.botHostId === p.id && room.entrants.some((e) => e.id === id && e.bot);
       if (!isMe && !isBot) return;
       // Sunucunun takip ettiği ilerleme tur sayısına ulaşmış olmalı
       const holder = isMe ? p : room.botState.get(id);
@@ -526,6 +552,7 @@ function handleClose(ws) {
   if (!p || !room || p.ws !== ws) return;
   p.ws = null;
   p.leftAt = now();
+  if (room.phase === 'racing' && room.botHostId === p.id) room.botHostId = chooseBotHost(room, null); // bağlantısı kopan botları sürmeyi bırakır
   if (room.hostId === p.id) {
     // Kısa kopmalarda (sayfa yenileme, anlık ağ kaybı) sahipliği hemen devretme
     setTimeout(() => {

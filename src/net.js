@@ -18,6 +18,7 @@ export class Net {
     this.queue = [];
     this.wsKey = null; // bağlantının hangi odaya açıldığı (Cloudflare'de oda başına ayrı sunucu)
     this.pendingKey = null;
+    this.perf = null; // () => ({ fps, rtt }): sunucuya bildirilir (bot sürücüsü seçimi)
     this.st = { last: 0, lastSrv: 0, gaps: [], win: [] }; // durum yayını ölçümü
   }
 
@@ -164,9 +165,10 @@ export class Net {
   // Saat senkronu: birkaç ping atıp en düşük gecikmeli olanı kullan
   sync() {
     this.samples = [];
-    for (let i = 0; i < 5; i++) setTimeout(() => this.sendNow({ type: 'ping', t: performance.now() }), i * 150);
+    const ping = () => this.sendNow({ type: 'ping', t: performance.now(), ...this.perf?.() });
+    for (let i = 0; i < 5; i++) setTimeout(ping, i * 150);
     clearInterval(this.syncTimer);
-    this.syncTimer = setInterval(() => this.sendNow({ type: 'ping', t: performance.now() }), 5000);
+    this.syncTimer = setInterval(ping, 5000);
   }
 
   onPong({ t, server }) {

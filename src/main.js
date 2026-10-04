@@ -61,6 +61,7 @@ const gpuName = (() => {
 
 // Hata raporları (sunucu loguna): yakalanmamış hatalar, WebGL kaybı, düşük FPS
 let lastFps = 0;
+let fpsAvg = 0; // sunucuya bildirilen düzleştirilmiş FPS
 initErrorReports();
 setReportContext(() => ({ track: trackDef?.id, quality: QUALITY.name + (QUALITY.auto ? '(auto)' : ''), pixelRatio: pixelRatio.toFixed(2), fps: Math.round(lastFps), gpu: gpuName, mode: timeTrial ? 'timeTrial' : race ? 'race' : 'menu', online: !!online }));
 renderer.domElement.addEventListener('webglcontextlost', () => reportIssue('webgl', 'context lost'));
@@ -107,6 +108,7 @@ const hud = createHud({ portraits, minimap: null, itemIcons: ITEM_ICONS });
 const touch = createTouchControls();
 initTilt();
 const net = new Net();
+net.perf = () => (fpsAvg > 0 ? { fps: Math.round(fpsAvg), rtt: Math.round(net.rtt) } : null);
 
 // Pist önizlemesi: oyundan alınmış kare (public/previews/<kimlik>.jpg)
 const previewOf = (id) => `/previews/${id}.jpg`;
@@ -355,6 +357,7 @@ function newOnline() {
   return {
     room: null,
     isHost: false,
+    isBotHost: false, // botları bu cihaz mı sürüyor (sunucu FPS/ping'e göre seçer)
     goAt: 0,
     owned: new Set(), // bu cihazın fiziğini çalıştırdığı kartlar
     kartById: new Map(),
@@ -710,8 +713,9 @@ async function startOnlineRace(msg) {
   });
   player = online.kartById.get(net.id);
   online.isHost = online.room?.hostId === net.id;
+  online.isBotHost = msg.botHostId ? msg.botHostId === net.id : online.isHost;
   online.owned = new Set([player]);
-  if (online.isHost) msg.entrants.filter((e) => e.bot).forEach((e) => online.owned.add(online.kartById.get(e.id)));
+  if (online.isBotHost) msg.entrants.filter((e) => e.bot).forEach((e) => online.owned.add(online.kartById.get(e.id)));
 
   setField(order);
   placeOnGrid(order);
@@ -770,16 +774,21 @@ net.on('room', (msg) => {
   }
   const nowHost = msg.hostId === net.id;
 
-  // Oda sahibi değişti ve yeni sahip biziz: botları devral
-  if (race && nowHost && !online.isHost) {
-    online.isHost = true;
-    for (const [id, kart] of online.kartById) {
-      if (id.startsWith('bot-')) {
-        kart.prevPosition.copy(kart.position);
-        online.owned.add(kart);
+  // Bot sürücüsü değişti: biz olduysak botları devral, bırakıldıysak uzaktan gelen duruma dön
+  if (race && msg.phase === 'racing' && msg.botHostId !== undefined) {
+    const nowBotHost = msg.botHostId === net.id;
+    if (nowBotHost && !online.isBotHost) {
+      for (const [id, kart] of online.kartById) {
+        if (id.startsWith('bot-')) {
+          kart.prevPosition.copy(kart.position);
+          online.owned.add(kart);
+        }
       }
+      menu.toast('Botları artık senin cihazın sürüyor.');
+    } else if (!nowBotHost && online.isBotHost) {
+      for (const [id, kart] of online.kartById) if (id.startsWith('bot-')) online.owned.delete(kart);
     }
-    menu.toast('Oda sahibi oldun; botları artık sen sürüyorsun.');
+    online.isBotHost = nowBotHost;
   }
   online.isHost = nowHost;
 
@@ -858,7 +867,7 @@ function sendStates(dt) {
   online.sendAcc = 0;
   const t = net.serverNow();
   const msg = { type: 'state', s: encodeState(player, race.entryOf(player), t) };
-  if (online.isHost) {
+  if (online.isBotHost) {
     msg.bots = [];
     for (const kart of online.owned) {
       if (kart !== player) msg.bots.push({ id: online.idByKart.get(kart), s: encodeState(kart, race.entryOf(kart), t) });
@@ -1076,6 +1085,7 @@ function frame(now) {
     const ping = online && net.connected ? ` · ${Math.round(net.rtt)} ms${ns ? ` · yayın ${ns.hz}/sn (sunucu ≤${ns.srvMax} ağ ≤${ns.arrMax} ms)` : ''}` : '';
     const fps = fpsFrames / fpsTime;
     lastFps = fps;
+    fpsAvg = fpsAvg ? fpsAvg * 0.85 + fps * 0.15 : fps;
     const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · ${QUALITY.fxaa ? 'fxaa' : 'msaa yok'}`;
     debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}`;
     adaptResolution(fps);
