@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Çok bölgeli tek pist (liman→şehir→sahil→orman; mimari pist başına tek tema, büyük refaktör); Orman Geçidi pisti (çamur, kristalli mağara tüneli, çıkışta güneş patlaması beyazlaması); köprüde uçarak geçme; Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- Gerçek GPU ölçümü: `node tools/dev/cdp-gpu-bench.mjs <pist> <q> "<ek sorgu>"...` (AMD Radeon iGPU, 1080p, high, palmCove): referans 32 FPS · gökyüzü etkisiz (55.1 vs 55.0) · composer MSAA 4x ~12 ms (msaa=0 → 51 FPS, msaa=2 → 35) · bloom ~2 ms · gölge ~3-5 ms · hepsi kapalı 66-71 FPS. `?fixres` dinamik çözünürlüğü kapatır
 - v1.54.3 dinamik çözünürlük sakinleşti: ilk 6 sn bekle, 3 sn kalıcı <45 FPS → FPS oranına göre tek hamlede hedefe in (oran²~piksel), 6 sn bekleme, yarışta en çok 3 değişim, yukarı çıkış yok, taban 0.8
 - v1.54.2 beyaz ekran parlaması: `adaptResolution` setSize'ı çizimden sonra yapıyordu (tuval temizlenir, boş kare görünür; masaüstünde yüksek pixelRatio ile ilk 10 sn art arda düşüş). Artık `ratioDirty` + `applyPixelRatio()` çizimden önce
 - v1.54.1 geri sayım takılması: yarış müziği (43 MB PCM) `preloadMusic` ile pist seçilirken çözülür; `buildTrackNow` sonunda `renderer.compile` + `initTexture` (menüde ısınma). Ölçüm: `cdp-countdown.mjs` (yazılım GL kare süresi güvenilmez, `ev` içinde `decoded` olayı artık geri sayımda yok)

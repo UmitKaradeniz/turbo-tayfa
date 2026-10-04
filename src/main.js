@@ -1153,7 +1153,9 @@ let slowSum = 0;
 let ratioCooldown = 0;
 let ratioChanges = 0;
 let ratioRace = null;
+const fixedRes = new URLSearchParams(location.search).has('fixres'); // tanı/ölçüm: dinamik çözünürlük kapalı
 function adaptResolution(fps) {
+  if (fixedRes) return;
   // Geri sayımda ve "BAŞLA"dan sonraki ilk 6 sn'de ayar yapma: doku/shader ısınması FPS'i geçici düşürür
   if (!race || paused || document.hidden || !race.started || race.clock < 6) {
     slowTime = slowSum = 0;
