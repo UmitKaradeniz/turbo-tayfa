@@ -68,6 +68,7 @@ function unlock() {
   // Kısa efektleri önceden yükle, müziği gerektiğinde
   SOUNDS.flatMap(variantNames).forEach(load);
   if (wantedMusic) playMusic(wantedMusic, wantedTrack);
+  if (preloadName) load(preloadName);
 }
 for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, unlock, { passive: true });
 document.addEventListener('visibilitychange', () => {
@@ -106,6 +107,14 @@ export function play(name, { volume = 1, rate = 1 } = {}) {
   g.gain.value = volume;
   src.connect(g).connect(sfxGain);
   src.start();
+}
+
+// Yarış müziğini (onlarca MB'lık PCM'e açılır) menüdeyken önceden çöz: geri sayımda çözülürse oyun takılır.
+let preloadName = null;
+export function preloadMusic(trackId) {
+  const tune = MUSIC_ALIAS[trackId] ?? trackId;
+  preloadName = TRACK_MUSIC.has(tune) ? `music_${tune}` : MUSIC.race;
+  if (ctx) load(preloadName); // ses bağlamı yoksa ilk etkileşimde (unlock) yüklenir
 }
 
 // Müzik: 'menu' | 'race' | null (race için pist kimliği verilirse o pistin müziği). Eskisi yavaşça kısılır, yenisi açılır.

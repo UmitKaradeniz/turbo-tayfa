@@ -34,7 +34,7 @@ import { PODIUM_MODELS } from './ui/podium3d.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
 import { createItemSystem } from './items.js';
 import { ITEM_ICONS } from './itemIcons.js';
-import { play, playMusic, updateEngine, applyVolumes } from './audio.js';
+import { play, playMusic, preloadMusic, updateEngine, applyVolumes } from './audio.js';
 import { TRACKS, TRACK_IDS, CUP_SETS } from './tracks/index.js';
 
 // --- Renderer ---
@@ -274,6 +274,7 @@ function buildTrackNow(def) {
   env.setTrack(def, track.terrain);
   fx.setDust(def.dust);
   startLights = createStartLights(decor);
+  preloadMusic(def.id); // müzik çözümü geri sayımda değil, pist seçilirken olsun
   hazards = createHazards({ scene, track, fx, quality: QUALITY });
   volcanoShow = def.volcano ? createVolcanoShow({ fx, def, quality: QUALITY }) : null;
   volcanoGlow = null;
@@ -308,6 +309,13 @@ function buildTrackNow(def) {
   minimap = createMinimap(track);
   hud.setMinimap(minimap);
   if (!race) showMenuField();
+  if (booted) {
+    // Yeni pistin shader'ları ve dokuları menüde GPU'ya yüklensin, ilk yarış karesinde (geri sayım) değil
+    renderer.compile(scene, camera);
+    scene.traverse((o) => {
+      for (const m of [o.material].flat()) if (m) for (const k of ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'alphaMap']) if (m[k]?.isTexture) renderer.initTexture(m[k]);
+    });
+  }
   if (window.__tt) Object.assign(window.__tt, { track, items });
 }
 
