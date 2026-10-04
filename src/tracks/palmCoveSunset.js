@@ -10,6 +10,7 @@ export default {
   meta: 'Tropikal sahil · gün batımı',
   dust: [0.95, 0.74, 0.55],
   sky: { top: 0x45368c, horizon: 0xff9a5a, fog: 0xf0a070 },
+  beams: 0.6, // hafif far ışığı süzmesi (alacakaranlık)
   skyTex: undefined, // Poly Haven gündüz gökyüzü yerine gradyan + güneş parıltısı
   water: { shallow: 0x62c4c8, deep: 0x4b3a9a },
   light: {

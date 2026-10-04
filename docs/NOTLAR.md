@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.51.0 far ışığı süzmesi (`kart.js` `setBeams(k)`, tek birleşik koni mesh, ortak geometri/materyal; `main.js` loadTrack: `QUALITY.beams ? (def.beams ?? (def.night?1:0))`; `quality.js` `beams` yalnız medlow ve üstü; Gün Batımı `beams:0.6`)
 - v1.50.0 seyirciler (`src/crowd.js` 3 InstancedMesh, kol sallama köşe gölgelendiricide; `decor.js` `ctx.crowdRow(i0,i1,lateral,{every,rows,rowGap,scale})`, `QUALITY.decor<0.5` yani Düşük'te yok; Palmiye Koyu + Gün Batımı + Neon Şehir start; `Q=medium node tools/dev/cdp-preview.mjs` kalite seçer)
 - v1.49.0 Palmiye Koyu Gün Batımı (`tracks/palmCoveSunset.js` = palmCove + `sky/light/water`; `def.kit` donanımı ana pistten alır, `MUSIC_ALIAS` müzik, `light.cloud` bulut rengi; `rooms.js` TRACKS'e eklendi)
 - v1.48.0 ahşap iskele zonu (`track.js` `ZONE_TYPES.boardwalk`, tahta dokusu `zoneTexture`, `audio.js` tıkırtı darbeleri `kart.surface==='boardwalk'`; Palmiye Koyu f 0.015–0.095)

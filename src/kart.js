@@ -2,6 +2,33 @@ import * as THREE from 'three';
 import { KART, SLOPE } from './config.js';
 import { createKartModel } from './kartModel.js';
 import { defaultVehicleFor } from './vehicles.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
+// Far ışığı süzmesi (gece/gün batımı pistleri): iki hafif koni, ucu karta yakın parlak, uzağa doğru sönük. Tek mesh, ortak geometri.
+let _beamGeo = null;
+const _beamMats = new Map();
+function beamGeometry() {
+  if (_beamGeo) return _beamGeo;
+  const L = 13;
+  const cones = [-0.6, 0.6].map((x) => {
+    const g = new THREE.ConeGeometry(1.7, L, 14, 1, true).translate(0, -L / 2, 0); // tepe orijinde, taban -Y'de
+    const pos = g.attributes.position;
+    const col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      const t = Math.min(1, -pos.getY(i) / L);
+      const k = (1 - t) * (1 - t);
+      col.set([k * 1.0, k * 0.92, k * 0.62], i * 3);
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    return g.rotateX(-Math.PI / 2 + 0.05).translate(x, 0.55, 1.3); // +Z'ye bak, hafif aşağı; ön lamba konumu
+  });
+  _beamGeo = mergeGeometries(cones);
+  return _beamGeo;
+}
+const beamMaterial = (k) => {
+  if (!_beamMats.has(k)) _beamMats.set(k, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.11 * k, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
+  return _beamMats.get(k);
+};
 
 // Arcade kart fiziği. Gerçek bir fizik motoru yok: hız vektörü, yön açısı
 // ve pistten sorgulanan zemin yüksekliği yeterli. heading = 0 iken kart +Z yönüne bakar.
@@ -84,6 +111,22 @@ export class Kart {
   setBodyOverride(path) {
     this.bodyOverride = path ?? null;
     this.model.setBody(this.bodyOverride ?? this.vehicle.body);
+  }
+
+  // Far ışığı süzmesi: k = şiddet çarpanı (0 kapalı)
+  setBeams(k) {
+    if (!k) {
+      if (this.beams) this.beams.visible = false;
+      return;
+    }
+    if (!this.beams) {
+      this.beams = new THREE.Mesh(beamGeometry(), beamMaterial(k));
+      this.beams.frustumCulled = false;
+      this.beams.renderOrder = 3;
+      this.object.add(this.beams);
+    }
+    this.beams.material = beamMaterial(k);
+    this.beams.visible = true;
   }
 
   reset(position, heading) {

@@ -265,6 +265,8 @@ function buildTrackNow(def) {
   trackDef = def;
   setKit(def.kit ?? def.id); // haritaya özel donanım (kemer, bayrak, kule, bariyer, tribün)
   for (const k of karts) k.setBodyOverride(def.kartBody ?? null); // haritaya özel araç (yoksa seçilen araç sınıfının gövdesi)
+  const beams = QUALITY.beams ? (def.beams ?? (def.night ? 1 : 0)) : 0; // far ışığı süzmesi (gece pistleri, gün batımı)
+  for (const k of karts) k.setBeams(beams);
   track = buildTrack(def, { detailRoad: QUALITY.detailRoad, detailGround: QUALITY.detailGround });
   scene.add(track.group);
   decor = buildDecor(track, (ctx) => def.decorate(ctx), QUALITY.decor);
