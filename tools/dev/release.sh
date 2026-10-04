@@ -32,3 +32,5 @@ timeout 120 git "${GH_PUSH[@]}" push origin "v$VER" 2>&1 | tail -1
 printf '%s\n\n- Geri dönüş: %s (%s)\n' "$NOTES" "$PREV" "$PREV_SHA" > /tmp/relnotes.md
 gh release create "v$VER" --title "v$VER — $TITLE" --notes-file /tmp/relnotes.md 2>&1 | tail -1
 timeout 60 git "${GH_PUSH[@]}" ls-remote origin "refs/tags/v$VER" | cut -c1-12
+# Cloudflare'e de yayınla (derleme yukarıda yapıldı). Hata olursa sürüm yine de çıkmış sayılır, Render etkilenmez.
+timeout 240 npx --yes wrangler deploy 2>&1 | grep -E "https://|Uploaded|ERROR|rror" | head -4 || echo "Cloudflare yayını başarısız (npx wrangler login gerekebilir)"

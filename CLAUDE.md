@@ -11,7 +11,7 @@ Tarayıcıda çok oyunculu 3B kart yarışı. Vite + Three.js istemci, tek Node 
 - İş bitince `docs/NOTLAR.md` "Son değişiklikler" bölümüne tek satır ekle; böylece sonraki oturum kodu yeniden keşfetmez.
 
 ## Sürüm kuralı
-Her ek/düzeltme ayrı sürüm: `bash tools/dev/release.sh <sürüm> "<başlık>" "<notlar>" "" <önceki_etiket>` (sürüm artırır, derler, commit, etiket, push, GitHub Release). Push `gh` kimliğiyle yapılır (Git Credential Manager takılabiliyor). Yalnızca dokümantasyon/araç değişikliği: sürüm çıkarma, commit mesajına `[skip render]` ekle.
+Her ek/düzeltme ayrı sürüm: `bash tools/dev/release.sh <sürüm> "<başlık>" "<notlar>" "" <önceki_etiket>` (sürüm artırır, derler, commit, etiket, push, GitHub Release). Betik sonunda `npx wrangler deploy` ile Cloudflare'e de yayınlar (kullanıcı onayı kalıcı: her sürümde otomatik, sorma; ayrıntı `docs/CLOUDFLARE.md`). Push `gh` kimliğiyle yapılır (Git Credential Manager takılabiliyor). Yalnızca dokümantasyon/araç değişikliği: sürüm çıkarma, commit mesajına `[skip render]` ekle.
 
 ## Varlık kuralları
 Yalnızca CC0 ve CC-BY (ticari güvenli). `CREDITS.md` ve `README.md` güncel tutulur. Kenney dışı paketlerde indirmeden önce ad/boyut söyle. Sunucuda hesap/veritabanı yok (basit mimari).
