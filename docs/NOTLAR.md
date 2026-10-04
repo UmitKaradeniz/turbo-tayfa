@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Çok bölgeli tek pist (liman→şehir→sahil→orman; mimari pist başına tek tema, büyük refaktör); Orman Geçidi pisti (çamur, kristalli mağara tüneli, çıkışta güneş patlaması beyazlaması); köprüde uçarak geçme; Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.54.0 açılan köprü kaldırıldı (kullanıcı: görünüşü içinden geçiliyormuş gibi, güvenilmez); `bridge` tipi ve `makeBridge` silindi, Palmiye Koyu'nda 2 yengeç kaldı
 - v1.53.0 açılan köprü tehlikesi (`hazards.js` tip `bridge`, `makeBridge`, zamana bağlı: uyarı 2 sn → kalkar → bekler → iner; kanat >0.5 rad iken dikdörtgen alanda `spinOut`; botlar kaçmaz; Palmiye Koyu f 0.93, grid arkasında; dev `__tt.hazards`). Gerçek 'uçarak geçme' yok. Paket C bitti
 - v1.52.0 havada boost + kum tepesi rampası (`kart.js` `airTime`, `AIR_BOOST_MIN` 0.7 s, yalnız `def.airBoost` pistlerinde inişte `boost(0.5–1.2)` + olay `airBoost`; zon `dune` = `bounce` 13.5 + kum dokusu; Palmiye Koyu f 0.128 ve 0.628, yan şeritten kaçılır)
 - v1.51.0 far ışığı süzmesi (`kart.js` `setBeams(k)`, tek birleşik koni mesh, ortak geometri/materyal; `main.js` loadTrack: `QUALITY.beams ? (def.beams ?? (def.night?1:0))`; `quality.js` `beams` yalnız medlow ve üstü; Gün Batımı `beams:0.6`)
