@@ -1,6 +1,7 @@
-import crypto from 'node:crypto';
+// Not: Node 22 ve Cloudflare Workers'ta ortak `crypto` (Web Crypto) kullanılır; bu dosya iki ortamda da çalışır.
 
-// Oda / lobi / yarış yönetimi. Tek süreç, bellekte; veritabanı yok.
+// Oda / lobi / yarış yönetimi. Bellekte; veritabanı yok. `createRooms()` kendi oda tablosunu taşır:
+// Node'da tek örnek (server/index.js), Cloudflare'de oda başına bir Durable Object (worker/index.js).
 //
 // Mesajlar JSON: { type, ... }. İstemci → sunucu:
 //   create {name, character, vehicle}  join {code, name, character, vehicle}
@@ -32,7 +33,10 @@ const MIN_LAP_SECONDS = 12; // bundan hızlı tur = hile/hata
 const MAX_PROGRESS_RATE = 40; // örnek/saniye, üstü reddedilir (kısayollar ilerlemeyi hızlandırır)
 const RESULTS_TIMEOUT_MS = 45_000; // ilk bitiren + bu süre → yarış biter
 
+export function createRooms(opts = {}) {
+const fixedCode = opts.code ? String(opts.code).toUpperCase() : null; // Cloudflare: oda kodunu Worker belirler
 const rooms = new Map();
+let timer = null;
 
 const now = () => Date.now();
 const cleanName = (s) =>
@@ -42,9 +46,10 @@ const cleanName = (s) =>
     .slice(0, 14) || 'Pilot';
 
 function newCode() {
+  if (fixedCode) return rooms.has(fixedCode) ? null : fixedCode;
   for (;;) {
     let code = '';
-    for (let i = 0; i < 5; i++) code += CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)];
+    for (let i = 0; i < 5; i++) code += CODE_ALPHABET[crypto.getRandomValues(new Uint32Array(1))[0] % CODE_ALPHABET.length];
     if (!rooms.has(code)) return code;
   }
 }
@@ -100,6 +105,7 @@ function addPlayer(room, ws, name, character, vehicle) {
     ready: false,
     ws,
     leftAt: 0,
+    lastSeen: now(),
     // yarış durumu (sunucu doğrulaması için)
     lastState: null,
     progress: null,
@@ -270,7 +276,7 @@ function scoreCupRound(room) {
 }
 
 // --- Mesaj işleme ---
-export function handleMessage(ws, raw) {
+function handleMessage(ws, raw) {
   let msg;
   try {
     msg = JSON.parse(raw);
@@ -280,6 +286,7 @@ export function handleMessage(ws, raw) {
   if (!msg || typeof msg.type !== 'string') return;
   const p = ws.player;
   const room = ws.room;
+  if (p) p.lastSeen = now();
 
   switch (msg.type) {
     case 'ping':
@@ -289,8 +296,10 @@ export function handleMessage(ws, raw) {
     case 'create': {
       if (p) return;
       const code = newCode();
+      if (!code) return;
       const r = { code, hostId: null, phase: 'lobby', settings: { laps: 3, difficulty: 'normal', track: 'palmCove', mode: 'race' }, players: new Map(), emptySince: 0 };
       rooms.set(code, r);
+      if (fixedCode && !timer) startTicker(); // Cloudflare: ticker oda varken çalışır, oda bitince durur (DO uyuyabilsin)
       const me = addPlayer(r, ws, msg.name, msg.character, msg.vehicle);
       r.hostId = me.id;
       syncRoom(r);
@@ -319,6 +328,7 @@ export function handleMessage(ws, raw) {
       if (old.ws && old.ws !== ws) old.ws.close();
       old.ws = ws;
       old.leftAt = 0;
+      old.lastSeen = now();
       ws.player = old;
       ws.room = r;
       if (!r.hostId) pickHost(r);
@@ -510,7 +520,7 @@ export function handleMessage(ws, raw) {
   }
 }
 
-export function handleClose(ws) {
+function handleClose(ws) {
   const p = ws.player;
   const room = ws.room;
   if (!p || !room || p.ws !== ws) return;
@@ -530,9 +540,15 @@ export function handleClose(ws) {
 }
 
 // Periyodik: durum yayını + zaman aşımları
-export function startTicker() {
-  setInterval(() => {
+function startTicker() {
+  if (timer) return;
+  timer = setInterval(() => {
     const t = now();
+    if (fixedCode && rooms.size === 0) {
+      clearInterval(timer);
+      timer = null;
+      return;
+    }
     for (const room of rooms.values()) {
       if (room.phase === 'racing') {
         const list = [];
@@ -542,6 +558,8 @@ export function startTicker() {
         for (const [id, th] of room.things) if (t - th.t > 30_000) room.things.delete(id);
         checkRaceOver(room);
       }
+      // Sessiz kalan (telefon uyudu, ağ koptu) bağlantıları kapat; istemci 5 sn'de bir ping atar
+      for (const p of room.players.values()) if (p.ws && t - p.lastSeen > 45_000) p.ws.close();
       // Uzun süredir kopuk oyuncuları çıkar
       for (const p of [...room.players.values()]) {
         if (!p.ws && p.leftAt && t - p.leftAt > (room.phase === 'lobby' ? 15_000 : RECONNECT_GRACE_MS)) removePlayer(room, p);
@@ -550,4 +568,7 @@ export function startTicker() {
   }, 1000 / STATE_HZ);
 }
 
-export const stats = () => ({ rooms: rooms.size, players: [...rooms.values()].reduce((n, r) => n + r.players.size, 0) });
+const stats = () => ({ rooms: rooms.size, players: [...rooms.values()].reduce((n, r) => n + r.players.size, 0) });
+
+return { handleMessage, handleClose, startTicker, stats, isEmpty: () => rooms.size === 0 };
+}

@@ -1,0 +1,14 @@
+// Cloudflare dağıtımı: `npx wrangler deploy` (önce `npm run build`). Ayrıntı: docs/CLOUDFLARE.md
+{
+  "name": "turbo-tayfa",
+  "main": "worker/index.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/ws", "/health", "/api/*"]
+  },
+  "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "RoomDO" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomDO"] }]
+}

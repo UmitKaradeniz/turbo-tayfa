@@ -1,12 +1,14 @@
+// Kullanım: node tools/dev/vehicle-protocol-test.mjs <port>  (Node sunucusu ya da `wrangler dev` portu; ?create=1 / ?c=KOD sorgusu iki ortamda da çalışır)
 import WebSocket from 'ws';
 const port = process.argv[2];
-const mk = () => new Promise((res) => { const ws = new WebSocket(`ws://localhost:${port}/ws`); ws.msgs = []; ws.on('message', (d) => ws.msgs.push(JSON.parse(d))); ws.on('open', () => res(ws)); });
+const mk = (q = 'create=1') => new Promise((res) => { const ws = new WebSocket(`ws://localhost:${port}/ws?${q}`); ws.msgs = []; ws.on('message', (d) => ws.msgs.push(JSON.parse(d))); ws.on('open', () => res(ws)); });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const last = (ws, t) => [...ws.msgs].reverse().find((m) => m.type === t);
-const a = await mk(), b = await mk();
+const a = await mk();
 a.send(JSON.stringify({ type: 'create', name: 'A', character: 'fox', vehicle: 'heavy' }));
 await sleep(200);
 const code = last(a, 'room').code;
+const b = await mk(`c=${code}`);
 b.send(JSON.stringify({ type: 'join', code, name: 'B', character: 'panda' }));
 await sleep(200);
 let pl = last(a, 'room').players; console.log('1', pl.map((p) => `${p.character}:${p.vehicle}`).join(' '));

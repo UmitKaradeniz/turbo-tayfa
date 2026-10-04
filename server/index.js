@@ -4,7 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
-import { handleMessage, handleClose, startTicker, stats } from './rooms.js';
+import { createRooms } from './rooms.js';
+
+const { handleMessage, handleClose, startTicker, stats } = createRooms();
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const isProd = process.argv.includes('--prod');
@@ -43,7 +45,7 @@ app.get('/health', (_req, res) => res.json({ ok: true, ...stats() }));
 // noServer: aynı HTTP sunucusundaki Vite HMR websocket'ine karışmamak için
 const wss = new WebSocketServer({ noServer: true, maxPayload: 16 * 1024 });
 server.on('upgrade', (req, socket, head) => {
-  if (req.url !== '/ws') return;
+  if (req.url.split('?')[0] !== '/ws') return; // ?c=KOD / ?create=1: Cloudflare sürümüyle ortak istemci sorgusu, burada yok sayılır
   wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
 });
 wss.on('connection', (ws) => {

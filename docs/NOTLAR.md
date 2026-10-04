@@ -37,6 +37,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 - v1.45.0 Kapadokya pisti (`tracks/cappadocia.js`; propları `gen_props.py`: chimney_a/b/c, mesa, hot_air_balloon; önizleme `tools/dev/cdp-preview.mjs`)
 - v1.44.0 podyum sahnesi (`src/ui/podium3d.js`: sonuç şeridinde 3B podyum, ilk 3 dans, dönen kupa, konfeti; ayrı küçük WebGL bağlamı, yalnız tablo açıkken çizer)
 - v1.43.0 süs propları (`public/models/tayfa`, 6 pistin `decorate` sonunda; kullanılmayan: start_arch, chevron_sign, flag_pole)
+- v1.59.0 Cloudflare seçeneği: `worker/index.js` + `wrangler.jsonc` (oda başına Durable Object), `server/rooms.js` artık `createRooms()` fabrikası (Node + Worker ortak), istemci `/ws?c=KOD|create=1`; Render değişmeden çalışır. Ayrıntı `docs/CLOUDFLARE.md` · v1.58.0 ağ teşhis sayacı (`net.statsInfo`, FPS göstergesi)
 - v1.42.0 tehlike GLB'leri (`public/models/hazard`, `hazards.js` `HAZARD_MODEL`, yüklenmezse kodlu mesh yedek; volcano skin `lava`)
 - v1.41.0 her pist kendi donanımı (kemer/bayrak/kule/bariyer/tribün: `public/models/kits/<pist>`, `assets.js` `setKit`)
 - v1.40.0 her pist kendi araç modelini kullanır
