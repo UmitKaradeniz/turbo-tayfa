@@ -7,6 +7,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const loader = new GLTFLoader();
 const cache = new Map();
 
+// Haritaya özel pist donanımı: Racing Kit anahtarları aktif pistin kendi modeline yönlenir (public/models/kits/<pist>/*.glb)
+const KIT_FILES = {
+  'racing/overheadLights': 'gantry', 'racing/flagCheckers': 'flag',
+  'racing/bannerTowerRed': 'towerA', 'racing/bannerTowerGreen': 'towerB',
+  'racing/barrierRed': 'barrierA', 'racing/barrierWhite': 'barrierB', 'racing/grandStandCovered': 'stand',
+};
+let activeKit = null;
+export const kitModels = (id) => Object.values(KIT_FILES).map((f) => `kits/${id}/${f}`);
+export const setKit = (id) => (activeKit = id);
+const resolveKey = (key) => (activeKit && KIT_FILES[key] ? `kits/${activeKit}/${KIT_FILES[key]}` : key);
+
 // Bu modellerin hepsi zaten yüklü mü?
 export function hasModels(keys) {
   return keys.every((k) => cache.has(k));
@@ -68,7 +79,7 @@ function tuneMaterial(mat) {
 
 // Modelin bir kopyası (animasyon klipleriyle birlikte)
 export function cloneModel(key) {
-  const gltf = cache.get(key);
+  const gltf = cache.get(resolveKey(key));
   if (!gltf) throw new Error(`Model yüklenmedi: ${key}`);
   return { scene: gltf.scene.clone(true), animations: gltf.animations };
 }

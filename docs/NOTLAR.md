@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Podyum sahnesi + kupa puan tablosu; Kapadokya ve Çöl Kanyonu pistleri; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.41.0 her pist kendi donanımı (kemer/bayrak/kule/bariyer/tribün: `public/models/kits/<pist>`, `assets.js` `setKit`)
 - v1.40.0 her pist kendi araç modelini kullanır
 - v1.38.7 item simgeleri SVG (D2) · v1.38.6 geri sayım donması giderildi · v1.38.5 podyum "yükleniyor" boyutu · v1.38.4 yapımcı yazısı sol üst · v1.38.3 nitro eski parlak görünüm · v1.38.2 sonuç tablosu yerinde güncellenir · v1.38.1 Baloo 2 · v1.38.0 adımlı hazırlık
 - v1.37 araç sınıfları · v1.36 ses varyantları · v1.35 yol/zemin dokuları · v1.34 gökyüzü · v1.33 parçacık atlası · v1.32 drift öğretisi · v1.22–v1.31 pist başına dağ-bayır profilleri · v1.21 otomatik kalite · v1.20 eğim fiziği

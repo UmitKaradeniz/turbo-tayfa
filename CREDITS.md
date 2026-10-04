@@ -130,3 +130,5 @@ ambientCG ([ambientcg.com](https://ambientcg.com)) malzemeleri CC0 1.0'dır. 1K-
 ## Yordamsal (kendi ürettiğimiz) içerik
 
 Neon tabelalar, sokak lambaları, kar yağışı, yıldızlı gökyüzü, hız tahtaları ve pencere ışıması kodla üretilir (src/city.js, src/environment.js, src/shortcut.js, src/assets.js).
+
+Haritaya özel araç gövdeleri, pist donanımı (`public/models/kits`), tehlike modelleri (`hazard`) ve süs propları (`tayfa`) proje sahibinin kendi ürettiği özgün modellerdir (üretici betikler `tools/`).

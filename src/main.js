@@ -4,7 +4,7 @@ import { QUALITY } from './quality.js';
 import { createAutoTuner } from './autoQuality.js';
 import { settings, saveSettings, DIFFICULTY } from './settings.js';
 import { readInput } from './input.js';
-import { loadModels, hasModels } from './assets.js';
+import { loadModels, hasModels, kitModels, setKit } from './assets.js';
 import { initErrorReports, setReportContext, reportIssue } from './report.js';
 import { Kart, resolveKartCollisions } from './kart.js';
 import { CHARACTERS, KART_MODELS, pickRivals } from './kartModel.js';
@@ -72,7 +72,7 @@ const autoTuner = QUALITY.auto ? createAutoTuner({ canReload: () => !race && !on
 // --- Yükleme: karakterler + seçili pistin modelleri (diğer pistler seçilince yüklenir) ---
 const loadingBar = document.querySelector('#loading .bar > div');
 // Pistin modelleri + haritaya özel araç gövdesi
-const modelsOf = (def) => (def.kartBody ? [...def.models, def.kartBody] : def.models);
+const modelsOf = (def) => [...def.models, ...(def.kartBody ? [def.kartBody] : []), ...kitModels(def.id)];
 const firstModels = [...new Set([...KART_MODELS, ...modelsOf(TRACKS[settings.track] ?? TRACKS.palmCove)])];
 await loadModels(firstModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
 
@@ -262,6 +262,7 @@ function buildTrackNow(def) {
     hazards?.dispose();
   }
   trackDef = def;
+  setKit(def.id); // haritaya özel donanım (kemer, bayrak, kule, bariyer, tribün)
   for (const k of karts) k.setBodyOverride(def.kartBody ?? null); // haritaya özel araç (yoksa seçilen araç sınıfının gövdesi)
   track = buildTrack(def, { detailRoad: QUALITY.detailRoad, detailGround: QUALITY.detailGround });
   scene.add(track.group);
