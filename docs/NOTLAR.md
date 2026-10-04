@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.49.0 Palmiye Koyu Gün Batımı (`tracks/palmCoveSunset.js` = palmCove + `sky/light/water`; `def.kit` donanımı ana pistten alır, `MUSIC_ALIAS` müzik, `light.cloud` bulut rengi; `rooms.js` TRACKS'e eklendi)
 - v1.48.0 ahşap iskele zonu (`track.js` `ZONE_TYPES.boardwalk`, tahta dokusu `zoneTexture`, `audio.js` tıkırtı darbeleri `kart.surface==='boardwalk'`; Palmiye Koyu f 0.015–0.095)
 - v1.47.0 yengeç tehlikesi (`hazards.js` skin `crab`, `cross` paramı, vuruşta spin yok yalnız %55 yavaşlama; model `tools/gen_crab.py` → `hazard/hazard-crab.glb`; Palmiye Koyu f 0.1/0.9/0.965). Paket C sırası: iskele zonu → Gün Batımı pisti → seyirciler → far ışığı → havada boost+`dune` → köprü
 - v1.46.0 otomatik kalite: 6 kademeli merdiven, gevşek menü eşikleri (<47 FPS −1), 3 yarışta in/2 yarışta çık, tavan 3 gün, GPU ailesine göre ilk tahmin (Adreno/Mali/Apple)

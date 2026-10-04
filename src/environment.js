@@ -154,6 +154,7 @@ export function createEnvironment(scene, quality) {
       scene.fog.near = L.fogNear ?? 160;
       scene.fog.far = L.fogFar ?? 620;
       clouds.visible = !def.night && !def.noClouds && !def.space;
+      clouds.userData.mat.color.set(L.cloud ?? 0xffffff);
       // Gerçek gökyüzü dokusu (Orta/Yüksek kalite): yüklenince gradyanın yerini alır, yapay bulutlar gizlenir
       skyU.useTex.value = 0;
       skyWanted = quality.sky && def.skyTex ? def.skyTex : null;
@@ -359,6 +360,7 @@ function createClouds() {
   tex.colorSpace = THREE.SRGBColorSpace;
   const group = new THREE.Group();
   const mat = new THREE.SpriteMaterial({ map: tex, fog: false, depthWrite: false, transparent: true, opacity: 0.95 });
+  group.userData.mat = mat; // def.light.cloud ile renklendirilir (gün batımı)
   for (let i = 0; i < 14; i++) {
     const s = new THREE.Sprite(mat);
     const a = (i / 14) * Math.PI * 2 + Math.random() * 0.3;

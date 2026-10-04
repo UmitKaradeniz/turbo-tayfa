@@ -31,7 +31,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🍭 **Şeker Diyarı:** dev kekler, donutlar, lolipoplar; çikolata yol, pembe şeker fıskiyeleri ve çikolata nehrini aşan kısayol
 - 🧸 **Oyuncak Odası:** dev bir odada kanepeler, kitaplıklar, blok kuleleri; yolu kesen dev plaj topları ve kutulardan geçen kısayol
 - 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
-- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 12 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
+- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 13 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
 - 🪵 Hareketli tehlikeler: yuvarlanan kütükler (Çam Vadisi), çığ topları (Kar Zirvesi), yolu kesen trafik (Neon Şehir), dev plaj topları (Oyuncak Odası)
 - 🌿 Pistlere özgü zeminler: bataklık (Çam Vadisi), buz ve derin kar (Kar Zirvesi), sığ su (Palmiye), ıslak asfalt ve neon hız şeritleri (Neon), halı ve trambolin (Oyuncak Odası), bal (Şeker Diyarı), trambolin ve hız şeritleri (Lunapark, Ay)

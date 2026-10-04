@@ -73,7 +73,7 @@ const autoTuner = QUALITY.auto ? createAutoTuner({ canReload: () => !race && !on
 // --- Yükleme: karakterler + seçili pistin modelleri (diğer pistler seçilince yüklenir) ---
 const loadingBar = document.querySelector('#loading .bar > div');
 // Pistin modelleri + haritaya özel araç gövdesi
-const modelsOf = (def) => [...def.models, ...(def.kartBody ? [def.kartBody] : []), ...kitModels(def.id), ...hazardModelKeys(def)];
+const modelsOf = (def) => [...def.models, ...(def.kartBody ? [def.kartBody] : []), ...kitModels(def.kit ?? def.id), ...hazardModelKeys(def)];
 const firstModels = [...new Set([...KART_MODELS, ...PODIUM_MODELS,...modelsOf(TRACKS[settings.track] ?? TRACKS.palmCove)])];
 await loadModels(firstModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
 
@@ -263,7 +263,7 @@ function buildTrackNow(def) {
     hazards?.dispose();
   }
   trackDef = def;
-  setKit(def.id); // haritaya özel donanım (kemer, bayrak, kule, bariyer, tribün)
+  setKit(def.kit ?? def.id); // haritaya özel donanım (kemer, bayrak, kule, bariyer, tribün)
   for (const k of karts) k.setBodyOverride(def.kartBody ?? null); // haritaya özel araç (yoksa seçilen araç sınıfının gövdesi)
   track = buildTrack(def, { detailRoad: QUALITY.detailRoad, detailGround: QUALITY.detailGround });
   scene.add(track.group);

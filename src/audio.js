@@ -15,6 +15,7 @@ const VARIANTS = { bump: 3, wall: 3, hit: 3, ui_click: 4, ui_select: 3 };
 const variantNames = (name) => Array.from({ length: VARIANTS[name] ?? 1 }, (_, i) => (i === 0 ? name : `${name}_${i + 1}`));
 const MUSIC = { menu: 'music_menu', race: 'music_race' };
 // Pist başına yarış müziği (dosya: music_<pist>); listede olmayan pist genel yarış müziğini çalar
+const MUSIC_ALIAS = { palmCoveSunset: 'palmCove' };
 const TRACK_MUSIC = new Set(['palmCove', 'pineValley', 'snowPeak', 'nightCity', 'volcano', 'moon', 'toyRoom', 'candyLand', 'funfair', 'graveyard', 'dinoValley']);
 
 const ext = (() => {
@@ -112,7 +113,8 @@ export function playMusic(which, trackId = null) {
   wantedMusic = which;
   wantedTrack = trackId;
   if (!ctx) return;
-  const name = which === 'race' && TRACK_MUSIC.has(trackId) ? `music_${trackId}` : which ? MUSIC[which] : null;
+  const tune = MUSIC_ALIAS[trackId] ?? trackId; // varyant pistler (gün batımı) ana pistin müziğini çalar
+  const name = which === 'race' && TRACK_MUSIC.has(tune) ? `music_${tune}` : which ? MUSIC[which] : null;
   if (music.name === name) return;
   const old = music;
   if (old.source) {
