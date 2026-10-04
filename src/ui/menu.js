@@ -404,6 +404,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         </div>
         <div class="set-body">
           <section data-pane="gfx">
+            ${toggleRow('📊', 'FPS göstergesi', 'Ekranın köşesinde FPS, ping ve ağ bilgisi.', 'data-set="showFps"')}
             <div class="set-now"></div>
             <div class="set-row">
               <div class="set-lab"><b>🎚 Kalite ön ayarı</b><small class="q-info"></small></div>
@@ -416,7 +417,6 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
             <div class="tt-label">Performans</div>
             ${toggleRow('📉', 'Dinamik çözünürlük', 'FPS düşünce çözünürlüğü kendiliğinden azaltır.', 'data-gfxbool="dynRes"')}
             ${gfxRowHtml(GFX_ROWS[7])}
-            ${toggleRow('📊', 'FPS göstergesi', 'Ekranın köşesinde FPS, ping ve ağ bilgisi.', 'data-set="showFps"')}
             <button class="tt-btn light block set-reset" data-go="gfx-reset">↺ Grafiği varsayılana döndür</button>
           </section>
           <section data-pane="game" hidden>
