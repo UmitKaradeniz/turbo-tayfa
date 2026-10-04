@@ -1,6 +1,6 @@
 // "Kapadokya" — gün doğumunda peribacaları arasından geçen kumtaşı vadisi. Gökyüzü sıcak hava balonlarıyla dolu;
 // yol kanyon kenarına tırmanır, vadi tabanına iner. Yamaçlardan kaya yuvarlanır, toz hortumları yolu keser.
-// Kontrol noktaları: [x, z, yükseklik]. Propları üreten betik: tools/gen_props.py (chimney_*, mesa, hot_air_balloon).
+// Kontrol noktaları: [x, z, yükseklik]. Üreticiler: tools/gen_props.py (chimney_*, mesa, hot_air_balloon), gen_kit_cappadocia.py, gen_kart_cappadocia.py.
 
 const CHIMNEYS = ['tayfa/chimney_a', 'tayfa/chimney_b', 'tayfa/chimney_c'];
 const ROCKS = ['tayfa/rock_boulder_b', 'tayfa/rock_boulder_a'];
@@ -8,6 +8,7 @@ const ROCKS = ['tayfa/rock_boulder_b', 'tayfa/rock_boulder_a'];
 export default {
   id: 'cappadocia',
   name: 'Kapadokya',
+  kartBody: 'karts/kart-cappadocia', // Balon Sepeti (tools/gen_kart_cappadocia.py)
   meta: 'Peribacaları · balonlar · kanyon',
   groundTex: { tex: 'sand', rock: 'rock', scale: 0.12, strength: 0.9 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   roadTex: 'asphalt_n',
@@ -70,7 +71,7 @@ export default {
     })),
   ],
 
-  // Geçici donanım: kits/cappadocia (şimdilik Dinozor Vadisi donanımının kopyası); araç gövdesi için `kartBody: 'karts/kart-cappadocia'` eklenecek
+  // Donanım: kits/cappadocia (tools/gen_kit_cappadocia.py)
   models: [
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers', 'racing/grandStandCovered', 'racing/bannerTowerRed', 'racing/bannerTowerGreen',
     ...CHIMNEYS, 'tayfa/mesa', 'tayfa/hot_air_balloon', 'tayfa/rock_boulder_a', 'tayfa/rock_boulder_b',
