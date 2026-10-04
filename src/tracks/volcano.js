@@ -70,8 +70,8 @@ export default {
     { type: 'geyser', f: 0.8, lateral: 3.5, radius: 4.2, period: 8, offset: 0 },
     { type: 'geyser', f: 0.94, lateral: -3.5, radius: 4.2, period: 7, offset: 6 },
     // Kalderaya inerken yamaçtan yuvarlanan kayalar
-    { type: 'ball', skin: 'rock', ballRadius: 2.4, f: 0.555, period: 11, offset: 2, dir: 1 },
-    { type: 'ball', skin: 'rock', ballRadius: 2.4, f: 0.66, period: 12, offset: 6, dir: -1 },
+    { type: 'ball', skin: 'lava', ballRadius: 2.4, f: 0.555, period: 11, offset: 2, dir: 1 },
+    { type: 'ball', skin: 'lava', ballRadius: 2.4, f: 0.66, period: 12, offset: 6, dir: -1 },
   ],
 
   // Kısayol: yanardağın eteğinden geçen toprak yol; ortasında lav nehrini aşan rampa var.

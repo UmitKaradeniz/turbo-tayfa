@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { hasModels, normalizedModel } from './assets.js';
+import { hasModels, cloneModel, normalizedModel } from './assets.js';
 
 // Zamanlı pist tehlikeleri: Volkan'da gayzerler, Ay'da meteorlar.
 // Zamanlama yarış saatinden (race.clock) hesaplanır; çevrimiçinde saat herkeste aynı olduğu için
@@ -40,9 +40,48 @@ function stripeTexture() {
   return t;
 }
 
-// Yolu kesen yuvarlanan nesne. skin: 'beach' (dev plaj topu) | 'snow' (çığ topu) | 'rock' (kaya) | 'log' (kütük) | 'car' (trafik arabası)
+// skin → GLB (public/models/hazard, tools/gen_hazards.py). Yüklü değilse aşağıdaki kodlu mesh yedek olarak çizilir.
+// rolls: yuvarlanır (merkez orijinde, yarıçap ~1) | değilse zeminde sürüklenir (+X ileri). k: ballR başına ölçek
+const HAZARD_MODEL = {
+  beach: { key: 'hazard/hazard-beachball', k: 1, rolls: true },
+  snow: { key: 'hazard/hazard-snowball', k: 1, rolls: true },
+  rock: { key: 'hazard/hazard-rock', k: 0.95, rolls: true },
+  lava: { key: 'hazard/hazard-lava-rock', k: 0.95, rolls: true },
+  log: { key: 'hazard/hazard-log', k: 0.92, rolls: true },
+  car: { key: 'hazard/hazard-taxi', k: 0.9 },
+  ghost: { key: 'hazard/hazard-ghost', k: 0.8, float: 0.1 },
+};
+export const hazardModelKeys = (def) => [...new Set((def.hazards ?? []).filter((h) => h.type === 'ball').map((h) => HAZARD_MODEL[h.skin ?? 'beach']?.key).filter(Boolean))];
+
+function makeModelBall(radius, spec, skin) {
+  const wrap = new THREE.Group();
+  if (spec.rolls) {
+    const mesh = cloneModel(spec.key).scene;
+    mesh.scale.setScalar(radius * spec.k);
+    wrap.add(mesh);
+    wrap.userData.roller = mesh;
+    return wrap;
+  }
+  const m = normalizedModel(spec.key);
+  m.scale.setScalar(radius * spec.k);
+  m.position.y = -radius * (1 - (spec.float ?? 0)); // top merkezi yerden radius yukarıda; model zemine otursun
+  if (skin === 'ghost') {
+    m.traverse((o) => {
+      if (!o.isMesh) return;
+      o.material = o.material.clone();
+      Object.assign(o.material, { transparent: true, opacity: 0.88, emissive: new THREE.Color(0x88b4ff), emissiveIntensity: 0.55 });
+    });
+  }
+  wrap.add(m);
+  wrap.userData.roller = new THREE.Group(); // yuvarlanmaz
+  return wrap;
+}
+
+// Yolu kesen yuvarlanan nesne. skin: 'beach' (dev plaj topu) | 'snow' (çığ topu) | 'rock' (kaya) | 'lava' (lav kayası) | 'log' (kütük) | 'car' (taksi) | 'ghost'
 // Dönüş: yaw dönen sarmalayıcı grup; userData.roller yuvarlanma eksenindeki (yerel z) iç mesh
 function makeBall(radius, skin = 'beach') {
+  const spec = HAZARD_MODEL[skin];
+  if (spec && hasModels([spec.key])) return makeModelBall(radius, spec, skin);
   const wrap = new THREE.Group();
   let mesh;
   if (skin === 'log') {
@@ -98,7 +137,7 @@ function makeBall(radius, skin = 'beach') {
     wrap.add(ghost);
     wrap.userData.roller = new THREE.Group();
     return wrap;
-  } else if (skin === 'rock') {
+  } else if (skin === 'rock' || skin === 'lava') {
     const g = new THREE.IcosahedronGeometry(radius, 1);
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) pos.setXYZ(i, pos.getX(i) * (0.88 + 0.24 * Math.sin(i * 7.3)), pos.getY(i) * (0.88 + 0.24 * Math.cos(i * 5.1)), pos.getZ(i) * (0.88 + 0.24 * Math.sin(i * 3.7)));

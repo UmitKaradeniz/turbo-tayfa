@@ -27,7 +27,7 @@ import { createHud } from './ui/hud.js';
 import { createMenu } from './ui/menu.js';
 import { createMinimap } from './ui/minimap.js';
 import { createNameplates } from './ui/nameplates.js';
-import { createHazards } from './hazards.js';
+import { createHazards, hazardModelKeys } from './hazards.js';
 import { createVolcanoShow } from './volcano.js';
 import { renderPortraits } from './ui/portraits.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
@@ -72,7 +72,7 @@ const autoTuner = QUALITY.auto ? createAutoTuner({ canReload: () => !race && !on
 // --- Yükleme: karakterler + seçili pistin modelleri (diğer pistler seçilince yüklenir) ---
 const loadingBar = document.querySelector('#loading .bar > div');
 // Pistin modelleri + haritaya özel araç gövdesi
-const modelsOf = (def) => [...def.models, ...(def.kartBody ? [def.kartBody] : []), ...kitModels(def.id)];
+const modelsOf = (def) => [...def.models, ...(def.kartBody ? [def.kartBody] : []), ...kitModels(def.id), ...hazardModelKeys(def)];
 const firstModels = [...new Set([...KART_MODELS, ...modelsOf(TRACKS[settings.track] ?? TRACKS.palmCove)])];
 await loadModels(firstModels, (p) => (loadingBar.style.width = `${Math.round(p * 100)}%`));
 
