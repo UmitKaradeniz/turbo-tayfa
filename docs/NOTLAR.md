@@ -17,6 +17,7 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.47.0 yengeç tehlikesi (`hazards.js` skin `crab`, `cross` paramı, vuruşta spin yok yalnız %55 yavaşlama; model `tools/gen_crab.py` → `hazard/hazard-crab.glb`; Palmiye Koyu f 0.1/0.9/0.965). Paket C sırası: iskele zonu → Gün Batımı pisti → seyirciler → far ışığı → havada boost+`dune` → köprü
 - v1.46.0 otomatik kalite: 6 kademeli merdiven, gevşek menü eşikleri (<47 FPS −1), 3 yarışta in/2 yarışta çık, tavan 3 gün, GPU ailesine göre ilk tahmin (Adreno/Mali/Apple)
 - v1.45.1 Kapadokya kendi donanımı + aracı (`gen_kit_cappadocia.py` → `kits/cappadocia`, `gen_kart_cappadocia.py` → `karts/kart-cappadocia` "Balon Sepeti"; kopya yok)
 - v1.45.0 Kapadokya pisti (`tracks/cappadocia.js`; propları `gen_props.py`: chimney_a/b/c, mesa, hot_air_balloon; önizleme `tools/dev/cdp-preview.mjs`)

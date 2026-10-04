@@ -71,6 +71,13 @@ export default {
     { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
   ],
 
+  // Sahil yengeçleri: yolu yavaşça yan yürüyerek keser (çarpan yavaşlar); önce çizgili uyarı şeridi yanar
+  hazards: [
+    { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.1, period: 14, offset: 4, dir: 1, cross: 4.6 },
+    { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.9, period: 13, offset: 9, dir: -1, cross: 4.6 },
+    { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.965, period: 15, offset: 2, dir: 1, cross: 4.6 },
+  ],
+
   models: [
     'tayfa/palm_tropic', 'tayfa/beach_umbrella', 'tayfa/rock_boulder_a', 'tayfa/rock_boulder_b', 'tayfa/rock_boulder_c',
     'racing/barrierRed', 'racing/barrierWhite', 'racing/overheadLights', 'racing/flagCheckers',

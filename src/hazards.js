@@ -50,6 +50,7 @@ const HAZARD_MODEL = {
   log: { key: 'hazard/hazard-log', k: 0.92, rolls: true },
   car: { key: 'hazard/hazard-taxi', k: 0.9 },
   ghost: { key: 'hazard/hazard-ghost', k: 0.8, float: 0.1 },
+  crab: { key: 'hazard/hazard-crab', k: 0.6 }, // tools/gen_crab.py; yan yürür (gövde X'te geniş), yavaşlatır
 };
 export const hazardModelKeys = (def) => [...new Set((def.hazards ?? []).filter((h) => h.type === 'ball').map((h) => HAZARD_MODEL[h.skin ?? 'beach']?.key).filter(Boolean))];
 
@@ -305,11 +306,12 @@ export function createHazards({ scene, track, fx, quality }) {
           }
           if (!(c >= warnStart && c < burstStart)) h.ring.scale.setScalar(h.radius);
         } else if (h.d.type === 'ball') {
-          const crossStart = h.period - S.cross;
+          const cross = h.d.cross ?? S.cross; // geçiş süresi (yengeç yavaş yürür)
+          const crossStart = h.period - cross;
           const warnStart = crossStart - S.warn;
           h.ball.visible = false;
           if (c >= crossStart) {
-            const u = (c - crossStart) / S.cross;
+            const u = (c - crossStart) / cross;
             ring = 0.35;
             const lat = h.dir * (-h.span + 2 * h.span * u);
             h.ballPos.set(h.pos.x - h.lateral * h.right.x + h.right.x * lat, h.pos.y, h.pos.z - h.lateral * h.right.z + h.right.z * lat);
@@ -317,6 +319,12 @@ export function createHazards({ scene, track, fx, quality }) {
             h.ball.position.set(h.ballPos.x, h.ballPos.y + h.ballR, h.ballPos.z);
             h.roller.rotation.z = -lat / h.ballR;
             h.ball.rotation.y = Math.atan2(-h.right.z, h.right.x) + ((h.d.skin === 'car' || h.d.skin === 'ghost') && h.dir < 0 ? Math.PI : 0);
+            if (h.d.skin === 'crab') {
+              // Yan yürüyüş: küçük sekme ve sallanma
+              const w = Math.sin(lat * 2.2);
+              h.ball.position.y += Math.abs(w) * 0.18;
+              h.ball.rotation.z = w * 0.07;
+            }
             active = true;
           } else if (c >= warnStart) {
             const k = (c - warnStart) / S.warn;
@@ -375,6 +383,16 @@ export function createHazards({ scene, track, fx, quality }) {
           const key = `${hazards.indexOf(h)}:${cycle}`;
           if (hitMemo.get(kart) === key) continue;
           hitMemo.set(kart, key);
+          if (h.d.skin === 'crab') {
+            // Yengeç: savurmaz, sadece yavaşlatır ve hafifçe sektirir
+            kart.velocity.y = Math.max(kart.velocity.y, 4);
+            kart.grounded = false;
+            kart.speed *= 0.45;
+            kart.velocity.x *= 0.45;
+            kart.velocity.z *= 0.45;
+            kart.events.push('bounce');
+            continue;
+          }
           kart.velocity.y = Math.max(kart.velocity.y, h.d.type === 'geyser' ? 9 : h.d.type === 'ball' ? 7 : 6);
           kart.grounded = false;
           kart.spinOut();
