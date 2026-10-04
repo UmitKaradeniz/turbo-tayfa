@@ -18,6 +18,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🚗 **Haritaya özel araçlar:** her pistin kendi araç tasarımı var (pist tanımında `kartBody`, `public/models/karts/kart-<pist>.glb`); araç sınıfı seçimi hız, ivme, tutuş ve ağırlığı belirler
 - 🏎️ **Araç sınıfları:** karakterden bağımsız 5 araç (Dengeli, Çevik, Roket, Ağır, Atak); hız, ivme, tutuş ve ağırlık farklı, seçim ekranında çubuklarla gösterilir; botlar da farklı sınıflarla yarışır, çevrimiçide herkesin aracı herkese görünür
 - 🌋 **Volkan Adası:** lav denizi, kül püsküren yanardağ, zamanlı gayzerler, yavaşlatan kızgın zemin ve lav nehrini aşan kısayol
+- 🎈 **Kapadokya:** gün doğumunda peribacaları arasından geçen kumtaşı vadisi; gökyüzünde sıcak hava balonları, kanyon kenarına tırmanış, yuvarlanan kayalar, toz hortumları ve hız şeritleri
 - 🦖 **Dinozor Vadisi:** devasa dinozorların arasında tarih öncesi vadi; yamaçtan yuvarlanan kayalar, ayak darbeleri, zorunlu bataklık ve yarığı aşan kısayol; 15 m'lik **Dev Sırt** tırmanışı, dik iniş, yatık viraj ve atlatan dinozor izi tümsekleri
 - ✨ **Parçacıklar:** duman, toz ve çamur Kenney Particle Pack (CC0) dokularıyla çiziliyor (`public/fx/particles.png`); nitro alevi ve kıvılcımlar parlak (HDR) yuvarlak noktalarla çiziliyor, bloom ile parlıyor.
 - ☁️ **Gerçek gökyüzü:** 8 pistte Poly Haven (CC0) gökyüzü; güneş pistin ışık yönüne döndürülür, ufuk sis rengine karışır. Orta/Yüksek kalitede; Düşük'te eski gradyan gökyüzü (hız için). Tanı: adrese `?sky=1` / `?sky=0`.
@@ -30,7 +31,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🍭 **Şeker Diyarı:** dev kekler, donutlar, lolipoplar; çikolata yol, pembe şeker fıskiyeleri ve çikolata nehrini aşan kısayol
 - 🧸 **Oyuncak Odası:** dev bir odada kanepeler, kitaplıklar, blok kuleleri; yolu kesen dev plaj topları ve kutulardan geçen kısayol
 - 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
-- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 11 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
+- 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 12 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
 - 🪵 Hareketli tehlikeler: yuvarlanan kütükler (Çam Vadisi), çığ topları (Kar Zirvesi), yolu kesen trafik (Neon Şehir), dev plaj topları (Oyuncak Odası)
 - 🌿 Pistlere özgü zeminler: bataklık (Çam Vadisi), buz ve derin kar (Kar Zirvesi), sığ su (Palmiye), ıslak asfalt ve neon hız şeritleri (Neon), halı ve trambolin (Oyuncak Odası), bal (Şeker Diyarı), trambolin ve hız şeritleri (Lunapark, Ay)
@@ -164,7 +165,7 @@ yarışa kaldığı yerden devam eder.
 - **Zamana Karşı:** Hızlı Yarış → Mod: *Zamana Karşı*. Bot ve item yok; en iyi turun
   yarı saydam bir hayalet olarak seninle yarışır. Rekorlar bu tarayıcıda saklanır.
 
-- **Turbo Kupası / Büyük Kupa:** Hızlı Yarış / oda lobisi → Mod: *Kupa* (Palmiye Koyu → Çam Vadisi → Kar Zirvesi → Neon Şehir) ya da *Büyük Kupa* (tüm pistler, Volkan Adası, Ay Yolu, Oyuncak Odası, Şeker Diyarı, Lunapark, Hayalet Mezarlığı ve Dinozor Vadisi dahil). Puanlar 15-12-10-8-6-4-2-1; her yarış sonunda puan tablosu çıkar, çevrimiçide **Sonraki Pist**'i oda sahibi başlatır. En çok puanı toplayan kupayı kazanır.
+- **Turbo Kupası / Büyük Kupa:** Hızlı Yarış / oda lobisi → Mod: *Kupa* (Palmiye Koyu → Çam Vadisi → Kar Zirvesi → Neon Şehir) ya da *Büyük Kupa* (tüm pistler, Volkan Adası, Ay Yolu, Oyuncak Odası, Şeker Diyarı, Lunapark, Hayalet Mezarlığı, Dinozor Vadisi ve Kapadokya dahil). Puanlar 15-12-10-8-6-4-2-1; her yarış sonunda puan tablosu çıkar, çevrimiçide **Sonraki Pist**'i oda sahibi başlatır. En çok puanı toplayan kupayı kazanır.
 - **Volkan Adası:** Yolda zamanlı **gayzerler** var: halka kızarıp yanıp sönünce kor fışkırır, içindeki kart savrulur; halkanın yanından geç. Parlayan **kızgın zemin çatlakları** kartı yavaşlatır (turbo varken yavaşlatmaz). Kısayol lav nehrini rampayla aşar; yetmezse lava düşüp girişe dönersin.
 - **Ay Yolu:** Yerçekimi yaklaşık yarıya iner; kart süzülür, rampalardan uzağa uçar, havadayken direksiyon az etki eder. Zamanlı **meteorlar**: yolda kırmızı uyarı halkası büyür, sonra meteor düşer ve halkadaki kart savrulur. Kısayol krater çukurunu rampayla aşar (yeterli hız gerekir); turbo tahtaları ve item kutuları var.
 - **Oyuncak Odası:** Yolda zamanlı **dev plaj topları** var: çizgili uyarı şeridi yanıp sönünce top yolu bir yandan öbür yana yuvarlanır, çarptığı kart savrulur. Kısayol oyuncak sandığını rampayla aşar.

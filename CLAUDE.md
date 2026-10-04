@@ -22,4 +22,4 @@ Yalnızca CC0 ve CC-BY (ticari güvenli). `CREDITS.md` ve `README.md` güncel tu
 - Dosya yazarken Windows yolları: Python'a `C:\...` ver, Git Bash'e `/c/...`.
 
 ## Mimari özeti
-`src/main.js` (oyun döngüsü, menü-yarış akışı), `src/kart.js` (fizik), `src/kartModel.js` (model), `src/vehicles.js` (araç sınıfları), `src/track.js` + `src/tracks/*.js` (11 pist; `kartBody`, `control` y profili, `bank`, `bumps`, `zones`), `src/ai.js`, `src/items.js`, `src/hazards.js`, `src/effects.js`, `src/environment.js`, `src/audio.js`, `src/ui/{menu,hud,chat}.js` + css, `server/rooms.js` (oda protokolü).
+`src/main.js` (oyun döngüsü, menü-yarış akışı), `src/kart.js` (fizik), `src/kartModel.js` (model), `src/vehicles.js` (araç sınıfları), `src/track.js` + `src/tracks/*.js` (12 pist; `kartBody`, `control` y profili, `bank`, `bumps`, `zones`), `src/ai.js`, `src/items.js`, `src/hazards.js`, `src/effects.js`, `src/environment.js`, `src/audio.js`, `src/ui/{menu,hud,chat}.js` + css, `server/rooms.js` (oda protokolü).

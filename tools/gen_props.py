@@ -523,7 +523,65 @@ def podium():
             box(m, bx - 0.025, bx + 0.025, h * 0.35, h * 0.35 + 0.14, 0.2, 0.212, W)
     return m
 
+def chimney(seed, h, base, neck, cap, cols, sides=9):
+    """Peribacası: sütun gövde + koyu şapka. h: boy, base/neck/cap: yarıçaplar."""
+    rng = np.random.RandomState(seed); m = Mesh(); BODY, BODY2, CAP, CAP2 = cols
+    ys = [0, 0.12, 0.3, 0.5, 0.68, 0.8]
+    rs = [base, base * 0.82, base * 0.62 + neck * 0.38, neck * 1.25, neck * 1.05, neck]
+    rings = [(r * (1 + rng.uniform(-0.05, 0.05)), y * h, rng.uniform(-0.01, 0.01) * h, rng.uniform(-0.01, 0.01) * h) for r, y in zip(rs, ys)]
+    lathe(m, rings, sides, [BODY, BODY2, BODY, BODY2, BODY], rot=rng.uniform(0, 1))
+    top = 0.8 * h
+    lathe(m, [(neck, top, 0, 0), (cap * 0.85, top + 0.02 * h, 0, 0), (cap, top + 0.07 * h, 0, 0), (cap * 0.9, top + 0.13 * h, 0, 0), (cap * 0.5, top + 0.2 * h, 0, 0), (0.0, top + 0.23 * h, 0, 0)],
+          sides, [CAP2, CAP, CAP2, CAP, CAP], rot=rng.uniform(0, 1))
+    return m
+
+def chimney_a():
+    return chimney(3, 1.0, 0.24, 0.07, 0.15, [H('#e2bf93'), H('#cfa77a'), H('#7a5a44'), H('#5e4433')])
+
+def chimney_b():
+    m = chimney(5, 1.0, 0.22, 0.065, 0.14, [H('#dcb88c'), H('#c89f72'), H('#7a5a44'), H('#5e4433')])
+    t = chimney(8, 0.62, 0.17, 0.055, 0.11, [H('#e6c89e'), H('#d2ac80'), H('#8a6650'), H('#664a38')], 8)
+    t.translate((0.3, 0, 0.1)); m.extend(t)
+    return m
+
+def chimney_c():
+    return chimney(11, 0.8, 0.28, 0.1, 0.22, [H('#ecd0a4'), H('#d8b588'), H('#6f5240'), H('#54392b')], 10)
+
+def mesa():
+    """Düz tepeli kumtaşı kaya (kanyon duvarı / kaya kütlesi)."""
+    rng = np.random.RandomState(21); m = Mesh()
+    C1, C2, TOP = H('#d9a273'), H('#c0845a'), H('#a8734f')
+    rings = []
+    for r, y in [(0.5, 0), (0.46, 0.18), (0.42, 0.4), (0.4, 0.62), (0.36, 0.85), (0.34, 1.0)]:
+        rings.append((r * rng.uniform(0.94, 1.06), y, rng.uniform(-0.02, 0.02), rng.uniform(-0.02, 0.02)))
+    lathe(m, rings, 7, [C1, C2, C1, C2, C1], rot=0.3)
+    lathe(m, [(0.34, 1.0, 0, 0), (0.33, 1.05, 0, 0), (0.0, 1.05, 0, 0)], 7, TOP, rot=0.3)
+    return m
+
+def hot_air_balloon():
+    m = Mesh()
+    pal = [H(c) for c in ('#ff4f6d', '#ffd23c', '#ffffff', '#3fb7ff', '#ff8a2a', '#ffffff')]
+    prof = [(0.0, 2.02), (0.2, 1.97), (0.38, 1.8), (0.48, 1.55), (0.5, 1.3), (0.45, 1.05), (0.32, 0.86), (0.2, 0.76)]
+    N = 12
+    for k in range(N):
+        a0, a1 = 2 * math.pi * k / N, 2 * math.pi * (k + 1) / N
+        c = pal[k % len(pal)]
+        for i in range(len(prof) - 1):
+            (r0, y0), (r1, y1) = prof[i], prof[i + 1]
+            q = [(r0 * math.cos(a0), y0, r0 * math.sin(a0)), (r0 * math.cos(a1), y0, r0 * math.sin(a1)),
+                 (r1 * math.cos(a1), y1, r1 * math.sin(a1)), (r1 * math.cos(a0), y1, r1 * math.sin(a0))]
+            if r0 < 1e-6: q = [q[0], q[2], q[3]]
+            m.poly(q, c * (1.0 - 0.1 * (i % 2)), (0, 1.3, 0))
+    W = H('#7a5232')
+    box(m, -0.1, 0.1, 0.2, 0.38, -0.1, 0.1, W)
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            strut(m, (sx * 0.09, 0.38, sz * 0.09), (sx * 0.18 * 0.9, 0.78, sz * 0.18 * 0.9), 0.008, H('#e8e0d0'), 4)
+    sphere(m, (0, 0.66, 0), 0.035, H('#ff7a1a'), 0)
+    return m
+
 MODELS = {
+    'chimney_a': chimney_a, 'chimney_b': chimney_b, 'chimney_c': chimney_c, 'mesa': mesa, 'hot_air_balloon': hot_air_balloon,
     'palm_tropic': palm,
     'rock_boulder_a': lambda: boulder(11, H('#6f7480'), H('#bcc1cb')),
     'rock_boulder_b': lambda: boulder(23, H('#b98c55'), H('#ecca90'), (1.1, 0.65, 0.95)),

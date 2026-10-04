@@ -14,9 +14,10 @@
 Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyken animasyon/rAF ilerlemez. Botlar iniş hız bonusunu tam kullanmaz.
 
 ## Fikir listesi (sorulmadan başlama)
-Kapadokya ve Çöl Kanyonu pistleri; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
+Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.45.0 Kapadokya pisti (`tracks/cappadocia.js`; propları `gen_props.py`: chimney_a/b/c, mesa, hot_air_balloon; **geçici**: `kits/cappadocia` = dinoValley kopyası, `kartBody` yok → kullanıcı kendi GLB'sini verince `kits/cappadocia/*.glb` + `karts/kart-cappadocia.glb` + `kartBody` eklenecek; müzik varsayılan; önizleme `tools/dev/cdp-preview.mjs`)
 - v1.44.0 podyum sahnesi (`src/ui/podium3d.js`: sonuç şeridinde 3B podyum, ilk 3 dans, dönen kupa, konfeti; ayrı küçük WebGL bağlamı, yalnız tablo açıkken çizer)
 - v1.43.0 süs propları (`public/models/tayfa`, 6 pistin `decorate` sonunda; kullanılmayan: start_arch, chevron_sign, flag_pole)
 - v1.42.0 tehlike GLB'leri (`public/models/hazard`, `hazards.js` `HAZARD_MODEL`, yüklenmezse kodlu mesh yedek; volcano skin `lava`)
