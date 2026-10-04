@@ -6,7 +6,7 @@ import { hasModels, cloneModel, normalizedModel } from './assets.js';
 // her cihaz aynı anda aynı olayı görür. İsabeti yalnızca kendi sürdüğü kartlar için o cihaz işler
 // (item isabetleriyle aynı mantık: karta sahip olan cihaz savrulmayı uygular).
 //
-// def.hazards: [{ type: 'geyser' | 'meteor', f (turun oranı), lateral (m), radius (m), period (s), offset (s) }]
+// def.hazards: [{ type: 'geyser' | 'meteor' | 'ball' | 'bridge', f (turun oranı), lateral (m), radius (m), period (s), offset (s) }]
 
 const EMBER = new THREE.Color(2.2, 0.65, 0.1);
 const EMBER_HOT = new THREE.Color(2.6, 1.3, 0.3);
@@ -17,6 +17,8 @@ const STYLE = {
   meteor: { ring: new THREE.Color(1.0, 0.1, 0.08), warn: 2.2, fall: 0.6, hit: 0.5, impact: 0.7 },
   // Oyuncak odasında yolu baştan başa kesen dev top: önce yolun üstünde çizgili uyarı şeridi yanıp söner
   ball: { ring: new THREE.Color(1.5, 0.35, 0.1), warn: 2.0, cross: 1.5 },
+  // Açılan köprü: yolu kaplayan kanat; uyarı (kırmızı lamba, çizgili şerit) → kalkar → bekler → iner. Dik kanat çarpana savrulma verir.
+  bridge: { ring: new THREE.Color(1.5, 0.35, 0.1), warn: 2.0, rise: 1.0, hold: 1.4, fall: 1.0, hitAngle: 0.5, maxAngle: 1.25 },
 };
 
 function stripeTexture() {
@@ -166,6 +168,44 @@ function makeBall(radius, skin = 'beach') {
   return wrap;
 }
 
+// Açılan köprü kanadı: menteşe yolun ilerisinde, kanat menteşenin gerisine uzanır; rotation.x artınca arka uç kalkar.
+// Dönüş: { root, deck, lamp } (lamp: ortak lamba malzemesi, yeşil/kırmızı)
+function makeBridge(hw, len) {
+  const root = new THREE.Group();
+  const deck = new THREE.Group();
+  const wood = new THREE.MeshLambertMaterial({ color: 0xa9763f });
+  const dark = new THREE.MeshLambertMaterial({ color: 0x6d4a26 });
+  const rail = new THREE.MeshLambertMaterial({ color: 0xe8e8e8 });
+  const red = new THREE.MeshLambertMaterial({ color: 0xc8352f });
+  const add = (parent, geo, mat, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = m.receiveShadow = true;
+    parent.add(m);
+    return m;
+  };
+  add(deck, new THREE.BoxGeometry(hw * 2, 0.35, len), wood, 0, 0.17, -len / 2);
+  const board = new THREE.BoxGeometry(hw * 2 + 0.02, 0.05, 0.12);
+  for (let k = 1; k < 8; k++) add(deck, board, dark, 0, 0.37, -(len * k) / 8);
+  for (const sx of [-1, 1]) {
+    add(deck, new THREE.BoxGeometry(0.3, 0.9, len), rail, sx * (hw - 0.15), 0.8, -len / 2);
+    for (let k = 0; k < 4; k++) add(deck, new THREE.BoxGeometry(0.32, 0.92, len / 8), red, sx * (hw - 0.15), 0.8, -len * (0.16 + k * 0.22));
+  }
+  add(deck, new THREE.BoxGeometry(hw * 2, 0.6, 0.3), red, 0, 0.5, -len + 0.15); // serbest uçta uyarı şeridi
+  root.add(deck);
+  // Menteşenin yanında lamba direkleri
+  const lamp = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.2, 1.6, 0.4), toneMapped: false });
+  const post = new THREE.BoxGeometry(0.6, 4.2, 0.6);
+  const bulb = new THREE.SphereGeometry(0.5, 10, 8);
+  for (const sx of [-1, 1]) {
+    add(root, post, dark, sx * (hw + 1.1), 2.1, 0.8);
+    const b = new THREE.Mesh(bulb, lamp);
+    b.position.set(sx * (hw + 1.1), 4.6, 0.8);
+    root.add(b);
+  }
+  return { root, deck, lamp };
+}
+
 function ringTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -200,7 +240,7 @@ export function createHazards({ scene, track, fx, quality }) {
     const style = STYLE[d.type];
     const h = { d, style, index: i, pos, lateral: d.lateral ?? 0, ballPos: new THREE.Vector3(), radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
 
-    h.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: d.type === 'ball' ? stripeTex : ringTex, color: style.ring, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, toneMapped: false }));
+    h.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: d.type === 'ball' || d.type === 'bridge' ? stripeTex : ringTex, color: style.ring, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, toneMapped: false }));
     // Renk paleti (şeker diyarında pembe, lunaparkta konfeti): d.colors = { ring, column, ember, hot, smoke } (r,g,b dizileri)
     if (d.colors) {
       const C = (a) => (a ? new THREE.Color(...a) : null);
@@ -226,6 +266,20 @@ export function createHazards({ scene, track, fx, quality }) {
       h.roller = h.ball.userData.roller;
       h.ball.visible = false;
       group.add(h.ball);
+    } else if (d.type === 'bridge') {
+      const f = track.forwards[i];
+      h.len = d.length ?? 7;
+      h.hw = track.def.halfWidth + 0.6;
+      h.fwd = f;
+      h.right = track.rights[i];
+      h.radius = h.hw; // isabet dikdörtgeni (hw × len/2); avoidLane atlar
+      h.ring.rotation.y = Math.atan2(-h.right.z, h.right.x);
+      h.ring.scale.set(h.hw, 1, h.len / 2 + 0.6);
+      h.ring.material.map.repeat.set(h.hw / 2.2, (h.len / 2 + 0.6) / 1.5);
+      h.bridge = makeBridge(h.hw, h.len);
+      h.bridge.root.position.set(pos.x + f.x * (h.len / 2), pos.y + 0.12, pos.z + f.z * (h.len / 2));
+      h.bridge.root.rotation.y = Math.atan2(f.x, f.z);
+      group.add(h.bridge.root);
     } else if (d.type === 'geyser') {
       h.column = new THREE.Mesh(colGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color(1.7, 0.42, 0.06), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false }));
       if (h.pal?.column) h.column.material.color.copy(h.pal.column);
@@ -330,6 +384,26 @@ export function createHazards({ scene, track, fx, quality }) {
             const k = (c - warnStart) / S.warn;
             ring = 0.25 + 0.6 * k + 0.25 * Math.sin(k * k * 60);
           } else ring = 0;
+        } else if (h.d.type === 'bridge') {
+          const total = S.warn + S.rise + S.hold + S.fall;
+          const u = c - (h.period - total);
+          const ease = (x) => x * x * (3 - 2 * x);
+          let angle = 0;
+          let warning = false;
+          if (u >= 0) {
+            if (u < S.warn) {
+              warning = true;
+              const k = u / S.warn;
+              ring = 0.35 + 0.5 * k + 0.25 * Math.sin(k * k * 50);
+            } else if (u < S.warn + S.rise) angle = ease((u - S.warn) / S.rise);
+            else if (u < S.warn + S.rise + S.hold) angle = 1;
+            else angle = ease(1 - (u - S.warn - S.rise - S.hold) / S.fall);
+          }
+          h.bridge.deck.rotation.x = angle * S.maxAngle;
+          if (angle > 0) ring = 0.3;
+          const red = warning ? Math.sin(time * 14) > 0 : angle > 0;
+          h.bridge.lamp.color.setRGB(red ? 1.8 : 0.2, red ? 0.2 : 1.6, red ? 0.15 : 0.4);
+          active = angle * S.maxAngle > S.hitAngle;
         } else {
           // Meteor: önce yere düşen uyarı halkası, sonra yukarıdan çarpma, ardından duman
           const fallStart = h.period - S.fall;
@@ -378,7 +452,10 @@ export function createHazards({ scene, track, fx, quality }) {
           const hp = h.d.type === 'ball' ? h.ballPos : h.pos;
           const dx = kart.position.x - hp.x;
           const dz = kart.position.z - hp.z;
-          if (dx * dx + dz * dz > h.radius * h.radius) continue;
+          if (h.d.type === 'bridge') {
+            // Köprü: dikdörtgen alan (yol genişliği × kanat uzunluğu)
+            if (Math.abs(dx * h.fwd.x + dz * h.fwd.z) > h.len / 2 + 1 || Math.abs(dx * h.right.x + dz * h.right.z) > h.hw) continue;
+          } else if (dx * dx + dz * dz > h.radius * h.radius) continue;
           if (Math.abs(kart.position.y - h.pos.y) > 3.5) continue;
           const key = `${hazards.indexOf(h)}:${cycle}`;
           if (hitMemo.get(kart) === key) continue;
@@ -405,7 +482,7 @@ export function createHazards({ scene, track, fx, quality }) {
       if (((driver?.phase ?? 0) % 1) < 0.25) return lane; // dikkatsiz bot
       const hw = track.def.halfWidth - 1.6;
       for (const h of hazards) {
-        if (h.d.type === 'ball') continue; // top yolu baştan başa keser, şerit değiştirmek kurtarmaz
+        if (h.d.type === 'ball' || h.d.type === 'bridge') continue; // top/köprü yolu baştan başa keser, şerit değiştirmek kurtarmaz
         const ahead = (h.index - idx + n) % n;
         if (ahead > 28) continue;
         if (Math.abs(lane - h.lateral) < h.radius + 1.6) {

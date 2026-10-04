@@ -76,11 +76,13 @@ export default {
     { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
   ],
 
-  // Sahil yengeçleri: yolu yavaşça yan yürüyerek keser (çarpan yavaşlar); önce çizgili uyarı şeridi yanar
+  // Sahil yengeçleri: yolu yavaşça yan yürüyerek keser (çarpan yavaşlar); önce çizgili uyarı şeridi yanar.
+  // Köprü grid arkasında (grid ~48 m geriye uzanır, f ≥ 0.944) kalmalı
   hazards: [
     { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.1, period: 14, offset: 4, dir: 1, cross: 4.6 },
-    { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.9, period: 13, offset: 9, dir: -1, cross: 4.6 },
-    { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.965, period: 15, offset: 2, dir: 1, cross: 4.6 },
+    { type: 'ball', skin: 'crab', ballRadius: 1.9, f: 0.885, period: 13, offset: 9, dir: -1, cross: 4.6 },
+    // Liman köprüsü: aralıklarla açılır, açıkken çarpan savrulur (kırmızı lamba ve çizgili şerit uyarır)
+    { type: 'bridge', f: 0.93, period: 16, offset: 6, length: 7 },
   ],
 
   models: [

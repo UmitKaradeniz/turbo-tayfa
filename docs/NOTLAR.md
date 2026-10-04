@@ -14,9 +14,10 @@
 Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyken animasyon/rAF ilerlemez. Botlar iniş hız bonusunu tam kullanmaz.
 
 ## Fikir listesi (sorulmadan başlama)
-Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
+Çok bölgeli tek pist (liman→şehir→sahil→orman; mimari pist başına tek tema, büyük refaktör); Orman Geçidi pisti (çamur, kristalli mağara tüneli, çıkışta güneş patlaması beyazlaması); köprüde uçarak geçme; Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
+- v1.53.0 açılan köprü tehlikesi (`hazards.js` tip `bridge`, `makeBridge`, zamana bağlı: uyarı 2 sn → kalkar → bekler → iner; kanat >0.5 rad iken dikdörtgen alanda `spinOut`; botlar kaçmaz; Palmiye Koyu f 0.93, grid arkasında; dev `__tt.hazards`). Gerçek 'uçarak geçme' yok. Paket C bitti
 - v1.52.0 havada boost + kum tepesi rampası (`kart.js` `airTime`, `AIR_BOOST_MIN` 0.7 s, yalnız `def.airBoost` pistlerinde inişte `boost(0.5–1.2)` + olay `airBoost`; zon `dune` = `bounce` 13.5 + kum dokusu; Palmiye Koyu f 0.128 ve 0.628, yan şeritten kaçılır)
 - v1.51.0 far ışığı süzmesi (`kart.js` `setBeams(k)`, tek birleşik koni mesh, ortak geometri/materyal; `main.js` loadTrack: `QUALITY.beams ? (def.beams ?? (def.night?1:0))`; `quality.js` `beams` yalnız medlow ve üstü; Gün Batımı `beams:0.6`)
 - v1.50.0 seyirciler (`src/crowd.js` 3 InstancedMesh, kol sallama köşe gölgelendiricide; `decor.js` `ctx.crowdRow(i0,i1,lateral,{every,rows,rowGap,scale})`, `QUALITY.decor<0.5` yani Düşük'te yok; Palmiye Koyu + Gün Batımı + Neon Şehir start; `Q=medium node tools/dev/cdp-preview.mjs` kalite seçer)
