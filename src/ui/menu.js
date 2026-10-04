@@ -4,7 +4,7 @@ import { settings, saveSettings, DIFFICULTY } from '../settings.js';
 import { PERSONALITIES } from '../ai.js';
 import { pickRivals } from '../kartModel.js';
 import { formatTime } from './hud.js';
-import { QUALITY, saveQuality } from '../quality.js';
+import { QUALITY, saveQuality, saveGfx, GFX_DEFAULTS } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
@@ -357,41 +357,130 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   };
 
   // ---------- Ayarlar ----------
+  // Grafik ayarları ön ayarın üstüne biner ('Ön ayar' = ön ayar ne diyorsa) ve sayfa yenilenince uygulanır.
+  const GFX_ROWS = [
+    { key: 'aa', icon: '🧩', label: 'Kenar yumuşatma', opts: [['auto', 'Ön ayar'], ['off', 'Kapalı'], ['fxaa', 'FXAA'], ['smaa', 'SMAA'], ['msaa2', 'MSAA 2x'], ['msaa4', 'MSAA 4x']],
+      hints: { auto: 'Cihaza uygun olanı kullanılır.', off: 'En hızlı; kenarlar tırtıklı görünür.', fxaa: 'Çok hafif; kenarları biraz yumuşatır.', smaa: 'FXAA kadar hafif, daha keskin sonuç.', msaa2: 'Net kenarlar; orta ağırlıkta.', msaa4: 'En net kenarlar; zayıf cihazda FPS düşürür.' } },
+    { key: 'sharpen', icon: '🔍', label: 'Keskinleştirme', opts: [['auto', 'Ön ayar'], ['off', 'Kapalı'], ['on', 'Açık']],
+      hints: { auto: 'FXAA/SMAA ile hafif keskinlik eklenir.', off: 'Görüntü olduğu gibi kalır.', on: 'Bulanıklığı alır, detayları öne çıkarır.' } },
+    { key: 'bloom', icon: '✨', label: 'Parlama (bloom)', opts: [['auto', 'Ön ayar'], ['on', 'Açık'], ['off', 'Kapalı']],
+      hints: { auto: 'Orta ve üstü kalitede açıktır.', on: 'Nitro ve kıvılcımlar parlar; biraz ağırdır.', off: 'Daha hızlı, daha sade görüntü.' } },
+    { key: 'res', icon: '📐', label: 'Çözünürlük', opts: [['auto', 'Ön ayar'], [1, '1x'], [1.25, '1.25x'], [1.5, '1.5x'], [2, '2x']],
+      hints: { auto: 'Ekrana ve ön ayara göre seçilir.', 1: 'En hızlı; biraz bulanık olabilir.', 1.25: 'Hafif netlik artışı.', 1.5: 'Dengeli.', 2: 'En net; güçlü ekran kartı ister.' } },
+    { key: 'shadows', icon: '🌓', label: 'Gölgeler', opts: [['auto', 'Ön ayar'], ['off', 'Kapalı'], ['mid', 'Orta'], ['high', 'Yüksek']],
+      hints: { auto: 'Ön ayara göre.', off: 'En hızlı.', mid: 'Dengeli gölge kalitesi.', high: 'Keskin gölgeler; daha ağır.' } },
+    { key: 'decor', icon: '🌲', label: 'Çevre yoğunluğu', opts: [['auto', 'Ön ayar'], ['low', 'Az'], ['mid', 'Orta'], ['high', 'Çok']],
+      hints: { auto: 'Ön ayara göre.', low: 'Ağaç, kaya vb. az; hızlı.', mid: 'Dengeli.', high: 'Dolu dolu çevre; daha ağır.' } },
+    { key: 'particles', icon: '💨', label: 'Parçacıklar', opts: [['auto', 'Ön ayar'], ['low', 'Az'], ['mid', 'Orta'], ['high', 'Çok']],
+      hints: { auto: 'Ön ayara göre.', low: 'Az duman ve kıvılcım; hızlı.', mid: 'Dengeli.', high: 'Bol efekt; daha ağır.' } },
+    { key: 'fpsCap', icon: '⏱', label: 'FPS sınırı', opts: [[0, 'Sınırsız'], [60, '60'], [30, '30']],
+      hints: { 0: 'Ekranın yenileme hızına kadar çizer.', 60: 'Pil ve ısıyı azaltır.', 30: 'En az pil/ısı; daha az akıcı.' } },
+  ];
+  const chip = (v, text) => `<button data-v="${v}">${text}</button>`;
+  const gfxRowHtml = (r) => `
+    <div class="set-row" data-gfx-row="${r.key}">
+      <div class="set-lab"><b>${r.icon} ${r.label}</b><small class="hint"></small></div>
+      <div class="set-chips" data-gfx="${r.key}">${r.opts.map(([v, t]) => chip(v, t)).join('')}</div>
+    </div>`;
+  const toggleRow = (icon, label, hint, attr) => `
+    <label class="set-row set-toggle">
+      <div class="set-lab"><b>${icon} ${label}</b><small>${hint}</small></div>
+      <span class="set-sw"><input type="checkbox" ${attr} /><span class="sw"></span></span>
+    </label>`;
+  const volRow = (icon, label, key) => `
+    <label class="set-row set-vol">
+      <div class="set-lab"><b>${icon} ${label}</b><output data-out="${key}"></output></div>
+      <input type="range" min="0" max="1" step="0.05" data-vol="${key}" />
+    </label>`;
   const settingsModal = h(`
     <div id="settings" class="tt-modal">
-      <div class="tt-card">
-        <h2>Ayarlar</h2>
-        <div class="tt-label">Grafik kalitesi</div>
-        <div class="tt-seg" data-q>${['auto', 'low', 'medium', 'high'].map((q) => `<button data-v="${q}">${{ auto: 'Otomatik', low: 'Düşük', medium: 'Orta', high: 'Yüksek' }[q]}</button>`).join('')}</div>
-        <p class="q-info" style="font-size:13px;font-weight:700;opacity:.6;margin:6px 2px 0"></p>
-        <p class="q-note" style="font-size:13px;font-weight:700;opacity:.6;margin:6px 2px 0;display:none">Kalite değişikliği sayfa yenilenince uygulanır.</p>
-        <label class="tt-toggle">Kamera sarsıntısı<input type="checkbox" data-set="shake" /><span class="sw"></span></label>
-        <label class="tt-toggle">FPS göstergesi<input type="checkbox" data-set="showFps" /><span class="sw"></span></label>
-        <label class="tt-toggle">Dokunmatikte otomatik gaz<input type="checkbox" data-set="autoGas" /><span class="sw"></span></label>
-        <label class="tt-toggle tilt-row">Telefonu çevirerek direksiyon<input type="checkbox" data-set="tiltSteer" /><span class="sw"></span></label>
-        <div class="tt-label">Ses</div>
-        <label class="tt-range">Müzik<input type="range" min="0" max="1" step="0.05" data-vol="musicVolume" /></label>
-        <label class="tt-range">Efektler<input type="range" min="0" max="1" step="0.05" data-vol="sfxVolume" /></label>
-        <div class="tt-label">Kontroller</div>
-        ${KEYS_HELP}
-        <div class="stack"><button class="tt-btn block" data-go="settings-done">Tamam</button></div>
+      <div class="tt-card set-card">
+        <div class="set-head"><h2>⚙ Ayarlar</h2><button class="tt-btn light icon set-x" data-go="settings-close" aria-label="Kapat">✕</button></div>
+        <div class="set-tabs" role="tablist">
+          <button class="on" data-tab="gfx">🎨 Grafik</button>
+          <button data-tab="game">🎮 Oyun</button>
+          <button data-tab="audio">🔊 Ses</button>
+          <button data-tab="keys">⌨ Kontroller</button>
+        </div>
+        <div class="set-body">
+          <section data-pane="gfx">
+            <div class="set-now"></div>
+            <div class="set-row">
+              <div class="set-lab"><b>🎚 Kalite ön ayarı</b><small class="q-info"></small></div>
+              <div class="set-chips" data-q>${['auto', 'low', 'medium', 'high'].map((q) => chip(q, { auto: 'Otomatik', low: 'Düşük', medium: 'Orta', high: 'Yüksek' }[q])).join('')}</div>
+            </div>
+            <div class="tt-label">Görüntü</div>
+            ${GFX_ROWS.slice(0, 4).map(gfxRowHtml).join('')}
+            <div class="tt-label">Detay</div>
+            ${GFX_ROWS.slice(4, 7).map(gfxRowHtml).join('')}
+            <div class="tt-label">Performans</div>
+            ${toggleRow('📉', 'Dinamik çözünürlük', 'FPS düşünce çözünürlüğü kendiliğinden azaltır.', 'data-gfxbool="dynRes"')}
+            ${gfxRowHtml(GFX_ROWS[7])}
+            ${toggleRow('📊', 'FPS göstergesi', 'Ekranın köşesinde FPS, ping ve ağ bilgisi.', 'data-set="showFps"')}
+            <button class="tt-btn light block set-reset" data-go="gfx-reset">↺ Grafiği varsayılana döndür</button>
+          </section>
+          <section data-pane="game" hidden>
+            ${toggleRow('📳', 'Kamera sarsıntısı', 'Çarpışma ve turboda kamera titrer.', 'data-set="shake"')}
+            <div class="tt-label">Dokunmatik ekran</div>
+            ${toggleRow('⛽', 'Otomatik gaz', 'Gaza basmana gerek kalmaz.', 'data-set="autoGas"')}
+            <div class="tilt-row">${toggleRow('📱', 'Telefonu çevirerek direksiyon', 'Telefonu direksiyon gibi çevir.', 'data-set="tiltSteer"')}</div>
+          </section>
+          <section data-pane="audio" hidden>
+            ${volRow('🎵', 'Müzik', 'musicVolume')}
+            ${volRow('🔊', 'Efektler', 'sfxVolume')}
+          </section>
+          <section data-pane="keys" hidden>${KEYS_HELP}</section>
+        </div>
+        <div class="set-foot">
+          <p class="q-note" hidden>Grafik değişiklikleri sayfa yenilenince uygulanır.</p>
+          <button class="tt-btn block" data-go="settings-done" data-main>Tamam</button>
+        </div>
       </div>
     </div>`);
   document.body.appendChild(settingsModal);
-  let pendingQuality = QUALITY.mode;
   const TIER_NAMES = { low: 'Düşük', lowplus: 'Düşük+', medlow: 'Orta−', medium: 'Orta', highlow: 'Yüksek−', high: 'Yüksek' };
+  const AA_NAMES = { off: 'AA yok', fxaa: 'FXAA', smaa: 'SMAA', msaa2: 'MSAA 2x', msaa4: 'MSAA 4x' };
+  let pendingQuality = QUALITY.mode;
+  let pendingGfx = { ...QUALITY.gfx };
+  const gfxChanged = () => pendingQuality !== QUALITY.mode || Object.keys(pendingGfx).some((k) => pendingGfx[k] !== QUALITY.gfx[k]);
   const syncQuality = () => {
     settingsModal.querySelectorAll('[data-q] button').forEach((b) => b.classList.toggle('on', b.dataset.v === pendingQuality));
-    const changed = pendingQuality !== QUALITY.mode;
-    settingsModal.querySelector('.q-note').style.display = changed ? 'block' : 'none';
-    settingsModal.querySelector('[data-go="settings-done"]').textContent = changed ? 'Kaydet ve yenile' : 'Tamam';
+    for (const r of GFX_ROWS) {
+      const row = settingsModal.querySelector(`[data-gfx-row="${r.key}"]`);
+      row.querySelectorAll('[data-gfx] button').forEach((b) => b.classList.toggle('on', b.dataset.v === String(pendingGfx[r.key])));
+      row.querySelector('.hint').textContent = r.hints[pendingGfx[r.key]] ?? '';
+    }
+    settingsModal.querySelector('[data-gfxbool="dynRes"]').checked = pendingGfx.dynRes !== false;
+    const changed = gfxChanged();
+    settingsModal.querySelector('.q-note').hidden = !changed;
+    settingsModal.querySelector('[data-main]').textContent = changed ? 'Kaydet ve yenile' : 'Tamam';
     const next = QUALITY.pendingTier && QUALITY.pendingTier !== QUALITY.name ? ` · sonraki açılışta: ${TIER_NAMES[QUALITY.pendingTier]}` : '';
-    settingsModal.querySelector('.q-info').textContent = pendingQuality === 'auto' ? `Cihaza göre ayarlanır · şu an: ${TIER_NAMES[QUALITY.name]}${next}` : '';
+    settingsModal.querySelector('.q-info').textContent = pendingQuality === 'auto' ? `Cihaza göre ayarlanır · şu an: ${TIER_NAMES[QUALITY.name]}${next}` : 'Seçtiğin seviye hiç değiştirilmez.';
+    settingsModal.querySelector('.set-now').textContent = `Şu an: ${TIER_NAMES[QUALITY.name]} · ${AA_NAMES[QUALITY.aa]}${QUALITY.sharpen ? ' + keskin' : ''} · ${QUALITY.bloom ? 'bloom' : 'bloom yok'} · ${QUALITY.shadows ? 'gölge' : 'gölge yok'} · ${QUALITY.pixelRatio}x`;
   };
   settingsModal.querySelector('[data-q]').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;
     pendingQuality = b.dataset.v;
+    syncQuality();
+  });
+  settingsModal.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-gfx] button');
+    if (b) {
+      const row = GFX_ROWS.find((r) => r.key === b.parentElement.dataset.gfx);
+      pendingGfx[row.key] = row.opts.find(([v]) => String(v) === b.dataset.v)[0];
+      syncQuality();
+      return;
+    }
+    const tab = e.target.closest('[data-tab]');
+    if (tab) {
+      settingsModal.querySelectorAll('[data-tab]').forEach((t) => t.classList.toggle('on', t === tab));
+      settingsModal.querySelectorAll('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== tab.dataset.tab));
+      settingsModal.querySelector('.set-body').scrollTop = 0;
+    }
+  });
+  settingsModal.querySelector('[data-gfxbool="dynRes"]').addEventListener('change', (e) => {
+    pendingGfx.dynRes = e.target.checked;
     syncQuality();
   });
   settingsModal.querySelectorAll('[data-set]').forEach((input) => {
@@ -408,12 +497,35 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   });
   syncQuality();
   settingsModal.querySelectorAll('[data-vol]').forEach((input) => {
+    const out = settingsModal.querySelector(`[data-out="${input.dataset.vol}"]`);
+    const show = () => (out.textContent = `${Math.round(Number(input.value) * 100)}%`);
     input.value = settings[input.dataset.vol];
+    show();
     input.addEventListener('input', () => {
+      show();
       saveSettings({ [input.dataset.vol]: Number(input.value) });
       handlers.settingsChanged();
     });
   });
+  const openSettings = () => {
+    pendingQuality = QUALITY.mode;
+    pendingGfx = { ...QUALITY.gfx };
+    syncQuality();
+    settingsModal.classList.add('show');
+  };
+  // Grafik değiştiyse kaydedip sayfayı yeniler (true döner); değilse sadece kapatır
+  const closeSettings = () => {
+    if (gfxChanged()) {
+      saveQuality(pendingQuality);
+      saveGfx(pendingGfx);
+      const url = new URL(location.href);
+      url.searchParams.delete('q');
+      location.href = url.toString();
+      return true;
+    }
+    settingsModal.classList.remove('show');
+    return false;
+  };
 
   // ---------- Odaya katıl ----------
   const joinModal = h(`
@@ -532,19 +644,19 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       case 'settings':
         settingsFromPause = pause.classList.contains('show');
         pause.classList.remove('show');
-        pendingQuality = QUALITY.mode;
+        openSettings();
+        break;
+      case 'gfx-reset':
+        pendingGfx = { ...GFX_DEFAULTS };
+        pendingQuality = 'auto';
         syncQuality();
-        settingsModal.classList.add('show');
+        break;
+      case 'settings-close': // kaydetmeden kapat
+        settingsModal.classList.remove('show');
+        if (settingsFromPause) pause.classList.add('show');
         break;
       case 'settings-done':
-        if (pendingQuality !== QUALITY.mode) {
-          saveQuality(pendingQuality);
-          const url = new URL(location.href);
-          url.searchParams.delete('q');
-          location.href = url.toString();
-          return;
-        }
-        settingsModal.classList.remove('show');
+        if (closeSettings()) return;
         if (settingsFromPause) pause.classList.add('show');
         break;
       case 'pause':

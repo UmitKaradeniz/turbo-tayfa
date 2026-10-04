@@ -39,7 +39,7 @@ import { play, playMusic, preloadMusic, updateEngine, applyVolumes } from './aud
 import { TRACKS, TRACK_IDS, CUP_SETS } from './tracks/index.js';
 
 // --- Renderer ---
-const renderer = new THREE.WebGLRenderer({ antialias: !QUALITY.bloom, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ antialias: !QUALITY.composer && QUALITY.msaa > 0, powerPreference: 'high-performance' });
 const basePixelRatio = Math.min(window.devicePixelRatio, QUALITY.pixelRatio);
 let pixelRatio = basePixelRatio;
 renderer.setPixelRatio(pixelRatio);
@@ -420,6 +420,7 @@ function endRaceLocal() {
   pauseOpen = false;
   menu.hidePause();
   hud.show(false);
+  hud.setBotHost(null);
   hud.reset();
   startLights.off();
   nameplates.clear();
@@ -714,6 +715,8 @@ async function startOnlineRace(msg) {
   player = online.kartById.get(net.id);
   online.isHost = online.room?.hostId === net.id;
   online.isBotHost = msg.botHostId ? msg.botHostId === net.id : online.isHost;
+  online.botHostId = msg.botHostId ?? online.room?.hostId ?? null;
+  refreshBotHostBadge();
   online.owned = new Set([player]);
   if (online.isBotHost) msg.entrants.filter((e) => e.bot).forEach((e) => online.owned.add(online.kartById.get(e.id)));
 
@@ -754,6 +757,14 @@ async function startOnlineRace(msg) {
   }
 }
 
+// Çevrimiçi yarışta botları kimin cihazının sürdüğünü küçük bir etiketle göster
+function refreshBotHostBadge() {
+  if (!online || !race || !online.botHostId) return hud.setBotHost(null);
+  if (online.botHostId === net.id) return hud.setBotHost('🤖 Botları senin cihazın sürüyor', true);
+  const name = online.room?.players.find((p) => p.id === online.botHostId)?.name;
+  hud.setBotHost(name ? `🤖 Botlar: ${name} cihazında` : null);
+}
+
 net.on('welcome', (msg) => {
   if (msg.resumed) menu.toast('Tekrar bağlandın!');
 });
@@ -789,6 +800,8 @@ net.on('room', (msg) => {
       for (const [id, kart] of online.kartById) if (id.startsWith('bot-')) online.owned.delete(kart);
     }
     online.isBotHost = nowBotHost;
+    online.botHostId = msg.botHostId;
+    refreshBotHostBadge();
   }
   online.isHost = nowHost;
 
@@ -1000,7 +1013,14 @@ function raceStep(input) {
   race.update(STEP);
 }
 
+let lastDrawAt = 0;
 function frame(now) {
+  // FPS sınırı (pil/ısı için): hedef aralığa gelmeden kareyi atla; fizik birikimi dt ile telafi edilir
+  if (QUALITY.fpsCap && now - lastDrawAt < 1000 / QUALITY.fpsCap - 2) {
+    requestAnimationFrame(frame);
+    return;
+  }
+  lastDrawAt = now;
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
 
@@ -1086,7 +1106,7 @@ function frame(now) {
     const fps = fpsFrames / fpsTime;
     lastFps = fps;
     fpsAvg = fpsAvg ? fpsAvg * 0.85 + fps * 0.15 : fps;
-    const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · ${QUALITY.fxaa ? 'fxaa' : 'msaa yok'}`;
+    const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · AA ${QUALITY.aa}${QUALITY.sharpen ? ' +keskin' : ''}`;
     debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}`;
     adaptResolution(fps);
     fpsFrames = 0;
@@ -1166,7 +1186,7 @@ let slowSum = 0;
 let ratioCooldown = 0;
 let ratioChanges = 0;
 let ratioRace = null;
-const fixedRes = new URLSearchParams(location.search).has('fixres'); // tanı/ölçüm: dinamik çözünürlük kapalı
+const fixedRes = !QUALITY.dynRes || new URLSearchParams(location.search).has('fixres'); // tanı/ölçüm: dinamik çözünürlük kapalı
 function adaptResolution(fps) {
   if (fixedRes) return;
   // Geri sayımda ve "BAŞLA"dan sonraki ilk 6 sn'de ayar yapma: doku/shader ısınması FPS'i geçici düşürür

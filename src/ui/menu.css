@@ -315,3 +315,57 @@
 /* 24 karakterli kadro: hepsi kartın içinde görünür (iç kaydırma yok, sayfa kayar); rakipleri yenileme düğmesi başlıkta sağda */
 .tt-card h3 { position: relative; }
 .tt-card h3 .reroll { position: absolute; right: 0; top: -4px; width: 38px; height: 38px; padding: 0; font-size: 18px; border-radius: 12px; }
+
+/* ---------- Ayarlar penceresi ---------- */
+#settings .set-card { width: min(560px, 100%); padding: 0; display: flex; flex-direction: column; overflow: hidden; max-height: min(720px, calc(100dvh - 32px)); }
+#settings .set-head, #settings .set-tabs, #settings .set-foot { flex: none; }
+#settings .set-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px 22px; }
+#settings .set-head h2 { margin: 0; text-align: left; font-size: 30px; }
+#settings .set-x { width: 40px; height: 40px; font-size: 16px; padding: 0; border-radius: 12px; }
+#settings .set-tabs { display: flex; gap: 6px; padding: 6px 16px 10px; overflow-x: auto; scrollbar-width: none; }
+#settings .set-tabs::-webkit-scrollbar { display: none; }
+#settings .set-tabs button {
+  flex: 1 0 auto; line-height: 1.2; border: 0; cursor: pointer; font-family: var(--tt-font); font-weight: 800; font-size: 15px;
+  color: var(--tt-navy); background: var(--tt-soft); padding: 9px 14px; border-radius: 99px; white-space: nowrap;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+#settings .set-tabs button:hover { background: rgba(10, 111, 214, 0.14); }
+#settings .set-tabs button.on { background: var(--tt-blue); color: #fff; box-shadow: 0 3px 0 var(--tt-blue-dark); }
+#settings .set-body { flex: 1; overflow-y: auto; padding: 2px 22px 8px; min-height: 0; overscroll-behavior: contain; }
+#settings .set-body section[hidden] { display: none; }
+#settings .set-now {
+  font-weight: 800; font-size: 13px; color: var(--tt-blue-dark); background: var(--tt-soft);
+  border-radius: 12px; padding: 8px 12px; margin: 4px 0 4px; line-height: 1.35;
+}
+#settings .tt-label { margin: 16px 0 2px; }
+#settings .set-row { display: grid; gap: 8px; padding: 10px 0; border-bottom: 1px solid rgba(11, 42, 85, 0.07); }
+#settings .set-row:last-of-type { border-bottom: 0; }
+#settings .set-lab { display: grid; gap: 1px; min-width: 0; }
+#settings .set-lab b { font-weight: 800; font-size: 16px; }
+#settings .set-lab small { font-weight: 700; font-size: 12.5px; opacity: 0.6; line-height: 1.3; min-height: 1.3em; }
+#settings .set-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+#settings .set-chips button {
+  flex: 1 0 auto; border: 0; cursor: pointer; font-family: var(--tt-font); font-weight: 800; font-size: 14px;
+  color: var(--tt-navy); background: var(--tt-soft); padding: 7px 12px; border-radius: 11px;
+  transition: background 0.12s, transform 0.1s;
+}
+#settings .set-chips button:hover { background: rgba(10, 111, 214, 0.14); }
+#settings .set-chips button:active { transform: scale(0.96); }
+#settings .set-chips button.on { background: var(--tt-blue); color: #fff; box-shadow: 0 3px 0 var(--tt-blue-dark); }
+#settings .set-toggle { grid-template-columns: 1fr auto; align-items: center; cursor: pointer; }
+#settings .set-sw input { display: none; }
+#settings .set-sw .sw { display: block; width: 50px; height: 28px; border-radius: 99px; background: #c9d6e8; position: relative; transition: background 0.2s; }
+#settings .set-sw .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); transition: transform 0.2s; }
+#settings .set-sw input:checked + .sw { background: var(--tt-green); }
+#settings .set-sw input:checked + .sw::after { transform: translateX(22px); }
+#settings .set-vol .set-lab { grid-template-columns: 1fr auto; align-items: center; }
+#settings .set-vol output { font-weight: 800; font-size: 14px; color: var(--tt-blue); }
+#settings .set-vol input[type="range"] { width: 100%; accent-color: var(--tt-blue); height: 28px; }
+#settings .set-reset { margin-top: 14px; }
+#settings .set-foot { padding: 10px 22px 18px; border-top: 1px solid rgba(11, 42, 85, 0.08); background: rgba(255, 255, 255, 0.9); }
+#settings .q-note { margin: 0 2px 8px; font-weight: 800; font-size: 13px; color: #b36b00; }
+@media (max-width: 480px) {
+  #settings .set-head h2 { font-size: 26px; }
+  #settings .set-body { padding: 2px 16px 8px; }
+  #settings .set-foot { padding: 10px 16px 16px; }
+}

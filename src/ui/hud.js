@@ -24,6 +24,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     <div id="hud-toast"></div>
     <div id="hud-coach"></div>
     <div id="hud-center"></div>
+    <div id="hud-bothost"></div>
     <div id="hud-wrongway">⟲ TERS YÖN</div>
     <div id="hud-map"></div>
     <div id="hud-speed">
@@ -114,7 +115,14 @@ export function createHud({ portraits, minimap, itemIcons }) {
     el.addEventListener('animationend', () => el.remove());
   };
 
+  const botHostEl = root.querySelector('#hud-bothost');
   return {
+    // Çevrimiçi: botları kimin cihazı sürüyor (null = gizle)
+    setBotHost(text, mine = false) {
+      botHostEl.textContent = text || '';
+      botHostEl.classList.toggle('show', !!text);
+      botHostEl.classList.toggle('mine', !!mine);
+    },
     show(visible) {
       root.classList.toggle('show', visible);
     },

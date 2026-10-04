@@ -83,13 +83,59 @@ function pick() {
   return { mode: 'auto', tier: PRESETS[auto.tier] ? auto.tier : guessTier() };
 }
 
+// Gelişmiş grafik ayarları: ön ayarın üstüne tek tek biner ('auto' = ön ayar ne diyorsa). Değişince sayfa yenilenir.
+const GFX_KEY = 'tt-gfx';
+export const GFX_DEFAULTS = { aa: 'auto', bloom: 'auto', res: 'auto', shadows: 'auto', decor: 'auto', particles: 'auto', sharpen: 'auto', dynRes: true, fpsCap: 0 };
+
+export function readGfx() {
+  try {
+    return { ...GFX_DEFAULTS, ...JSON.parse(localStorage.getItem(GFX_KEY) || '{}') };
+  } catch {
+    return { ...GFX_DEFAULTS };
+  }
+}
+
+export function saveGfx(gfx) {
+  try {
+    localStorage.setItem(GFX_KEY, JSON.stringify(gfx));
+  } catch {}
+}
+
 // Tanı için tek tek özellik kapatma: ?msaa=0  ?bloom=0  ?shadows=0
 const params = new URLSearchParams(location.search);
 const picked = pick();
 export const QUALITY = { ...PRESETS[picked.tier], mode: picked.mode, auto: picked.mode === 'auto' };
+
+const gfx = readGfx();
+QUALITY.gfx = gfx;
+if (gfx.bloom === 'on') QUALITY.bloom = true;
+if (gfx.bloom === 'off') QUALITY.bloom = false;
+if (typeof gfx.res === 'number') QUALITY.pixelRatio = gfx.res;
+if (gfx.shadows === 'off') QUALITY.shadows = false;
+if (gfx.shadows === 'mid' || gfx.shadows === 'high') {
+  QUALITY.shadows = true;
+  QUALITY.shadowSize = gfx.shadows === 'high' ? 2048 : 1024;
+}
+const LEVEL = { low: 0, mid: 1, high: 2 };
+if (gfx.decor in LEVEL) QUALITY.decor = [0.45, 0.75, 1][LEVEL[gfx.decor]];
+if (gfx.particles in LEVEL) QUALITY.particles = [0.5, 0.8, 1][LEVEL[gfx.particles]];
+
 if (params.get('msaa') === '0') QUALITY.msaa = 0;
 if (params.get('bloom') === '0') QUALITY.bloom = false;
 if (params.get('shadows') === '0') QUALITY.shadows = false;
+
+// Kenar yumuşatma: off | fxaa | smaa | msaa2 | msaa4. Ön ayar varsayılanı: bloom varsa FXAA, yoksa tarayıcının MSAA'sı.
+// (TAA bilerek yok: hızlı hareket eden kamerada hayalet izi bırakır.)
+QUALITY.aa = gfx.aa !== 'auto' ? gfx.aa : QUALITY.bloom ? 'fxaa' : 'msaa4';
+if (params.get('msaa') === '0' && QUALITY.aa.startsWith('msaa')) QUALITY.aa = 'off';
+QUALITY.msaa = QUALITY.aa === 'msaa2' ? 2 : QUALITY.aa === 'msaa4' ? 4 : 0;
+QUALITY.fxaa = QUALITY.aa === 'fxaa';
+QUALITY.smaa = QUALITY.aa === 'smaa';
+// Keskinleştirme: FXAA/SMAA hafif bulanıklık bırakır; 'auto' bunlarla hafif keskinlik ekler
+QUALITY.sharpen = gfx.sharpen === 'on' ? 0.35 : gfx.sharpen === 'off' ? 0 : QUALITY.fxaa || QUALITY.smaa ? 0.2 : 0;
+QUALITY.composer = QUALITY.bloom || QUALITY.fxaa || QUALITY.smaa || QUALITY.sharpen > 0; // son işlem zinciri gerekli mi
+QUALITY.dynRes = gfx.dynRes !== false;
+QUALITY.fpsCap = [30, 60].includes(gfx.fpsCap) ? gfx.fpsCap : 0;
 if (params.get('sky') === '1') QUALITY.sky = true; // tanı: Düşük kalitede de gerçek gökyüzü
 if (params.get('sky') === '0') QUALITY.sky = false;
 if (params.get('tex') === '1') QUALITY.detailRoad = QUALITY.detailGround = true; // tanı: Düşük kalitede de detay dokuları
