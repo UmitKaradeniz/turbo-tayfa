@@ -18,6 +18,7 @@
   align-items: flex-end;
 }
 #touch .pad.left { left: max(18px, env(safe-area-inset-left)); }
+#touch.tilt .pad.left { display: none; }
 #touch .pad.right { right: max(18px, env(safe-area-inset-right)); }
 #touch button {
   pointer-events: auto;

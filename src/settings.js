@@ -13,6 +13,7 @@ const DEFAULTS = {
   musicVolume: 0.7,
   sfxVolume: 0.9,
   autoGas: true, // dokunmatikte otomatik gaz
+  tiltSteer: false, // dokunmatikte telefonu çevirerek direksiyon (gaz yine otomatik)
   track: 'palmCove',
   mode: 'race', // race | cup | timeTrial (Zamana Karşı sadece tek oyunculu)
   driftTips: 0, // drift ipucunun gösterildiği yarış sayısı (en çok 3)

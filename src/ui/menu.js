@@ -6,6 +6,8 @@ import { pickRivals } from '../kartModel.js';
 import { formatTime } from './hud.js';
 import { QUALITY, saveQuality } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
+import { enableTilt, applyTiltUI } from '../tilt.js';
+import { isTouchDevice } from './touch.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
@@ -363,6 +365,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         <label class="tt-toggle">Kamera sarsıntısı<input type="checkbox" data-set="shake" /><span class="sw"></span></label>
         <label class="tt-toggle">FPS göstergesi<input type="checkbox" data-set="showFps" /><span class="sw"></span></label>
         <label class="tt-toggle">Dokunmatikte otomatik gaz<input type="checkbox" data-set="autoGas" /><span class="sw"></span></label>
+        <label class="tt-toggle tilt-row" style="display:${isTouchDevice ? 'flex' : 'none'}">Telefonu çevirerek direksiyon<input type="checkbox" data-set="tiltSteer" /><span class="sw"></span></label>
         <div class="tt-label">Ses</div>
         <label class="tt-range">Müzik<input type="range" min="0" max="1" step="0.05" data-vol="musicVolume" /></label>
         <label class="tt-range">Efektler<input type="range" min="0" max="1" step="0.05" data-vol="sfxVolume" /></label>
@@ -390,8 +393,13 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   });
   settingsModal.querySelectorAll('[data-set]').forEach((input) => {
     input.checked = settings[input.dataset.set];
-    input.addEventListener('change', () => {
+    input.addEventListener('change', async () => {
+      if (input.dataset.set === 'tiltSteer' && input.checked && !(await enableTilt())) {
+        input.checked = false; // sensör yok ya da izin verilmedi
+        toast('Hareket sensörüne erişilemedi');
+      }
       saveSettings({ [input.dataset.set]: input.checked });
+      if (input.dataset.set === 'tiltSteer') applyTiltUI();
       handlers.settingsChanged();
     });
   });

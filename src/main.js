@@ -32,6 +32,7 @@ import { createVolcanoShow } from './volcano.js';
 import { renderPortraits } from './ui/portraits.js';
 import { PODIUM_MODELS } from './ui/podium3d.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
+import { initTilt } from './tilt.js';
 import { createItemSystem } from './items.js';
 import { ITEM_ICONS } from './itemIcons.js';
 import { play, playMusic, preloadMusic, updateEngine, applyVolumes } from './audio.js';
@@ -104,6 +105,7 @@ let booted = false; // menü kurulurken (henüz pist yokken) sahne işlemleri at
 const portraits = renderPortraits(renderer, CHARACTERS);
 const hud = createHud({ portraits, minimap: null, itemIcons: ITEM_ICONS });
 const touch = createTouchControls();
+initTilt();
 const net = new Net();
 
 // Pist önizlemesi: oyundan alınmış kare (public/previews/<kimlik>.jpg)
@@ -997,7 +999,7 @@ function frame(now) {
 
   let throttle = 0;
   if (race && !paused) {
-    const input = readInput();
+    const input = readInput(!race.started);
     throttle = input.throttle;
     // R: son checkpoint'e dön (tuşa basıldığı anda bir kez)
     if (input.reset && !resetHeld && race.started && race.entryOf(player).finishTime === null) {
