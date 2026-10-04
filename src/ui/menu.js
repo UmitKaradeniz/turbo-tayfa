@@ -373,7 +373,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     </div>`);
   document.body.appendChild(settingsModal);
   let pendingQuality = QUALITY.mode;
-  const TIER_NAMES = { low: 'Düşük', medium: 'Orta', high: 'Yüksek' };
+  const TIER_NAMES = { low: 'Düşük', lowplus: 'Düşük+', medlow: 'Orta−', medium: 'Orta', highlow: 'Yüksek−', high: 'Yüksek' };
   const syncQuality = () => {
     settingsModal.querySelectorAll('[data-q] button').forEach((b) => b.classList.toggle('on', b.dataset.v === pendingQuality));
     const changed = pendingQuality !== QUALITY.mode;

@@ -5,8 +5,8 @@
 //    (hâlâ yükleniyor, sekme arka planda, çok takılma) hükümsüz sayılıp birkaç kez tekrarlanır; hiç karar
 //    çıkmazsa seviye değişmez. 30 FPS'e kilitli görünen ekran (pil tasarrufu) "yavaş cihaz" sayılmaz.
 // 2) Yarışlarda gerçek performans: dinamik çözünürlük (main.js) zaten anlık düşüşleri yönetir. Sadece
-//    iki ayrı yarışta çözünürlük uzun süre düşük kalırsa seviye bir kademe iner. Bir kademe yükselmek için
-//    art arda 4 yarışın tam FPS ile geçmesi gerekir; yükselme/inme bir sonraki açılışta uygulanır.
+//    üç ayrı yarışta çözünürlük uzun süre düşük kalırsa seviye bir kademe iner (6 kademeli merdiven, bkz. quality.js).
+//    Bir kademe yükselmek için art arda 2 yarışın sorunsuz geçmesi yeter; yükselme/inme bir sonraki açılışta uygulanır.
 //
 // Kalıcı durum (tt-auto): { tier, calibrated, slow, good, max, maxAt }
 
@@ -51,8 +51,10 @@ export function createAutoTuner({ canReload }) {
     const capped30 = medianMs > 30 && medianMs < 37 && spreadMs < 4;
     if (capped30) return false;
     let tier = QUALITY.name;
-    if (fps < 36) tier = step(tier, -2);
-    else if (fps < 50) tier = step(tier, -1);
+    // Merdiven ince olduğu için eşikler gevşek: 60 Hz ekranda 47-58 FPS normal sayılır, ısınma/shader derlemesi yanıltmasın
+    if (fps < 30) tier = step(tier, -3);
+    else if (fps < 40) tier = step(tier, -2);
+    else if (fps < 47) tier = step(tier, -1);
     applyTier(tier, { calibrated: true, slow: 0, good: 0 });
     // Ana menüdeyken, kullanıcı bir şey yapmıyorsa sessizce yeni seviyeyle yeniden başlat
     if (tier !== QUALITY.name && canReload()) {
@@ -125,15 +127,15 @@ export function createAutoTuner({ canReload }) {
       if (lowFrac >= 0.5) {
         slow++;
         good = 0;
-      } else if (baseFrac >= 0.9 && medFps >= 56) {
+      } else if (baseFrac >= 0.8 && medFps >= 52) {
         good++;
         slow = 0;
       }
-      const maxTier = auto.max && Date.now() - (auto.maxAt ?? 0) < 14 * DAY ? auto.max : 'high';
-      if (slow >= 2 && tier !== 'low') {
+      const maxTier = auto.max && Date.now() - (auto.maxAt ?? 0) < 3 * DAY ? auto.max : 'high';
+      if (slow >= 3 && tier !== 'low') {
         const next = step(tier, -1);
         applyTier(next, { slow: 0, good: 0, max: next, maxAt: Date.now() });
-      } else if (good >= 4 && TIERS.indexOf(tier) < TIERS.indexOf(maxTier)) {
+      } else if (good >= 2 && TIERS.indexOf(tier) < TIERS.indexOf(maxTier)) {
         applyTier(step(tier, 1), { slow: 0, good: 0 });
       } else saveAuto({ slow, good });
     },
