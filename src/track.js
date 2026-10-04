@@ -230,6 +230,7 @@ export function buildTrack(def, detail = {}) {
     boardwalk: { surface: 'boardwalk', speed: 1, bad: false }, // ahşap iskele: yavaşlatmaz, tıkırtı sesi (audio.js)
     boost: { surface: 'road', pad: { boost: 0.9 }, bad: false },
     bounce: { surface: 'road', bounce: 11, bad: false },
+    dune: { surface: 'road', bounce: 13.5, bad: false }, // kum tepesi rampası: fırlatır; def.airBoost pistlerinde uçuş sonrası turbo
   };
   const zones = [...(def.hotZones ?? []).map((z) => ({ type: 'hot', ...z })), ...(def.zones ?? [])].map((z) => ({
     type: z.type,
@@ -890,6 +891,31 @@ function zoneTexture(z, width, length) {
       g.beginPath();
       g.arc(w / 2, h / 2, r * k, 0, Math.PI * 2);
       g.stroke();
+    }
+  } else if (z.type === 'dune') {
+    // Kum tepesi rampası: sarı kum, ileri bakan açık renk oklar, dalga çizgileri
+    g.fillStyle = 'rgba(232,186,92,0.97)';
+    g.fillRect(0, 0, w, h);
+    blobs((w * h) / 2500, 8, 22, 'rgba(255,224,150,0.5)');
+    g.strokeStyle = 'rgba(170,118,48,0.55)';
+    g.lineWidth = 3;
+    for (let y = 12; y < h; y += 22) {
+      g.beginPath();
+      g.moveTo(0, y);
+      g.quadraticCurveTo(w / 2, y - 7, w, y);
+      g.stroke();
+    }
+    g.fillStyle = 'rgba(255,248,214,0.92)';
+    for (let y = h - 16; y > 16; y -= 40) {
+      g.beginPath();
+      g.moveTo(w / 2, y - 24);
+      g.lineTo(w * 0.78, y + 4);
+      g.lineTo(w * 0.78, y + 16);
+      g.lineTo(w / 2, y - 6);
+      g.lineTo(w * 0.22, y + 16);
+      g.lineTo(w * 0.22, y + 4);
+      g.closePath();
+      g.fill();
     }
   }
   if (z.type === 'boardwalk') {

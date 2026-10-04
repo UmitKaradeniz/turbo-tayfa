@@ -43,6 +43,7 @@ const _probe = new THREE.Vector3();
 
 // Drift kademesi: kıvılcım rengi ve mini-turbo süresi buna göre (0 = yok)
 // Hızı kısan zeminler (hız oranı yüzeyden gelir; yoksa varsayılan)
+const AIR_BOOST_MIN = 0.7; // s: bu kadar havada kalınca iniş turbosu
 const SLOW_SURFACES = new Set(['sand', 'dirt', 'hot', 'mud', 'water', 'honey', 'carpet', 'snowdrift']);
 
 // Eğime (grade, + yokuş) göre hız sınırı çarpanı
@@ -93,6 +94,7 @@ export class Kart {
     this.visualTilt = new THREE.Quaternion();
     this.visualDriftYaw = 0;
 
+    this.airTime = 0; // havada geçen süre (def.airBoost pistlerinde uzun uçuş inişte turbo verir)
     this.bodyOverride = null;
     this.vehicle = defaultVehicleFor(character);
     this.stats = this.vehicle.stats; // araç sınıfı çarpanları (bkz. vehicles.js)
@@ -143,6 +145,7 @@ export class Kart {
     this.fallTime = 0;
     this.grade = 0;
     this.crestCool = 0;
+    this.airTime = 0;
     this.boostTime = this.spinTime = this.shieldTime = 0;
   }
 
@@ -171,6 +174,7 @@ export class Kart {
     this.prevPosition.copy(this.position);
     this.prevHeading = this.heading;
     this.crestCool = Math.max(0, this.crestCool - dt);
+    this.airTime = this.grounded ? 0 : this.airTime + dt;
 
     // Savrulurken kontrol yok
     if (this.spinTime > 0) {
@@ -332,6 +336,8 @@ export class Kart {
       this.events.push('crest');
     } else if (this.position.y <= g.y + snap && (this.velocity.y <= 0.5 || this.position.y < g.y)) {
       this.position.y = g.y;
+      const air = this.grounded ? 0 : this.airTime;
+      this.airTime = 0;
       // Rampada dikey hız korunur: rampanın ucundan kart eğim kadar yukarı fırlar
       this.velocity.y = g.ramp ? Math.max(0, g.ramp.slope * (this.velocity.x * g.ramp.tx + this.velocity.z * g.ramp.tz)) : 0;
       this.grounded = true;
@@ -344,6 +350,11 @@ export class Kart {
         this.velocity.y = g.bounce;
         this.grounded = false;
         this.events.push('bounce');
+      }
+      // Uzun uçuştan sonra iniş: turbo (savrulan karta yok; yalnız def.airBoost pistleri)
+      if (air > AIR_BOOST_MIN && this.spinTime <= 0 && !g.bounce && track.def?.airBoost) {
+        this.boost(Math.min(1.2, 0.5 + (air - AIR_BOOST_MIN) * 0.9));
+        this.events.push('airBoost');
       }
       if (g.pad) {
         if (this.boostTime < 0.3) this.events.push('pad');

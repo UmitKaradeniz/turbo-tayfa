@@ -14,6 +14,7 @@ export default {
   groundTex: { tex: 'sand', scale: 0.14, strength: 0.9 }, // ambientCG (CC0) detay dokusu; sadece Yüksek kalite
   roadTex: 'asphalt_n', // yol normal haritası (ambientCG, CC0); Orta/Yüksek kalite
   halfWidth: 8,
+  airBoost: true, // uzun uçuştan sonra inişte turbo (kum rampaları, kısayol atlayışı, tepe)
   curbWidth: 1,
   shoulder: 5, // bordür ile bariyer arasındaki kum şeridi
   terrainSize: 560,
@@ -68,6 +69,9 @@ export default {
   // Zemin bölgeleri: sığ su geçidi (yavaşlatır, sıçratır) ve ortada hız şeridi
   zones: [
     { type: 'boardwalk', f: [0.015, 0.095], lateral: [-8.2, 8.2] }, // başlangıç düzlüğü ahşap iskele
+    // Kum tepesi rampaları: fırlatır; uzun uçuştan sonra inişte turbo (airBoost). Yolun ortasında, yandan kaçılabilir
+    { type: 'dune', f: [0.128, 0.138], lateral: [-3.6, 3.6] },
+    { type: 'dune', f: [0.628, 0.638], lateral: [-3.6, 3.6] },
     { type: 'water', f: [0.67, 0.715], lateral: [-8, 8] },
     { type: 'boost', f: [0.86, 0.875], lateral: [-2.6, 2.6] },
   ],

@@ -234,6 +234,7 @@ export function createKartEffects(scene, quality) {
       _p.copy(kart.object.position).setY(kart.object.position.y + 1);
       if (name.startsWith('miniTurbo')) burst(_p, SPARK_COLORS[Number(name.slice(-1)) - 1], 18, 7, 4);
       else if (name === 'pad') burst(_p, SPARK_COLORS[1], 16, 8, 4);
+      else if (name === 'airBoost') burst(_p.setY(_p.y - 0.6), SPARK_COLORS[2], 26, 9, 5);
       else if (name === 'bounce') burst(_p.setY(_p.y - 0.4), SPARK_COLORS[2], 20, 7, 5);
       else if (name === 'hit') burst(_p.setY(_p.y + 1), STAR, 22, 6, 6, 0.5, 0.7);
       else if (name === 'blocked') burst(_p, BUBBLE, 30, 9, 3, 0.45, 0.5);
