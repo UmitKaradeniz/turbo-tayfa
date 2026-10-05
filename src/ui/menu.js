@@ -66,6 +66,13 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           <input id="tt-name" class="tt-input" maxlength="14" placeholder="İsmini yaz" autocomplete="off" />
         </div>
         <div class="name-hint enter" role="alert">✏️ Bir isim belirle</div>
+        <div class="ring enter">
+          <button class="ring-arrow l" data-go="ring-prev" aria-label="Önceki pist">‹</button>
+          <div class="ring-disc"><img class="ring-map" alt="" draggable="false" /><img class="ring-head" alt="" draggable="false" /></div>
+          <button class="ring-arrow r" data-go="ring-next" aria-label="Sonraki pist">›</button>
+          <button class="ring-flag daily-flag" data-go="daily" aria-label="Günlük meydan okuma">🏁<span class="dot"></span></button>
+          <div class="ring-name"></div>
+        </div>
         <div class="buttons enter">
           <div class="quick-row">
             <button class="tt-btn primary big" data-go="quick">▶ Hızlı Yarış</button>
@@ -79,7 +86,6 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
             <button class="tt-btn light" data-go="garage">🎨 Garaj</button>
             <button class="tt-btn light" data-go="achievements">🏅 Başarımlar</button>
           </div>
-          <button class="tt-btn light block daily-btn" data-go="daily">📅 Günlük Meydan Okuma<span class="dot"></span></button>
         </div>
       </div>
       <div class="corner"><button class="tt-btn ghost icon fs-btn" data-go="fullscreen" aria-label="Tam ekran">⛶</button><button class="tt-btn ghost icon" data-go="settings" aria-label="Ayarlar">⚙</button></div>
@@ -687,8 +693,22 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   const refreshDaily = () => {
     challenge = dailyChallenge(tracks.map((t) => t.id), dateKey());
     const st = dailyState(challenge.key);
-    main.querySelector('.daily-btn').classList.toggle('pending', !st.done);
+    main.querySelector('.daily-flag').classList.toggle('pending', !st.done);
     return st;
+  };
+  // Pist halkası: seçili pistin çizgisi, karakter kafası ve pist adı
+  const refreshRing = () => {
+    const tr = tracks.find((t) => t.id === settings.track) ?? tracks[0];
+    main.querySelector('.ring-map').src = tr.ring;
+    main.querySelector('.ring-head').src = portraits[settings.character] ?? '';
+    main.querySelector('.ring-name').textContent = tr.name;
+  };
+  const stepRing = (d) => {
+    const i = tracks.findIndex((t) => t.id === settings.track);
+    const next = tracks[(i + d + tracks.length) % tracks.length];
+    saveSettings({ track: next.id });
+    handlers.track(next.id);
+    refreshRing();
   };
   const renderDaily = () => {
     const st = refreshDaily();
@@ -710,6 +730,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     if (el === main) {
       refreshLevel();
       refreshDaily();
+      refreshRing();
     }
   };
 
@@ -738,6 +759,12 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         handlers.start({ character: ch.id, laps, difficulty: diff, mode: 'race', rivals, track: tr.id });
         break;
       }
+      case 'ring-prev':
+        stepRing(-1);
+        break;
+      case 'ring-next':
+        stepRing(1);
+        break;
       case 'garage':
         renderGarage();
         show(garage);

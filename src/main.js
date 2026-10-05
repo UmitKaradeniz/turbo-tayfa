@@ -142,7 +142,9 @@ const trackCards = TRACK_IDS.map((id) => {
   trackCounts[id] = outline.centerline.length;
   const thumb = createMinimap(outline, { size: 72, theme: 'plain', shortcuts: 'dash' });
   thumb.draw([]);
-  return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL(), preview: previewOf(id) };
+  const ring = createMinimap(outline, { size: 220, theme: 'plain', shortcuts: 'dash' }); // ana menü pist halkası
+  ring.draw([]);
+  return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL(), ring: ring.canvas.toDataURL(), preview: previewOf(id) };
 });
 
 const chat = createChat({
