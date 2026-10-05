@@ -32,20 +32,6 @@ const KEYS_HELP = `
     <kbd>Esc / P</kbd><span>Duraklat</span>
   </div>`;
 
-const PLAYED_KEY = 'tt-played'; // ilk yarış başlatıldı mı (Hızlı Yarış sihirbazı atlasın)
-const played = () => {
-  try {
-    return localStorage.getItem(PLAYED_KEY) === '1' || localStorage.getItem('tt-records') != null; // eski oyuncular da sayılır
-  } catch {
-    return false;
-  }
-};
-const markPlayed = () => {
-  try {
-    localStorage.setItem(PLAYED_KEY, '1');
-  } catch {}
-};
-
 export function createMenu({ characters, portraits, tracks, handlers, records, chatPanel }) {
   const botTag = (c) => `Bot · ${PERSONALITIES[c.personality]?.label ?? ''}`;
   const byId = Object.fromEntries(characters.map((c) => [c.id, c]));
@@ -82,8 +68,8 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         <div class="name-hint enter" role="alert">✏️ Bir isim belirle</div>
         <div class="buttons enter">
           <div class="quick-row">
-            <button class="tt-btn primary big" data-go="quick">▶ Hızlı Yarış<small class="quick-sub"></small></button>
-            <button class="tt-btn light gear" data-go="setup-open" aria-label="Yarışı ayarla" title="Yarışı ayarla">⚙</button>
+            <button class="tt-btn primary big" data-go="quick">▶ Hızlı Yarış</button>
+            <button class="tt-btn light rnd" data-go="random" title="Pist, karakter, tur ve zorluk rastgele">🎲 Rastgele</button>
           </div>
           <div class="row2">
             <button class="tt-btn light" data-go="host">Oda Kur</button>
@@ -120,7 +106,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   const hasName = () => settings.name.trim().length > 0;
   const refreshNameGate = () => {
     main.classList.toggle('need-name', !hasName());
-    for (const b of main.querySelectorAll('[data-go="quick"], [data-go="setup-open"], [data-go="host"], [data-go="join"]')) b.setAttribute('aria-disabled', hasName() ? 'false' : 'true');
+    for (const b of main.querySelectorAll('[data-go="quick"], [data-go="random"], [data-go="host"], [data-go="join"]')) b.setAttribute('aria-disabled', hasName() ? 'false' : 'true');
   };
   const demandName = () => {
     if (hasName()) return false;
@@ -617,13 +603,6 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     main.querySelector('.lv-tp').textContent = `${lv.cur}/${lv.need} TP`;
   };
   refreshLevel();
-  // Hızlı Yarış altyazısı: son seçilen pist ve mod
-  const refreshQuick = () => {
-    const tr = tracks.find((t) => t.id === settings.track);
-    const what = settings.mode === 'timeTrial' ? 'Zamana karşı' : settings.mode === 'cup' ? 'Kupa' : `${settings.laps} tur`;
-    main.querySelector('.quick-sub').textContent = played() && tr ? `${tr.name} · ${what}` : '';
-  };
-  refreshQuick();
 
   // ---------- Garaj: boya ve iz seçimi (kart canlı sahnede önizlenir) ----------
   const garage = h(`
@@ -731,7 +710,6 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     if (el === main) {
       refreshLevel();
       refreshDaily();
-      refreshQuick();
     }
   };
 
@@ -741,26 +719,25 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     switch (go) {
       case 'quick':
         if (demandName()) break;
-        if (!played()) {
-          // İlk kez: karakter/pist seçsin
-          setStep(1);
-          show(setup);
-          handlers.screen('setup');
-          break;
-        }
-        // Sonraki: son ayarlarla hemen, yeni rakiplerle
-        rivalIds = pickRivals(settings.character);
-        handlers.rivals?.(rivalIds);
-        markPlayed();
-        show(null);
-        handlers.start({ character: settings.character, laps: settings.laps, difficulty: settings.difficulty, mode: settings.mode, rivals: rivalIds });
-        break;
-      case 'setup-open':
-        if (demandName()) break;
         setStep(1);
         show(setup);
         handlers.screen('setup');
         break;
+      case 'random': {
+        // Hiçbir şey seçtirmeden: rastgele karakter, pist, tur ve zorluk (kayıtlı ayarlara dokunmaz)
+        if (demandName()) break;
+        const pick = (a) => a[Math.floor(Math.random() * a.length)];
+        const ch = pick(characters);
+        const tr = pick(tracks);
+        const laps = pick([1, 3, 5]);
+        const diff = pick(Object.keys(DIFFICULTY));
+        const rivals = pickRivals(ch.id);
+        handlers.rivals?.(rivals);
+        toast(`🎲 ${tr.name} · ${ch.name} · ${laps} tur · ${DIFFICULTY[diff].label}`);
+        show(null);
+        handlers.start({ character: ch.id, laps, difficulty: diff, mode: 'race', rivals, track: tr.id });
+        break;
+      }
       case 'garage':
         renderGarage();
         show(garage);
@@ -817,7 +794,6 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           handlers.lobbyButton(isHost() ? 'start' : me()?.ready ? 'unready' : 'ready');
           break;
         }
-        markPlayed();
         show(null);
         handlers.start({ character: settings.character, laps: settings.laps, difficulty: settings.difficulty, mode: settings.mode, rivals: rivalIds });
         break;
