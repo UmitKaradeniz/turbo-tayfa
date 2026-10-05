@@ -116,6 +116,7 @@ export class Net {
       const was = this.connected;
       this.connected = false;
       if (was) this.emit('disconnect');
+      else if (this.wanted) this.emit('connectfail'); // hiç açılamadı
       if (this.wanted) {
         // Artan bekleme ile yeniden dene (0.5s, 1s, 2s … en çok 5s)
         const delay = Math.min(5000, 500 * 2 ** this.retry++);
@@ -124,18 +125,26 @@ export class Net {
     };
   }
 
+  // Açık/bekleyen bağlantıyı yeniden bağlanma denemesi başlatmadan kapat
+  dropSocket() {
+    if (!this.ws) return;
+    this.ws.onclose = null;
+    this.ws.close();
+    this.ws = null;
+    this.connected = false;
+  }
+
   // Oda ile ilgili mesajlar bağlantı yoksa kuyruğa alınır
   send(msg) {
     if (msg.type === 'join' || msg.type === 'create') {
       const key = msg.type === 'join' ? String(msg.code ?? '').toUpperCase() : 'new';
       this.pendingKey = key;
-      // Başka bir odaya açık bağlantı varsa kapat (oda sunucuları ayrı olabilir)
-      if (this.ws && this.wsKey !== key && !this.code) {
-        this.ws.onclose = null;
-        this.ws.close();
-        this.ws = null;
-        this.connected = false;
-      }
+      // Eski bir oturum (kopmuş oda) kaldıysa yeni oda isteği onu geçersiz kılar; yoksa bağlanırken 'resume' hatası isteği iptal ederdi
+      if (this.code) {
+        this.code = this.token = this.id = null;
+        this.saveSession();
+        this.dropSocket();
+      } else if (this.ws && this.wsKey !== key) this.dropSocket(); // başka odaya açık bağlantı (oda sunucuları ayrı olabilir)
     }
     if (this.connected) this.sendNow(msg);
     else {

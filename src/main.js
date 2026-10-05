@@ -171,10 +171,12 @@ const menu = createMenu({
     // Çevrimiçi
     host: () => {
       online = newOnline();
+      slowConnectHint();
       net.send({ type: 'create', name: playerName(), character: settings.character, vehicle: settings.vehicle || null });
     },
     join: (code) => {
       online = newOnline();
+      slowConnectHint();
       net.send({ type: 'join', code, name: playerName(), character: settings.character, vehicle: settings.vehicle || null });
     },
     leaveRoom: () => leaveRoom(),
@@ -901,6 +903,21 @@ net.on('error', (msg) => {
     menu.setOnline(null);
     if (wasRacing) toMenu();
   }
+});
+
+// Bağlantı birkaç saniyeden uzun sürerse (sunucu uyanıyor olabilir) kullanıcıya bildir
+function slowConnectHint() {
+  setTimeout(() => {
+    if (online && !net.id) menu.toast('Sunucuya bağlanılıyor… (ilk bağlantı biraz sürebilir)');
+  }, 4000);
+}
+
+// Sunucuya hiç bağlanılamadıysa sessiz kalma (Oda Kur / Katıl "basınca bir şey olmuyor" görünürdü)
+let connectToastAt = 0;
+net.on('connectfail', () => {
+  if (!online || performance.now() - connectToastAt < 8000) return;
+  connectToastAt = performance.now();
+  menu.toast('Sunucuya bağlanılamıyor, tekrar deneniyor…');
 });
 
 net.on('disconnect', () => {
