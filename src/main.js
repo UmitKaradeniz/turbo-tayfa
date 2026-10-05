@@ -19,7 +19,7 @@ import { createStartLights } from './startLights.js';
 import { Race } from './race.js';
 import { createDriver, driveInput, botEmote } from './ai.js';
 import { createEmoteBubbles } from './emotes.js';
-import { recordOf, submitTotal, createGhostRecorder, createGhost } from './records.js';
+import { recordOf, submitTotal, createGhostRecorder, createDeltaTracker, createGhost } from './records.js';
 import { awardRace, setTrackTotal, recordCupWin } from './progress.js';
 import { dailyDone } from './daily.js';
 import { activeCosmetics, tickCosmetics } from './cosmetics.js';
@@ -408,6 +408,7 @@ let raceStats = { shortcuts: 0, gold: 0, lapRecords: 0, hits: 0, mt3: 0 };
 let raceReward = null;
 let rewardShown = false;
 const recorder = createGhostRecorder();
+const delta = createDeltaTracker();
 const emoteCooldown = new Map(); // kart → son tepki zamanı
 let lastConfig = null;
 let paused = false; // sadece tek oyunculuda oyunu dondurur
@@ -564,12 +565,14 @@ function setupRace(order, laps) {
       botReact(kart, 'go', Math.random() * 1500);
     }
     recorder.startLap();
+    delta.startLap(trackDef.id);
   });
   race.on('lap', (e, time) => {
     if (e.kart !== player) return;
     const best = e.lapTimes.length > 1 && Math.min(...e.lapTimes) === time;
     // Kişisel tur rekoru mu? (rekorsa hayalet olarak saklanır)
     const record = recorder.finishLap(trackDef.id, player.character.id, time);
+    delta.startLap(trackDef.id); // yeni rekor turu bir sonraki tur için ölçüt olur
     if (record) raceStats.lapRecords++;
     hud.lapToast(e.lapsDone, time, best, record);
     if (e.lapsDone < race.laps) play('lap');
@@ -1363,6 +1366,7 @@ function updateHud(dt) {
   hud.setPosition(race.positionOf(player), activeKarts.length);
   hud.setLap(Math.min(race.laps, Math.max(1, entry.lapsDone + 1)), race.laps);
   hud.setTime(entry.finishTime ?? Math.max(0, race.clock));
+  hud.setDelta(race.started && entry.finishTime === null ? delta.update(player, race.clock - entry.lapStart) : null);
   const speed = Math.abs(player.speed);
   hud.setSpeed(speed * 3.6, speed / KART.maxSpeed, player.boostTime > 0);
   minimap.draw(activeKarts.map((k) => ({ x: k.position.x, z: k.position.z, id: k.character.id, color: k.character.color, me: k === player, human: k !== player && humanKarts.has(k), place: race.positionOf(k) })), performance.now() / 1000);

@@ -403,8 +403,7 @@ function handleMessage(ws, raw) {
       syncRoom(room);
       return;
 
-    case 'look':
-      if (room.phase !== 'lobby') return;
+    case 'look': // her aşamada kabul; sonraki yarışın başlangıcında diğerlerine gider
       p.paint = cleanPaint(msg.paint);
       p.trail = cleanTrail(msg.trail);
       syncRoom(room);

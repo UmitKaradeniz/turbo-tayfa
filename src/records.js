@@ -72,6 +72,41 @@ export function createGhostRecorder() {
   };
 }
 
+// Rekora fark: oyuncunun şimdiki konumuna en yakın hayalet örneğini bulur, tur süresini onunkiyle kıyaslar.
+// Dönüş: saniye (negatif = rekordan önde) ya da null (rekor yok / yoldan çıkıldı).
+export function createDeltaTracker() {
+  let s = null;
+  let idx = 0;
+  let smooth = null; // örnekleme 10 Hz olduğundan rakam titremesin diye yumuşatılır
+  return {
+    startLap(trackId) {
+      s = recordOf(trackId)?.ghost?.s ?? null;
+      idx = 0;
+      smooth = null;
+    },
+    update(kart, lapClock) {
+      if (!s || lapClock < 1.5) return null;
+      let best = -1;
+      let bd = Infinity;
+      const hi = Math.min(s.length - 1, idx + 40);
+      for (let i = Math.max(0, idx - 3); i <= hi; i++) {
+        const dx = s[i][1] - kart.position.x;
+        const dz = s[i][3] - kart.position.z;
+        const d = dx * dx + dz * dz;
+        if (d < bd) {
+          bd = d;
+          best = i;
+        }
+      }
+      if (best < 0 || bd > 900) return null; // 30 birimden uzak: kısayol/yoldan çıkma, kıyas anlamsız
+      idx = best;
+      const raw = lapClock - s[best][0];
+      smooth = smooth == null ? raw : smooth + (raw - smooth) * 0.08;
+      return smooth;
+    },
+  };
+}
+
 // Hayalet kart: kayıtlı turu yarı saydam bir kartla oynatır
 export function createGhost(scene, character, ghost, bodyPath) {
   const model = createKartModel(character, bodyPath);

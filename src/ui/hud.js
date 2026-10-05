@@ -18,7 +18,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
   root.id = 'hud';
   root.innerHTML = `
     <div id="hud-position" class="hud-outline"><span class="num">1</span><span class="suffix">.</span><span class="total">/8</span></div>
-    <div id="hud-lap" class="hud-outline"><div class="lap"><small>TUR</small><span class="cur">1</span>/<span class="max">3</span></div><div class="time">0:00.000</div></div>
+    <div id="hud-lap" class="hud-outline"><div class="lap"><small>TUR</small><span class="cur">1</span>/<span class="max">3</span></div><div class="time">0:00.000</div><div class="delta"></div></div>
     <button id="hud-pause" data-go="pause" aria-label="Duraklat"><i></i><i></i></button>
     <button id="hud-fs" class="fs-btn" data-go="fullscreen" aria-label="Tam ekran"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
     <div id="hud-item"><div class="slot"><img alt="" /></div><div class="key">E</div></div>
@@ -96,6 +96,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
   const lapCur = $('#hud-lap .cur');
   const lapMax = $('#hud-lap .max');
   const timeEl = $('#hud-lap .time');
+  const deltaEl = $('#hud-lap .delta');
+  let lastDelta = '';
   const center = $('#hud-center');
   const toasts = $('#hud-toast');
   const coachEl = $('#hud-coach');
@@ -146,6 +148,15 @@ export function createHud({ portraits, minimap, itemIcons }) {
     setLap(cur, max) {
       lapCur.textContent = cur;
       lapMax.textContent = max;
+    },
+    // Kişisel rekora fark (sn); null = gizle
+    setDelta(d) {
+      const txt = d == null ? '' : `${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(2)}`;
+      if (txt === lastDelta) return;
+      lastDelta = txt;
+      deltaEl.textContent = txt;
+      deltaEl.classList.toggle('on', d != null);
+      deltaEl.classList.toggle('up', d != null && d <= 0);
     },
     setTime(t) {
       timeEl.textContent = formatTime(t);

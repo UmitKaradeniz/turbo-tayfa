@@ -46,6 +46,9 @@
 }
 #hud-lap .lap { font-family: var(--tt-font-display); font-weight: 800; font-size: clamp(26px, 5vw, 40px); line-height: 1; }
 #hud-lap .lap small { font-size: 0.6em; opacity: 0.85; margin-right: 6px; }
+#hud-lap .delta { display: none; margin-top: 4px; font-weight: 800; font-size: clamp(14px, 2.6vw, 18px); font-variant-numeric: tabular-nums; color: #ff6b5e; -webkit-text-stroke: 0; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+#hud-lap .delta.on { display: block; }
+#hud-lap .delta.up { color: #46e58c; }
 #hud-lap .time {
   margin-top: 6px;
   font-weight: 800;
