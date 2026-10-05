@@ -249,8 +249,30 @@ async function buildWanted() {
   buildTrackNow(def);
 }
 
+// Dokuları GPU'ya kare başına ~3 ms'lik dilimlerle gönder (hepsini birden göndermek menüde takılma yapıyordu)
+let texUploadGen = 0;
+function uploadTexturesGradually(list) {
+  const gen = ++texUploadGen;
+  const step = () => {
+    if (gen !== texUploadGen) return; // başka pist kuruldu
+    const t0 = performance.now();
+    while (list.length && performance.now() - t0 < 3) renderer.initTexture(list.pop());
+    if (list.length) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// Pist kurulum süresi ölçümü: aşama adı → ms (window.__tt.lastBuild; çok yavaşsa sunucu loguna da yazılır)
+let buildMarks = null;
+const mark = (name) => {
+  const t = performance.now();
+  buildMarks.phases[name] = Math.round(t - buildMarks.t);
+  buildMarks.t = t;
+};
+
 function buildTrackNow(def) {
   if (trackDef === def) return;
+  buildMarks = { id: def.id, start: performance.now(), t: performance.now(), phases: {} };
   if (track) {
     scene.remove(track.group, decor);
     track.group.traverse((o) => {
@@ -271,13 +293,17 @@ function buildTrackNow(def) {
   for (const k of karts) k.setBodyOverride(def.kartBody ?? null); // haritaya özel araç (yoksa seçilen araç sınıfının gövdesi)
   const beams = QUALITY.beams ? (def.beams ?? (def.night ? 1 : 0)) : 0; // far ışığı süzmesi (gece pistleri, gün batımı)
   for (const k of karts) k.setBeams(beams);
+  mark('temizlik');
   track = buildTrack(def, { detailRoad: QUALITY.detailRoad, detailGround: QUALITY.detailGround });
   scene.add(track.group);
+  mark('pist');
   decor = buildDecor(track, (ctx) => def.decorate(ctx), QUALITY.decor);
   scene.add(decor);
+  mark('dekor');
   env.setTrack(def, track.terrain);
   fx.setDust(def.dust);
   startLights = createStartLights(decor);
+  mark('ortam');
   preloadMusic(def.id); // müzik çözümü geri sayımda değil, pist seçilirken olsun
   hazards = createHazards({ scene, track, fx, quality: QUALITY });
   volcanoShow = def.volcano ? createVolcanoShow({ fx, def, quality: QUALITY }) : null;
@@ -310,17 +336,25 @@ function buildTrackNow(def) {
       if (vol > 0) play({ turbo: 'turbo', shield: 'shield', coconut: 'throw', oil: 'oil' }[item], { volume: vol });
     },
   });
+  mark('oyun nesneleri');
   minimap = createMinimap(track);
   hud.setMinimap(minimap);
   if (!race) showMenuField();
+  mark('harita');
   if (booted) {
     // Yeni pistin shader'ları ve dokuları menüde GPU'ya yüklensin, ilk yarış karesinde (geri sayım) değil
-    renderer.compile(scene, camera);
+    // Shader derlemesi sürücüde paralel (ana iş parçacığını tutmaz); dokular kare başına küçük dilimlerle yüklenir
+    renderer.compileAsync(scene, camera).catch(() => {});
+    const textures = new Set();
     scene.traverse((o) => {
-      for (const m of [o.material].flat()) if (m) for (const k of ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'alphaMap']) if (m[k]?.isTexture) renderer.initTexture(m[k]);
+      for (const m of [o.material].flat()) if (m) for (const k of ['map', 'emissiveMap', 'normalMap', 'roughnessMap', 'alphaMap']) if (m[k]?.isTexture) textures.add(m[k]);
     });
+    uploadTexturesGradually([...textures]);
   }
-  if (window.__tt) Object.assign(window.__tt, { track, items });
+  mark('shader+doku');
+  buildMarks.total = Math.round(performance.now() - buildMarks.start);
+  if (window.__tt) Object.assign(window.__tt, { track, items, lastBuild: buildMarks });
+  if (buildMarks.total > 700) reportIssue('perf', `pist kurulumu yavaş: ${def.id} ${buildMarks.total}ms ${JSON.stringify(buildMarks.phases)}`);
 }
 
 // Oyuncuya yakın olayların sesi (uzaktakiler duyulmaz)

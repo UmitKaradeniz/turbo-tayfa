@@ -1,2 +1,14 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Adları içerik hash'i taşımayan ama nadiren değişen dosyalar: tekrar gelenler anında yüklesin, arka planda yenilensin
+/models/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/audio/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/tex/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/sky/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

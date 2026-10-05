@@ -149,7 +149,7 @@ function windowGlowTexture(map) {
   const c = document.createElement('canvas');
   c.width = img.width;
   c.height = img.height;
-  const g = c.getContext('2d');
+  const g = c.getContext('2d', { willReadFrequently: true }); // CPU tuvali: GPU'dan geri okuma beklemez (31 bina × 1 MB okuma ≈ 0,8 sn sürüyordu)
   g.drawImage(img, 0, 0);
   const data = g.getImageData(0, 0, c.width, c.height);
   const d = data.data;

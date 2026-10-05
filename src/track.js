@@ -104,30 +104,149 @@ export function buildTrack(def, detail = {}) {
     segDz[i] = b.z - a.z;
     segInv[i] = 1 / (segDx[i] * segDx[i] + segDz[i] * segDz[i]);
   }
+  // --- Hızlı sorgular: ipucsuz closest() (BVH) ve insideLoop() (z satırları) tüm segmentleri taramaz ---
+  // Arazi kurulumunda 200x200 noktanın her biri için çağrılıyordu (pist başına yüzlerce ms); sonuç eski taramayla aynıdır.
+  const CELL = 16;
+  let gMinZ = Infinity;
+  let gMaxZ = -Infinity;
+  for (let i = 0; i < count; i++) {
+    gMinZ = Math.min(gMinZ, segAz[i], segAz[i] + segDz[i]);
+    gMaxZ = Math.max(gMaxZ, segAz[i], segAz[i] + segDz[i]);
+  }
+  const gNz = Math.floor((gMaxZ - gMinZ) / CELL) + 1;
+  const zRows = Array.from({ length: gNz }, () => []); // insideLoop: her z satırını kesen kenarlar
+  for (let i = 0; i < count; i++) {
+    const bz = segAz[i] + segDz[i];
+    const cz0 = Math.floor((Math.min(segAz[i], bz) - gMinZ) / CELL);
+    const cz1 = Math.floor((Math.max(segAz[i], bz) - gMinZ) / CELL);
+    for (let gz = cz0; gz <= cz1; gz++) zRows[gz].push(i);
+  }
+
+  // Segmentlerin sınır kutuları üzerinde ikili ağaç (yaprak ≤ 4 segment)
+  const LEAF = 4;
+  const order = Array.from({ length: count }, (_, i) => i);
+  const bMinX = [];
+  const bMaxX = [];
+  const bMinZ = [];
+  const bMaxZ = [];
+  const bLeft = []; // yaprakta: -1
+  const bRight = [];
+  const bStart = [];
+  const bEnd = [];
+  const buildNode = (lo, hi) => {
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let z0 = Infinity;
+    let z1 = -Infinity;
+    for (let k = lo; k < hi; k++) {
+      const i = order[k];
+      const ex = segAx[i] + segDx[i];
+      const ez = segAz[i] + segDz[i];
+      x0 = Math.min(x0, segAx[i], ex);
+      x1 = Math.max(x1, segAx[i], ex);
+      z0 = Math.min(z0, segAz[i], ez);
+      z1 = Math.max(z1, segAz[i], ez);
+    }
+    const id = bMinX.length;
+    bMinX.push(x0);
+    bMaxX.push(x1);
+    bMinZ.push(z0);
+    bMaxZ.push(z1);
+    bLeft.push(-1);
+    bRight.push(-1);
+    bStart.push(lo);
+    bEnd.push(hi);
+    if (hi - lo > LEAF) {
+      const alongX = x1 - x0 >= z1 - z0;
+      const mid = (lo + hi) >> 1;
+      const sub = order.slice(lo, hi).sort((a, b) => (alongX ? segAx[a] + segDx[a] / 2 - (segAx[b] + segDx[b] / 2) : segAz[a] + segDz[a] / 2 - (segAz[b] + segDz[b] / 2)));
+      for (let k = lo; k < hi; k++) order[k] = sub[k - lo];
+      bLeft[id] = buildNode(lo, mid);
+      bRight[id] = buildNode(mid, hi);
+    }
+    return id;
+  };
+  buildNode(0, count);
+  const boxDist2 = (n, x, z) => {
+    const dx = Math.max(bMinX[n] - x, 0, x - bMaxX[n]);
+    const dz = Math.max(bMinZ[n] - z, 0, z - bMaxZ[n]);
+    return dx * dx + dz * dz;
+  };
+  const stack = [];
+  let nBest = 0;
+  let nIdx = 0;
+  let nT = 0;
+  // En yakın segment (sonuç nBest/nIdx/nT'ye yazılır). Eşitlikte en küçük indeks kazanır (eski tarama sırası).
+  function nearest(x, z) {
+    let best = Infinity;
+    let bi = 0;
+    let bt = 0;
+    stack.length = 0;
+    stack.push(0);
+    while (stack.length) {
+      const n = stack.pop();
+      if (boxDist2(n, x, z) > best) continue;
+      if (bLeft[n] < 0) {
+        for (let k = bStart[n]; k < bEnd[n]; k++) {
+          const i = order[k];
+          const dx = segDx[i];
+          const dz = segDz[i];
+          const rx = x - segAx[i];
+          const rz = z - segAz[i];
+          let t = (rx * dx + rz * dz) * segInv[i];
+          t = t < 0 ? 0 : t > 1 ? 1 : t;
+          const ex = rx - dx * t;
+          const ez = rz - dz * t;
+          const d = ex * ex + ez * ez;
+          if (d < best || (d === best && i < bi)) {
+            best = d;
+            bi = i;
+            bt = t;
+          }
+        }
+      } else {
+        const l = bLeft[n];
+        const r = bRight[n];
+        // yakın çocuk en son itilir → önce o işlenir
+        if (boxDist2(l, x, z) <= boxDist2(r, x, z)) stack.push(r, l);
+        else stack.push(l, r);
+      }
+    }
+    nBest = best;
+    nIdx = bi;
+    nT = bt;
+  }
+
   function closest(x, z, hint = -1) {
     let best = Infinity;
     let bi = 0;
     let bt = 0;
-    const from = hint >= 0 ? hint - 12 : 0;
-    const to = hint >= 0 ? hint + 12 : count - 1;
-    for (let k = from; k <= to; k++) {
-      const i = k < 0 ? k + count : k >= count ? k - count : k;
-      const dx = segDx[i];
-      const dz = segDz[i];
-      const rx = x - segAx[i];
-      const rz = z - segAz[i];
-      let t = (rx * dx + rz * dz) * segInv[i];
-      t = t < 0 ? 0 : t > 1 ? 1 : t;
-      const ex = rx - dx * t;
-      const ez = rz - dz * t;
-      const d = ex * ex + ez * ez;
-      if (d < best) {
-        best = d;
-        bi = i;
-        bt = t;
+    if (hint >= 0) {
+      // Önceki konumun çevresindeki küçük pencere (yarış sırasında her karede)
+      for (let k = hint - 12; k <= hint + 12; k++) {
+        const i = k < 0 ? k + count : k >= count ? k - count : k;
+        const dx = segDx[i];
+        const dz = segDz[i];
+        const rx = x - segAx[i];
+        const rz = z - segAz[i];
+        let t = (rx * dx + rz * dz) * segInv[i];
+        t = t < 0 ? 0 : t > 1 ? 1 : t;
+        const ex = rx - dx * t;
+        const ez = rz - dz * t;
+        const d = ex * ex + ez * ez;
+        if (d < best) {
+          best = d;
+          bi = i;
+          bt = t;
+        }
       }
+      if (best > 900) return closest(x, z, -1); // ipucu penceresi pistten uzakta (kısayol): her yere bak
+    } else {
+      nearest(x, z);
+      best = nBest;
+      bi = nIdx;
+      bt = nT;
     }
-    if (hint >= 0 && best > 900) return closest(x, z, -1); // ipucu penceresi pistten uzakta (kısayol): her yere bak
     const a = points[bi];
     const b = points[bi + 1 < count ? bi + 1 : 0];
     const px = segAx[bi] + segDx[bi] * bt;
@@ -146,10 +265,14 @@ export function buildTrack(def, detail = {}) {
   }
 
   function insideLoop(x, z) {
+    const row = Math.floor((z - gMinZ) / CELL);
+    if (row < 0 || row >= gNz) return false; // hiçbir kenar bu z'yi kesmez
+    const list = zRows[row];
     let inside = false;
-    for (let i = 0, j = count - 1; i < count; j = i++) {
+    for (let n = 0; n < list.length; n++) {
+      const i = list[n];
       const a = points[i];
-      const b = points[j];
+      const b = points[i + 1 < count ? i + 1 : 0];
       if (a.z > z !== b.z > z && x < ((b.x - a.x) * (z - a.z)) / (b.z - a.z) + a.x) inside = !inside;
     }
     return inside;
