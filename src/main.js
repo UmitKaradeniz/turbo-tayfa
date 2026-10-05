@@ -986,6 +986,7 @@ if (session) {
   online = newOnline();
   net.code = session.code;
   net.token = session.token;
+  net.hostIdx = session.host ?? null;
   net.connect();
   menu.toast('Odaya yeniden bağlanılıyor…');
 } else if (invite) {
