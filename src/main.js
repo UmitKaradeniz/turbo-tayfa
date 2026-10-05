@@ -21,6 +21,7 @@ import { createDriver, driveInput, botEmote } from './ai.js';
 import { createEmoteBubbles } from './emotes.js';
 import { recordOf, submitTotal, createGhostRecorder, createGhost } from './records.js';
 import { awardRace, setTrackTotal, recordCupWin } from './progress.js';
+import { dailyDone } from './daily.js';
 import { activeCosmetics, tickCosmetics } from './cosmetics.js';
 import { createChat } from './ui/chat.js';
 import { Net } from './net.js';
@@ -581,7 +582,10 @@ function setupRace(order, laps) {
     if (e.kart === player) {
       if (resultsTimer === 0) {
         lastTotalRecord = submitTotal(trackDef.id, race.laps, e.finishTime);
-        raceReward = awardRace({ place, racers: order.length, timeTrial, newRecord: lastTotalRecord, trackId: trackDef.id, online: !!online, humans: online ? Math.max(0, humanKarts.size - 1) : 0, ...raceStats });
+        const daily = !online && !timeTrial && lastConfig?.daily && lastConfig.track === trackDef.id ? lastConfig.daily : null;
+        const dailyOk = daily ? dailyDone(daily, { place, ...raceStats }) : false;
+        raceReward = awardRace({ place, racers: order.length, timeTrial, newRecord: lastTotalRecord, trackId: trackDef.id, online: !!online, humans: online ? Math.max(0, humanKarts.size - 1) : 0, dailyKey: daily?.key, dailyOk, ...raceStats });
+        raceReward.dailyMiss = daily && !dailyOk ? daily.text : null;
         hud.finish(timeTrial ? (lastTotalRecord ? 1 : 2) : place);
         playMusic(null);
         play(place <= 3 ? 'finish_win' : 'finish');
@@ -602,7 +606,7 @@ async function startOfflineRace(config) {
   if (CUP_SETS[config.mode]) {
     if (!cup || cup.done || cup.mode !== config.mode) cup = { mode: config.mode, round: 0, tracks: [...CUP_SETS[config.mode]], points: new Map(), done: false };
   } else cup = null;
-  await loadTrack(cup ? cup.tracks[cup.round] : settings.track); // pist modelleri inmediyse bekle
+  await loadTrack(cup ? cup.tracks[cup.round] : config.track ?? settings.track); // pist modelleri inmediyse bekle
   lastConfig = config;
   player = kartOf(config.character);
   syncVehicles(player);
@@ -629,6 +633,7 @@ function showResults() {
   if (raceReward && !rewardShown) {
     rewardShown = true;
     hud.showReward(raceReward);
+    if (raceReward.dailyMiss) menu.toast(`📅 Günlük hedef tutmadı: ${raceReward.dailyMiss}. Tekrar dene!`);
   }
 }
 

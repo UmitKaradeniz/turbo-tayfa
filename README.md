@@ -9,6 +9,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 💨 Drift + 3 kademeli mini-turbo, başlangıç turbosu
 - 🏅 **Turbo Puan ve Garaj:** yarışlardan puan kazan, seviye atla; 14 kart boyası ve 8 drift/turbo izi seviyeyle açılır (Garaj ekranı, ilerleme tarayıcıda saklanır)
 - 🏆 **Başarımlar:** 24 rozet (ilk zafer, kestirmeci, nişancı, kupa…), her biri Turbo Puan verir
+- 📅 **Günlük meydan okuma:** her gün herkes için aynı pist ve hedef, seriyle artan Turbo Puan ödülü
 - 🗺️ **Mini harita:** her yarışçı hayvan kafasıyla ve sıra rozetiyle görünür (çevrimiçide arkadaşını da takip et)
 - 🛤️ Pist başına kısayol: hız tahtalı **kum yolu** (Palmiye Koyu), dereyi aşan **rampa** (Çam Vadisi), **buz geçidi** (Kar Zirvesi), kanalı aşan **servis yolu** (Neon Şehir)
 - 🎁 Itemler: Turbo Şişesi, Balon Kalkan, Hindistan Cevizi, Yağ Lekesi

@@ -9,7 +9,8 @@ import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
 import { toggleFullscreen } from './fullscreen.js';
-import { levelInfo, selection, setSelection, achievementList, bumpStat } from '../progress.js';
+import { levelInfo, selection, setSelection, achievementList, bumpStat, dailyState, dailyReward } from '../progress.js';
+import { dailyChallenge, dateKey } from '../daily.js';
 import { PAINTS, TRAILS } from '../cosmetics.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
@@ -75,6 +76,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
             <button class="tt-btn light" data-go="garage">🎨 Garaj</button>
             <button class="tt-btn light" data-go="achievements">🏅 Başarımlar</button>
           </div>
+          <button class="tt-btn light block daily-btn" data-go="daily">📅 Günlük Meydan Okuma<span class="dot"></span></button>
         </div>
       </div>
       <div class="corner"><button class="tt-btn ghost icon fs-btn" data-go="fullscreen" aria-label="Tam ekran">⛶</button><button class="tt-btn ghost icon" data-go="settings" aria-label="Ayarlar">⚙</button></div>
@@ -667,11 +669,45 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       .join('');
   };
 
-  const screens = [main, setup, garage, achScreen];
+  // ---------- Günlük meydan okuma ----------
+  const dailyScreen = h(`
+    <section id="screen-daily" class="tt-screen">
+      <div class="topbar">
+        <button class="tt-btn ghost icon" data-go="daily-back" aria-label="Geri">←</button>
+        <h1>Günlük Meydan Okuma</h1>
+        <span class="g-lv daily-streak"></span>
+      </div>
+      <div class="g-panel daily-panel"></div>
+    </section>`);
+  document.body.appendChild(dailyScreen);
+  let challenge = null;
+  const refreshDaily = () => {
+    challenge = dailyChallenge(tracks.map((t) => t.id), dateKey());
+    const st = dailyState(challenge.key);
+    main.querySelector('.daily-btn').classList.toggle('pending', !st.done);
+    return st;
+  };
+  const renderDaily = () => {
+    const st = refreshDaily();
+    const tr = tracks.find((t) => t.id === challenge.track);
+    dailyScreen.querySelector('.daily-streak').innerHTML = st.streak ? `🔥 <b>${st.streak}</b> gün` : 'Seri yok';
+    dailyScreen.querySelector('.daily-panel').innerHTML = `
+      <div class="d-track"><img src="${tr.preview}" alt="" /><div><b>${tr.name}</b><small>${challenge.laps} tur · ${DIFFICULTY[challenge.difficulty].label} zorluk</small></div></div>
+      <div class="d-goal"><small>Bugünün hedefi</small><b>${challenge.text}</b></div>
+      <p class="d-reward">Ödül: <b>+${dailyReward(st.streak + 1)} TP</b>${st.done ? '' : ` · seri her gün +20 TP artar (en çok 5 gün)`}</p>
+      <button class="tt-btn primary big block" data-go="daily-start">${st.done ? '✓ Bugün tamamlandı · yine oyna' : 'Başla ▶'}</button>
+      <p class="d-note">Hedef her gün yenilenir ve herkeste aynıdır. Ödül günde bir kez verilir; tamamlamazsan istediğin kadar tekrar deneyebilirsin.</p>`;
+  };
+  refreshDaily();
+
+  const screens = [main, setup, garage, achScreen, dailyScreen];
   let settingsFromPause = false;
   const show = (el) => {
     screens.forEach((s) => s.classList.toggle('show', s === el));
-    if (el === main) refreshLevel();
+    if (el === main) {
+      refreshLevel();
+      refreshDaily();
+    }
   };
 
   document.addEventListener('click', (e) => {
@@ -689,6 +725,20 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         show(garage);
         handlers.screen('garage');
         handlers.cosmetic?.();
+        break;
+      case 'daily':
+        renderDaily();
+        show(dailyScreen);
+        handlers.screen('garage');
+        break;
+      case 'daily-back':
+        show(main);
+        handlers.screen('main');
+        break;
+      case 'daily-start':
+        if (demandName()) break;
+        show(null);
+        handlers.start({ character: settings.character, laps: challenge.laps, difficulty: challenge.difficulty, mode: 'race', rivals: rivalIds, track: challenge.track, daily: challenge });
         break;
       case 'achievements':
         renderAch();

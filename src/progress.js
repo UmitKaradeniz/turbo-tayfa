@@ -1,10 +1,11 @@
 // Turbo Puan (TP), seviye, sayaçlar ve başarımlar. Yalnızca bu tarayıcıda saklanır (localStorage); hesap yok.
 import { ACHIEVEMENTS } from './achievements.js';
+import { dayNumber } from './daily.js';
 
 const KEY = 'tt-progress';
 const PLACE_TP = [100, 80, 65, 50, 40, 30, 25, 20];
 const FIRST_TRACK_TP = 30;
-const STAT_KEYS = ['finished', 'wins', 'podiums', 'streak', 'bestStreak', 'shortcuts', 'gold', 'hits', 'lapRecords', 'records', 'mt3', 'cups', 'bigCups', 'onlineRaces', 'onlineWins', 'styled'];
+const STAT_KEYS = ['finished', 'wins', 'podiums', 'streak', 'bestStreak', 'shortcuts', 'gold', 'hits', 'lapRecords', 'records', 'mt3', 'cups', 'bigCups', 'onlineRaces', 'onlineWins', 'styled', 'dailies', 'bestDaily'];
 
 function load() {
   try {
@@ -17,9 +18,10 @@ function load() {
       sel: { paint: d.sel?.paint ?? 'stock', trail: d.sel?.trail ?? 'classic' },
       stats,
       ach: d.ach && typeof d.ach === 'object' ? d.ach : {},
+      daily: { done: d.daily?.done ?? null, last: d.daily?.last ?? null, streak: Math.max(0, d.daily?.streak | 0) },
     };
   } catch {
-    return { tp: 0, tracks: {}, sel: { paint: 'stock', trail: 'classic' }, stats: Object.fromEntries([...STAT_KEYS.map((k) => [k, 0]), ['trackWins', {}]]), ach: {} };
+    return { tp: 0, tracks: {}, sel: { paint: 'stock', trail: 'classic' }, stats: Object.fromEntries([...STAT_KEYS.map((k) => [k, 0]), ['trackWins', {}]]), ach: {}, daily: { done: null, last: null, streak: 0 } };
   }
 }
 const data = load();
@@ -53,6 +55,15 @@ export function setSelection(kind, id) {
   data.sel[kind] = id;
   save();
 }
+
+// ---------- Günlük meydan okuma ----------
+// Bugün tamamlandı mı ve ardışık gün serisi (dün tamamlandıysa seri sürer)
+export function dailyState(key) {
+  const d = data.daily;
+  const alive = d.last && dayNumber(key) - dayNumber(d.last) <= 1;
+  return { done: d.done === key, streak: alive ? d.streak : 0 };
+}
+export const dailyReward = (streak) => 120 + 20 * Math.min(streak - 1, 5);
 
 // ---------- Başarımlar ----------
 let trackTotal = 13; // main.js pist sayısını bildirir (Gezgin başarımı)
@@ -143,6 +154,15 @@ export function awardRace(r) {
   if (r.online) {
     st.onlineRaces++;
     if (won && r.humans > 0) st.onlineWins++;
+  }
+
+  // Günlük meydan okuma hedefi tutturuldu (günde bir kez ödül)
+  if (r.dailyKey && r.dailyOk && data.daily.done !== r.dailyKey) {
+    const streak = dailyState(r.dailyKey).streak + 1;
+    data.daily = { done: r.dailyKey, last: r.dailyKey, streak };
+    st.dailies++;
+    st.bestDaily = Math.max(st.bestDaily, streak);
+    parts.push({ label: `📅 Günlük görev (${streak}. gün)`, tp: dailyReward(streak) });
   }
 
   const before = levelInfo();
