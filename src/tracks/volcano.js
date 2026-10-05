@@ -99,7 +99,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0x1d1618,
-      surprise: { skin: 'magma', f: 0.78 },
+      surprise: { skin: 'magma', f: 0.5 },
       edge: { keys: ['nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_tallE'], step: 4, scale: [5, 8] },
       botChance: 0.2,
     },

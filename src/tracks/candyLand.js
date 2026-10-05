@@ -76,7 +76,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0xe3b878,
-      surprise: { skin: 'gift', f: 0.78 },
+      surprise: { skin: 'gift', f: 0.5 },
       edge: { keys: ['tayfa/candy_cane', 'tayfa/swirl_lollipop', 'tayfa/gumdrop_cluster'], step: 7, scale: [14, 18] },
       botChance: 0.2,
     },

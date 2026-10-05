@@ -98,7 +98,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0x2a2a3a,
-      surprise: { skin: 'lantern', f: 0.78 },
+      surprise: { skin: 'lantern', f: 0.5 },
       edge: { keys: ['graveyard/fire-basket', 'halloween/shrine_candles', 'graveyard/coffin-old', 'graveyard/fire-basket'], step: 5, scale: [5, 7] },
       botChance: 0.2,
     },

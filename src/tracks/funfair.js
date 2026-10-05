@@ -81,7 +81,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0xc96a9a,
-      surprise: { skin: 'balloons', f: 0.78 },
+      surprise: { skin: 'balloons', f: 0.5 },
       edge: { keys: ['tayfa/balloon_bunch', 'coaster/flowers', 'tayfa/popcorn_cart', 'coaster/bench'], step: 5, scale: [6, 9] },
       botChance: 0.2,
     },

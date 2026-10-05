@@ -66,7 +66,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0xb98a5a,
-      surprise: { skin: 'pot', f: 0.78 },
+      surprise: { skin: 'pot', f: 0.5 },
       edge: { keys: ['tayfa/chimney_a', 'tayfa/chimney_b', 'tayfa/chimney_c'], step: 9, scale: [10, 15] },
       botChance: 0.2,
     },

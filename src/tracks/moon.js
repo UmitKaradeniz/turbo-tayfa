@@ -98,7 +98,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0x7d8696,
-      surprise: { skin: 'moon', f: 0.78 },
+      surprise: { skin: 'moon', f: 0.5 },
       edge: { keys: ['space/rock_crystalsLargeA', 'space/rock_crystalsLargeB', 'space/rock_crystals', 'space/rocks_smallA'], step: 5, scale: [7, 11] },
       botChance: 0.2,
     },

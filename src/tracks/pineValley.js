@@ -71,7 +71,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0x8a6b3f,
-      surprise: { skin: 'honey', f: 0.78 },
+      surprise: { skin: 'honey', f: 0.5 },
       edge: { keys: ['nature/log_stack', 'nature/stump_round', 'nature/mushroom_redGroup'], step: 5, scale: [4, 5.5] },
       botChance: 0.2,
     },

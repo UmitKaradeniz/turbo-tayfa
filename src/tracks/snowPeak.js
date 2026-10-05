@@ -87,7 +87,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0xbcd6ea,
-      surprise: { skin: 'ice', f: 0.78 },
+      surprise: { skin: 'ice', f: 0.5 },
       edge: { keys: ['nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_largeC', 'holiday/lantern'], step: 4, scale: [4.5, 6] },
       botChance: 0.2,
     },

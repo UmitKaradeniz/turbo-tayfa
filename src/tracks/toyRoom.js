@@ -73,7 +73,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0xd9a066,
-      surprise: { skin: 'jack', f: 0.78 },
+      surprise: { skin: 'jack', f: 0.5 },
       edge: { keys: ['furniture/cardboardBoxOpen', 'tayfa/alphabet_block', 'furniture/cardboardBoxClosed', 'tayfa/spinning_top'], step: 6, scale: [18, 23] },
       botChance: 0.2,
     },

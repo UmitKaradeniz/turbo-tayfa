@@ -75,7 +75,7 @@ export default {
       halfWidth: 5,
       surface: 'road',
       color: 0x30364a,
-      surprise: { skin: 'neon', f: 0.78 },
+      surprise: { skin: 'neon', f: 0.5 },
       edge: { keys: ['tayfa/vending_machine', 'tayfa/traffic_cone', 'tayfa/tire_stack'], step: 4, scale: [3.4, 4] },
       botChance: 0.2,
     },

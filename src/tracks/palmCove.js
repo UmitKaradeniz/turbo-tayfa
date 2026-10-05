@@ -71,7 +71,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0x9a6b3a,
-      surprise: { skin: 'chest', f: 0.78 },
+      surprise: { skin: 'chest', f: 0.5 },
       edge: { keys: ['pirate/barrel', 'pirate/crate', 'pirate/crate-bottles'], step: 5, scale: [3, 3.6] },
       botChance: 0.2,
     },

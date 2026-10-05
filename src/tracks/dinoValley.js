@@ -101,7 +101,7 @@ export default {
       halfWidth: 5,
       surface: 'dirt',
       color: 0x8a7a4a,
-      surprise: { skin: 'egg', f: 0.78 },
+      surprise: { skin: 'egg', f: 0.5 },
       edge: { keys: ['nat2/Rock_Moss_1', 'nat2/Rock_Moss_2', 'nat2/Cactus_1', 'nat2/Plant_2'], step: 5, scale: [4, 7] },
       botChance: 0.2,
     },

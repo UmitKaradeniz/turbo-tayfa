@@ -95,7 +95,7 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
     arch.rotation.y = Math.atan2(-a.fx, -a.fz); // yerel X ekseni yolun sağ vektörüne bakar
     scene.add(arch);
     extras.push(arch);
-    const q = sc.pointAt(sc.length * (sp.f ?? 0.78));
+    const q = sc.pointAt(sc.length * (sp.f ?? 0.5));
     const pos = new THREE.Vector3(q.x, q.y + 1.5, q.z);
     const mesh = createGoldBox(sp.skin);
     mesh.position.copy(pos);
