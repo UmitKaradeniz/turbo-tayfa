@@ -83,6 +83,7 @@ export class Net {
     this.wsKey = key;
     this.st = { last: 0, lastSrv: 0, gaps: [], win: [] };
     ws.onopen = () => {
+      if (this.ws !== ws) return; // bu arada bırakılmış eski bağlantı
       this.connected = true;
       this.retry = 0;
       this.sync();
@@ -92,6 +93,7 @@ export class Net {
       this.emit('open');
     };
     ws.onmessage = (e) => {
+      if (this.ws !== ws) return;
       let msg;
       try {
         msg = JSON.parse(e.data);
@@ -113,6 +115,7 @@ export class Net {
       this.emit(msg.type, msg);
     };
     ws.onclose = () => {
+      if (this.ws !== ws) return;
       const was = this.connected;
       this.connected = false;
       if (was) this.emit('disconnect');
@@ -132,6 +135,7 @@ export class Net {
     this.ws.close();
     this.ws = null;
     this.connected = false;
+    clearInterval(this.syncTimer);
   }
 
   // Oda ile ilgili mesajlar bağlantı yoksa kuyruğa alınır
@@ -168,7 +172,8 @@ export class Net {
     this.code = this.token = this.id = null;
     this.saveSession();
     this.queue.length = 0;
-    this.ws?.close();
+    // Kapanışı beklemeden bırak: hemen ardından yeni oda kurulursa eski (kapanmakta olan) bağlantıya yazılıp mesaj kaybolmasın
+    this.dropSocket();
   }
 
   // Saat senkronu: birkaç ping atıp en düşük gecikmeli olanı kullan
