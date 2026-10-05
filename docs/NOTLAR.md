@@ -14,7 +14,7 @@
 Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyken animasyon/rAF ilerlemez. Botlar iniş hız bonusunu tam kullanmaz.
 
 ## Fikir listesi (sorulmadan başlama)
-Çok bölgeli tek pist (liman→şehir→sahil→orman; mimari pist başına tek tema, büyük refaktör); Orman Geçidi pisti (çamur, kristalli mağara tüneli, çıkışta güneş patlaması beyazlaması); köprüde uçarak geçme; Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA; başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
+Çok bölgeli tek pist (liman→şehir→sahil→orman; mimari pist başına tek tema, büyük refaktör); Orman Geçidi pisti (çamur, kristalli mağara tüneli, çıkışta güneş patlaması beyazlaması); köprüde uçarak geçme; Çöl Kanyonu pisti; gamepad + erişilebilirlik ayarları; PWA (ertelendi: iPhone Safari'de Tam Ekran API'si yok, tek çözüm "Ana Ekrana Ekle"; gerekenler: manifest display fullscreen/landscape, apple-mobile-web-app meta, kodla üretilen simgeler, iOS Safari'de ipucu. Sınır: kullanıcı elle eklemeli, ana ekran sürümünün localStorage'ı Safari'ninkinden ayrı olduğundan puan/ayar sıfırdan başlar); başarımlar; hava durumu; gökyüzü yansıması (PMREM); hareketli dinozorlar.
 
 ## Son değişiklikler
 - v1.70.1 Yarışta tam ekran düğmesi: duraklat düğmesinin hemen solunda (`#hud-fs`, yalnız dokunmatikte), aynı düğme tam ekrandan da çıkarır (`src/ui/fullscreen.js` `toggleFullscreen`, `html.fs-on` ikon değişimi); menüdeki ⛶ de artık aç/kapat yapar. Tam ekran API'si olmayan tarayıcıda (iPhone Safari) gizlenir
