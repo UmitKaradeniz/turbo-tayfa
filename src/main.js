@@ -1366,7 +1366,7 @@ function updateHud(dt) {
   hud.setPosition(race.positionOf(player), activeKarts.length);
   hud.setLap(Math.min(race.laps, Math.max(1, entry.lapsDone + 1)), race.laps);
   hud.setTime(entry.finishTime ?? Math.max(0, race.clock));
-  hud.setDelta(race.started && entry.finishTime === null ? delta.update(player, race.clock - entry.lapStart) : null);
+  hud.setDelta(timeTrial && race.started && entry.finishTime === null ? delta.update(player, race.clock - entry.lapStart) : null);
   const speed = Math.abs(player.speed);
   hud.setSpeed(speed * 3.6, speed / KART.maxSpeed, player.boostTime > 0);
   minimap.draw(activeKarts.map((k) => ({ x: k.position.x, z: k.position.z, id: k.character.id, color: k.character.color, me: k === player, human: k !== player && humanKarts.has(k), place: race.positionOf(k) })), performance.now() / 1000);
