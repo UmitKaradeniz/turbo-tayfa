@@ -20,7 +20,7 @@ import { Race } from './race.js';
 import { createDriver, driveInput, botEmote } from './ai.js';
 import { createEmoteBubbles } from './emotes.js';
 import { recordOf, submitTotal, createGhostRecorder, createGhost } from './records.js';
-import { awardRace } from './progress.js';
+import { awardRace, setTrackTotal, recordCupWin } from './progress.js';
 import { activeCosmetics, tickCosmetics } from './cosmetics.js';
 import { createChat } from './ui/chat.js';
 import { Net } from './net.js';
@@ -31,7 +31,7 @@ import { createMinimap } from './ui/minimap.js';
 import { createNameplates } from './ui/nameplates.js';
 import { createHazards, hazardModelKeys } from './hazards.js';
 import { createVolcanoShow } from './volcano.js';
-import { renderPortraits } from './ui/portraits.js';
+import { renderPortraits, renderHeads } from './ui/portraits.js';
 import { PODIUM_MODELS } from './ui/podium3d.js';
 import { createTouchControls, isTouchDevice } from './ui/touch.js';
 import { initTilt } from './tilt.js';
@@ -115,6 +115,7 @@ let booted = false; // menü kurulurken (henüz pist yokken) sahne işlemleri at
 
 // --- Arayüz ---
 const portraits = renderPortraits(renderer, CHARACTERS);
+const heads = renderHeads(renderer, CHARACTERS); // mini harita kafaları
 const hud = createHud({ portraits, minimap: null, itemIcons: ITEM_ICONS });
 const touch = createTouchControls();
 initTilt();
@@ -126,11 +127,12 @@ const previewOf = (id) => `/previews/${id}.jpg`;
 
 // Menüdeki pist küçük resimleri (sadece orta çizgiden)
 const trackCounts = {}; // pist → orta çizgi örnek sayısı (kupada sunucu ilerleme doğrulaması için)
+setTrackTotal(TRACK_IDS.length);
 const trackCards = TRACK_IDS.map((id) => {
   const def = TRACKS[id];
   const outline = trackOutline(def);
   trackCounts[id] = outline.centerline.length;
-  const thumb = createMinimap(outline, 72);
+  const thumb = createMinimap(outline, { size: 72, theme: 'plain', shortcuts: 'dash' });
   thumb.draw([]);
   return { id, name: def.name, meta: `${Math.round(outline.length)} m · ${def.meta}`, thumb: thumb.canvas.toDataURL(), preview: previewOf(id) };
 });
@@ -343,6 +345,7 @@ function buildTrackNow(def) {
     // İsabet: vuran bot sevinir, vurulan bot kızar (kişiliğe göre)
     onHit: (victim, owner, result) => {
       if (result !== 'hit') return;
+      if (owner === player && victim !== player) raceStats.hits++;
       if (owner && owner !== victim) botReact(owner, 'hitOther', 300);
       botReact(victim, 'gotHit', 500);
     },
@@ -353,7 +356,7 @@ function buildTrackNow(def) {
     },
   });
   mark('oyun nesneleri');
-  minimap = createMinimap(track);
+  minimap = createMinimap(track, { heads, theme: 'glass', shortcuts: 'dash' });
   hud.setMinimap(minimap);
   if (!race) showMenuField();
   mark('harita');
@@ -390,7 +393,8 @@ let timeTrial = false; // Zamana Karşı modu (tek oyunculu, botsuz, itemsiz)
 let ghost = null; // rekor turun hayaleti
 let lastTotalRecord = false;
 // Turbo Puan: yarış boyu sayaçlar, bitişte verilen ödül ve sonuç ekranında gösterildi mi
-let raceStats = { shortcuts: 0, gold: 0, lapRecords: 0 };
+const humanKarts = new Set(); // çevrimiçi gerçek oyuncuların kartları (mini haritada beyaz halka)
+let raceStats = { shortcuts: 0, gold: 0, lapRecords: 0, hits: 0, mt3: 0 };
 let raceReward = null;
 let rewardShown = false;
 const recorder = createGhostRecorder();
@@ -516,7 +520,7 @@ function setupRace(order, laps) {
   emotes.clear();
   chat.setRacing(true);
   lastTotalRecord = false;
-  raceStats = { shortcuts: 0, gold: 0, lapRecords: 0 };
+  raceStats = { shortcuts: 0, gold: 0, lapRecords: 0, hits: 0, mt3: 0 };
   raceReward = null;
   rewardShown = false;
   hazards.reset();
@@ -575,7 +579,7 @@ function setupRace(order, laps) {
     if (e.kart === player) {
       if (resultsTimer === 0) {
         lastTotalRecord = submitTotal(trackDef.id, race.laps, e.finishTime);
-        raceReward = awardRace({ place, racers: order.length, timeTrial, newRecord: lastTotalRecord, trackId: trackDef.id, ...raceStats });
+        raceReward = awardRace({ place, racers: order.length, timeTrial, newRecord: lastTotalRecord, trackId: trackDef.id, online: !!online, humans: online ? Math.max(0, humanKarts.size - 1) : 0, ...raceStats });
         hud.finish(timeTrial ? (lastTotalRecord ? 1 : 2) : place);
         playMusic(null);
         play(place <= 3 ? 'finish_win' : 'finish');
@@ -658,6 +662,17 @@ function renderResults() {
 const characterName = (id) => CHARACTERS.find((c) => c.id === id)?.name ?? id;
 const cupRow = (id, name, me, total, pts) => ({ id, name, me, right: `${total} puan`, sub: pts ? `+${pts}` : '' });
 
+// Kupa kazanma başarımı (kupa başına bir kez)
+let cupWinPaid = null;
+function payCupWin(key, mode) {
+  if (cupWinPaid === key) return;
+  cupWinPaid = key;
+  announceBadges(recordCupWin(mode === 'bigCup' ? 'bigCup' : 'cup'));
+}
+function announceBadges({ fresh }) {
+  fresh.forEach((a, i) => setTimeout(() => menu.toast(`${a.icon} Başarım: ${a.name} (+${a.tp} TP)`), i * 900));
+}
+
 // Tek oyunculu: kupa puan tablosu (bitmemiş yarışçılar anlık sıraya göre geçici puan alır)
 function offlineCupView(standings, me) {
   const final = cup.round >= cup.tracks.length - 1;
@@ -671,6 +686,7 @@ function offlineCupView(standings, me) {
     .map((r) => cupRow(r.e.kart.character.id, displayNames.get(r.e.kart) ?? r.e.kart.character.name, r.e.kart === player, r.total, r.pts));
   if (final) cup.done = true;
   const running = standings.filter((e) => e.finishTime === null).length;
+  if (final && !running && rows[0].me) payCupWin(cup, cup.mode);
   const place = `${trackDef.name} · ${me}. oldun${running ? ' · diğerleri hâlâ yarışıyor' : ''}`;
   return {
     rows,
@@ -689,6 +705,7 @@ function onlineCupView(standings, me) {
     return { rows, subtitle: `${trackDef.name} · ${me}. oldun`, opts: { title: `Pist ${info.round + 1}/${info.total}`, next: 'wait', waitText: 'Diğerleri bitiriyor…' } };
   }
   const rows = c.standings.map((s) => cupRow(s.character, s.name ?? characterName(s.character), s.character === player.character.id, s.total, s.pts));
+  if (c.final && rows[0].me) payCupWin(c, online.room?.settings?.mode);
   const place = `${trackDef.name} · ${me}. oldun`;
   return {
     rows,
@@ -790,10 +807,14 @@ async function startOnlineRace(msg) {
   drivers = new Map(order.map((k, i) => [k, createDriver(i + 1 + (msg.goAt % 1000), skill, k.character.personality)]));
   displayNames = new Map();
   nameplates.clear();
+  humanKarts.clear();
   for (const e of msg.entrants) {
     const kart = online.kartById.get(e.id);
     displayNames.set(kart, e.bot ? kart.character.name : e.name);
-    if (!e.bot) nameplates.set(kart, e.name); // sadece gerçek oyuncuların üstünde isim yazar
+    if (!e.bot) {
+      nameplates.set(kart, e.name); // sadece gerçek oyuncuların üstünde isim yazar
+      humanKarts.add(kart);
+    }
   }
 
   menu.hideAll();
@@ -1147,6 +1168,7 @@ function frame(now) {
       fx.event(kart, ev);
       kartSound(kart, ev);
       if (kart === player) driftCoach(ev);
+      if (kart === player && ev === 'miniTurbo3' && race?.started) raceStats.mt3++;
     }
     if (kart === player && kart.drifting && driftPulse) setDriftPulse(false);
     kart.events.length = 0;
@@ -1324,7 +1346,7 @@ function updateHud(dt) {
   hud.setTime(entry.finishTime ?? Math.max(0, race.clock));
   const speed = Math.abs(player.speed);
   hud.setSpeed(speed * 3.6, speed / KART.maxSpeed, player.boostTime > 0);
-  minimap.draw(activeKarts.map((k) => ({ x: k.position.x, z: k.position.z, color: k.character.color, me: k === player })));
+  minimap.draw(activeKarts.map((k) => ({ x: k.position.x, z: k.position.z, id: k.character.id, color: k.character.color, me: k === player, human: k !== player && humanKarts.has(k), place: race.positionOf(k) })), performance.now() / 1000);
   if (resultsTimer > 0 && !paused) {
     resultsTimer -= dt;
     if (resultsTimer <= 0) {

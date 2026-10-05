@@ -367,7 +367,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     // Yarış ödülü: "+N TP", kalemler ve seviye çubuğu (bar eski orandan yeniye dolar)
     showReward(rw) {
       const box = results.querySelector('.reward');
-      const chips = rw.parts.map((p) => `<span>${p.label} <b>+${p.tp}</b></span>`).join('');
+      const chips = rw.parts.map((p) => `<span${p.badge ? ' class="bd"' : ''}>${p.label} <b>+${p.tp}</b></span>`).join('');
       box.innerHTML = `
         <div class="rw-top"><span class="rw-gain">+${rw.gain} TP</span><span class="rw-lv">Seviye <b>${rw.before.level}</b></span></div>
         <div class="rw-bar"><i style="width:${rw.before.frac * 100}%"></i></div>

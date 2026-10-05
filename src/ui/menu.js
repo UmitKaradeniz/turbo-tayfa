@@ -8,7 +8,7 @@ import { QUALITY, saveQuality, saveGfx, GFX_DEFAULTS } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
-import { levelInfo, selection, setSelection } from '../progress.js';
+import { levelInfo, selection, setSelection, achievementList, bumpStat } from '../progress.js';
 import { PAINTS, TRAILS } from '../cosmetics.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
@@ -61,15 +61,19 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         <div class="lv-row enter" title="Turbo Puan"><span class="lv-badge">Sv <b></b></span><div class="lv-bar"><i></i></div><small class="lv-tp"></small></div>
         <div class="name-row enter">
           <label for="tt-name">Takma adın</label>
-          <input id="tt-name" class="tt-input" maxlength="14" placeholder="Pilot" autocomplete="off" />
+          <input id="tt-name" class="tt-input" maxlength="14" placeholder="İsmini yaz" autocomplete="off" />
         </div>
+        <div class="name-hint enter" role="alert">✏️ Bir isim belirle</div>
         <div class="buttons enter">
           <button class="tt-btn primary big block" data-go="quick">▶ Hızlı Yarış</button>
           <div class="row2">
             <button class="tt-btn light" data-go="host">Oda Kur</button>
             <button class="tt-btn light" data-go="join">Odaya Katıl</button>
           </div>
-          <button class="tt-btn light block" data-go="garage">🎨 Garaj</button>
+          <div class="row2">
+            <button class="tt-btn light" data-go="garage">🎨 Garaj</button>
+            <button class="tt-btn light" data-go="achievements">🏅 Başarımlar</button>
+          </div>
         </div>
       </div>
       <div class="corner"><button class="tt-btn ghost icon fs-btn" data-go="fullscreen" aria-label="Tam ekran">⛶</button><button class="tt-btn ghost icon" data-go="settings" aria-label="Ayarlar">⚙</button></div>
@@ -92,7 +96,26 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   document.body.appendChild(main);
   const nameInput = main.querySelector('#tt-name');
   nameInput.value = settings.name;
-  nameInput.addEventListener('input', () => saveSettings({ name: nameInput.value.trim().slice(0, 14) }));
+  // İsim zorunlu: boşken yarış/oda düğmeleri soluk, altta "Bir isim belirle" uyarısı
+  const hasName = () => settings.name.trim().length > 0;
+  const refreshNameGate = () => {
+    main.classList.toggle('need-name', !hasName());
+    for (const b of main.querySelectorAll('[data-go="quick"], [data-go="host"], [data-go="join"]')) b.setAttribute('aria-disabled', hasName() ? 'false' : 'true');
+  };
+  const demandName = () => {
+    if (hasName()) return false;
+    toast('Önce bir isim belirle!');
+    nameInput.focus();
+    nameInput.classList.remove('shake');
+    void nameInput.offsetWidth;
+    nameInput.classList.add('shake');
+    return true;
+  };
+  nameInput.addEventListener('input', () => {
+    saveSettings({ name: nameInput.value.trim().slice(0, 14) });
+    refreshNameGate();
+  });
+  refreshNameGate();
 
   // Letter delays for the logo wave
   main.querySelectorAll('.tt-logo span span').forEach((s, i) => (s.style.animationDelay = `${i * 0.08}s`));
@@ -618,9 +641,32 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     setSelection(t.dataset.kind, def.id);
     renderGarage();
     handlers.cosmetic?.();
+    if (def.id !== 'stock' && def.id !== 'classic') bumpStat('styled').fresh.forEach((a, i) => setTimeout(() => toast(`${a.icon} Başarım: ${a.name} (+${a.tp} TP)`), i * 900));
   });
 
-  const screens = [main, setup, garage];
+  // ---------- Başarımlar ----------
+  const achScreen = h(`
+    <section id="screen-ach" class="tt-screen">
+      <div class="topbar">
+        <button class="tt-btn ghost icon" data-go="ach-back" aria-label="Geri">←</button>
+        <h1>Başarımlar</h1>
+        <span class="g-lv ach-count"></span>
+      </div>
+      <div class="g-panel ach-list"></div>
+    </section>`);
+  document.body.appendChild(achScreen);
+  const renderAch = () => {
+    const list = achievementList();
+    achScreen.querySelector('.ach-count').innerHTML = `<b>${list.filter((a) => a.done).length}</b>/${list.length}`;
+    achScreen.querySelector('.ach-list').innerHTML = [...list].sort((a, b) => b.done - a.done)
+      .map((a) => {
+        const [cur, max] = a.progress ?? [a.done ? 1 : 0, 1];
+        return `<div class="ach${a.done ? ' done' : ''}"><span class="ico">${a.icon}</span><div class="txt"><b>${a.name}</b><small>${a.desc}</small>${a.done ? '' : `<div class="bar"><i style="width:${Math.round((cur / max) * 100)}%"></i></div>`}</div><span class="tp">${a.done ? '✓' : `+${a.tp} TP`}</span></div>`;
+      })
+      .join('');
+  };
+
+  const screens = [main, setup, garage, achScreen];
   let settingsFromPause = false;
   const show = (el) => {
     screens.forEach((s) => s.classList.toggle('show', s === el));
@@ -632,6 +678,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     if (!go) return;
     switch (go) {
       case 'quick':
+        if (demandName()) break;
         setStep(1);
         show(setup);
         handlers.screen('setup');
@@ -641,6 +688,15 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         show(garage);
         handlers.screen('garage');
         handlers.cosmetic?.();
+        break;
+      case 'achievements':
+        renderAch();
+        show(achScreen);
+        handlers.screen('garage');
+        break;
+      case 'ach-back':
+        show(main);
+        handlers.screen('main');
         break;
       case 'garage-back':
         show(main);
@@ -676,6 +732,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         rerollRivals();
         break;
       case 'host':
+        if (demandName()) break;
         handlers.host();
         break;
       case 'copy-code':
@@ -698,12 +755,18 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
           .catch(() => {});
         break;
       case 'join':
+        if (demandName()) break;
         joinModal.classList.add('show');
         setTimeout(() => codeInput.focus(), 50);
         break;
       case 'join-confirm':
         if (codeInput.value.length < 4) {
           toast('Oda kodu en az 4 karakter olmalı.');
+          break;
+        }
+        if (!hasName()) {
+          joinModal.classList.remove('show'); // davet linkiyle gelindiyse isim kutusu pencerenin arkasında kalır
+          demandName();
           break;
         }
         joinModal.classList.remove('show');
