@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { driftLevel } from './kart.js';
+import { trailOf, rainbowColor } from './cosmetics.js';
 
 // Basit parçacık sistemi: tek bir THREE.Points, sabit havuz, CPU'da güncelleme.
 // Sprite'lar tek bir atlastan (public/fx/particles.png, Kenney Particle Pack, CC0) gelir: 4x2 hücre.
@@ -156,6 +157,16 @@ const SURF_FX = {
 };
 const ICE_SPARK = new THREE.Color(1.6, 2.2, 3.0);
 
+// Kartın seçtiği iz (cosmetics.js): drift kıvılcımı kademe rengi ve turbo alevi
+const sparkColor = (kart, level) => {
+  const t = trailOf(kart.trail);
+  return t.rainbow ? rainbowColor(level * 0.12) : t.sparks?.[level - 1] ?? SPARK_COLORS[level - 1];
+};
+const flameColor = (kart, i) => {
+  const t = trailOf(kart.trail);
+  return t.rainbow ? rainbowColor(i * 0.5) : t.flame?.[i % 2] ?? FLAME[i % 2];
+};
+
 
 export function createKartEffects(scene, quality) {
   const smoke = new Particles(Math.round(500 * quality.particles), { drag: 1.2, gravity: -1.2, frames: [FRAME.SMOKE_A, FRAME.SMOKE_B] });
@@ -191,7 +202,7 @@ export function createKartEffects(scene, quality) {
           if (level > 0 && Math.random() < 55 * dt * rate) {
             const side = Math.sign(local.x) * kart.driftDir;
             _v.set(-kart.velocity.x * 0.1 + (Math.random() - 0.5) * 3, 2 + Math.random() * 3, -kart.velocity.z * 0.1 + (Math.random() - 0.5) * 3);
-            sparks.emit(_p, _v, { life: 0.3 + Math.random() * 0.2, size: side > 0 ? 0.45 : 0.3, sizeEnd: 0.05, color: SPARK_COLORS[level - 1] });
+            sparks.emit(_p, _v, { life: 0.3 + Math.random() * 0.2, size: side > 0 ? 0.45 : 0.3, sizeEnd: 0.05, color: sparkColor(kart, level) });
           }
         } else if (kart.surface === 'hot' && kart.grounded && speed > 4) {
           // Kızgın zemin: tekerlerden turuncu kor kıvılcımları
@@ -225,14 +236,14 @@ export function createKartEffects(scene, quality) {
         _p.copy(exhaust);
         kart.model.body.localToWorld(_p);
         _v.set(-Math.sin(kart.heading) * 6 + (Math.random() - 0.5) * 2, 0.5 + Math.random(), -Math.cos(kart.heading) * 6 + (Math.random() - 0.5) * 2);
-        sparks.emit(_p, _v, { life: 0.2 + Math.random() * 0.1, size: 1.15, sizeEnd: 0.25, color: FLAME[i % 2] });
+        sparks.emit(_p, _v, { life: 0.2 + Math.random() * 0.1, size: 1.15, sizeEnd: 0.25, color: flameColor(kart, i) });
       }
     },
 
     // Kart olayları: mini-turbo, isabet, kalkanın patlaması
     event(kart, name) {
       _p.copy(kart.object.position).setY(kart.object.position.y + 1);
-      if (name.startsWith('miniTurbo')) burst(_p, SPARK_COLORS[Number(name.slice(-1)) - 1], 18, 7, 4);
+      if (name.startsWith('miniTurbo')) burst(_p, sparkColor(kart, Number(name.slice(-1))), 18, 7, 4);
       else if (name === 'pad') burst(_p, SPARK_COLORS[1], 16, 8, 4);
       else if (name === 'airBoost') burst(_p.setY(_p.y - 0.6), SPARK_COLORS[2], 26, 9, 5);
       else if (name === 'bounce') burst(_p.setY(_p.y - 0.4), SPARK_COLORS[2], 20, 7, 5);

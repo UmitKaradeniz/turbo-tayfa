@@ -8,7 +8,8 @@ import { QUALITY, saveQuality, saveGfx, GFX_DEFAULTS } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
-import { levelInfo } from '../progress.js';
+import { levelInfo, selection, setSelection } from '../progress.js';
+import { PAINTS, TRAILS } from '../cosmetics.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
 // Oyun mantığı bilmez; seçimleri geri çağrılarla (handlers) bildirir.
@@ -68,6 +69,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
             <button class="tt-btn light" data-go="host">Oda Kur</button>
             <button class="tt-btn light" data-go="join">Odaya Katıl</button>
           </div>
+          <button class="tt-btn light block" data-go="garage">🎨 Garaj</button>
         </div>
       </div>
       <div class="corner"><button class="tt-btn ghost icon fs-btn" data-go="fullscreen" aria-label="Tam ekran">⛶</button><button class="tt-btn ghost icon" data-go="settings" aria-label="Ayarlar">⚙</button></div>
@@ -572,7 +574,53 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
     main.querySelector('.lv-tp').textContent = `${lv.cur}/${lv.need} TP`;
   };
   refreshLevel();
-  const screens = [main, setup];
+
+  // ---------- Garaj: boya ve iz seçimi (kart canlı sahnede önizlenir) ----------
+  const garage = h(`
+    <section id="screen-garage" class="tt-screen">
+      <div class="topbar">
+        <button class="tt-btn ghost icon" data-go="garage-back" aria-label="Geri">←</button>
+        <h1>Garaj</h1>
+        <span class="g-lv"></span>
+      </div>
+      <div class="g-panel">
+        <p class="g-next"></p>
+        <h3>Boya</h3>
+        <div class="g-grid" data-kind="paint"></div>
+        <h3>İz <small>(drift kıvılcımı ve turbo alevi)</small></h3>
+        <div class="g-grid" data-kind="trail"></div>
+      </div>
+    </section>`);
+  document.body.appendChild(garage);
+  const renderGarage = () => {
+    const lv = levelInfo().level;
+    const sel = selection();
+    garage.querySelector('.g-lv').innerHTML = `Seviye <b>${lv}</b>`;
+    const tile = (kind, d) => {
+      const locked = d.lv > lv;
+      const on = sel[kind] === d.id && !locked;
+      const bg = d.swatch.length > 1 ? `linear-gradient(135deg, ${d.swatch.join(', ')})` : d.swatch[0];
+      return `<button class="g-tile${on ? ' on' : ''}${locked ? ' locked' : ''}" data-kind="${kind}" data-id="${d.id}"><i style="background:${bg}"></i><b>${d.name}</b><small>${locked ? `🔒 Sv ${d.lv}` : on ? '✓ Seçili' : ''}</small></button>`;
+    };
+    garage.querySelector('[data-kind="paint"]').innerHTML = PAINTS.map((d) => tile('paint', d)).join('');
+    garage.querySelector('[data-kind="trail"]').innerHTML = TRAILS.map((d) => tile('trail', d)).join('');
+    const next = [...PAINTS.map((d) => ({ ...d, what: 'boya' })), ...TRAILS.map((d) => ({ ...d, what: 'iz' }))].filter((d) => d.lv > lv).sort((a, b) => a.lv - b.lv)[0];
+    garage.querySelector('.g-next').textContent = next ? `Sıradaki: Seviye ${next.lv} → ${next.name} ${next.what}` : 'Tüm boya ve izler açık!';
+  };
+  garage.addEventListener('click', (e) => {
+    const t = e.target.closest('.g-tile');
+    if (!t) return;
+    const def = (t.dataset.kind === 'paint' ? PAINTS : TRAILS).find((d) => d.id === t.dataset.id);
+    if (def.lv > levelInfo().level) {
+      toast(`Seviye ${def.lv}'de açılır. Yarışarak Turbo Puan kazan!`);
+      return;
+    }
+    setSelection(t.dataset.kind, def.id);
+    renderGarage();
+    handlers.cosmetic?.();
+  });
+
+  const screens = [main, setup, garage];
   let settingsFromPause = false;
   const show = (el) => {
     screens.forEach((s) => s.classList.toggle('show', s === el));
@@ -587,6 +635,16 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         setStep(1);
         show(setup);
         handlers.screen('setup');
+        break;
+      case 'garage':
+        renderGarage();
+        show(garage);
+        handlers.screen('garage');
+        handlers.cosmetic?.();
+        break;
+      case 'garage-back':
+        show(main);
+        handlers.screen('main');
         break;
       case 'wiz-next':
         setStep(step + 1);

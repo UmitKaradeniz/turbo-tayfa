@@ -6,9 +6,13 @@ const FIRST_TRACK_TP = 30;
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { tp: Math.max(0, d.tp | 0), tracks: d.tracks && typeof d.tracks === 'object' ? d.tracks : {} };
+    return {
+      tp: Math.max(0, d.tp | 0),
+      tracks: d.tracks && typeof d.tracks === 'object' ? d.tracks : {},
+      sel: { paint: d.sel?.paint ?? 'stock', trail: d.sel?.trail ?? 'classic' },
+    };
   } catch {
-    return { tp: 0, tracks: {} };
+    return { tp: 0, tracks: {}, sel: { paint: 'stock', trail: 'classic' } };
   }
 }
 const data = load();
@@ -20,8 +24,8 @@ function save() {
   }
 }
 
-// Seviye L'ye geçmek için gereken TP: 200 + 50*L (1→2: 250, 2→3: 300 ...)
-const need = (level) => 200 + 50 * level;
+// Seviye L'ye geçmek için gereken TP: 200 + 30*L (1→2: 230, 2→3: 260 ...); seviye 16 ≈ 6600 TP ≈ 60 yarış
+const need = (level) => 200 + 30 * level;
 
 // Toplam TP'den seviye, o seviyedeki ilerleme ve çubuk oranı
 export function levelInfo(tp = data.tp) {
@@ -35,6 +39,13 @@ export function levelInfo(tp = data.tp) {
 }
 
 export const totalTp = () => data.tp;
+
+// Seçili kozmetikler: { paint, trail }. Kilidi açık mı kontrolü cosmetics.js'te (seviye gerekir).
+export const selection = () => ({ ...data.sel });
+export function setSelection(kind, id) {
+  data.sel[kind] = id;
+  save();
+}
 
 // Bir yarış sonunda puan ver. `r`: { place, racers, timeTrial, newRecord, lapRecords, shortcuts, gold, trackId }
 // Dönüş: { gain, parts: [{label, tp}], before, after, levelUp }

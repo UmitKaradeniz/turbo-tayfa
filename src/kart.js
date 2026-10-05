@@ -96,6 +96,7 @@ export class Kart {
 
     this.airTime = 0; // havada geçen süre (def.airBoost pistlerinde uzun uçuş inişte turbo verir)
     this.bodyOverride = null;
+    this.trail = 'classic'; // drift/turbo izi (cosmetics.js TRAILS)
     this.vehicle = defaultVehicleFor(character);
     this.stats = this.vehicle.stats; // araç sınıfı çarpanları (bkz. vehicles.js)
     this.model = createKartModel(character, this.vehicle.body);

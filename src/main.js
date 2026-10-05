@@ -21,6 +21,7 @@ import { createDriver, driveInput, botEmote } from './ai.js';
 import { createEmoteBubbles } from './emotes.js';
 import { recordOf, submitTotal, createGhostRecorder, createGhost } from './records.js';
 import { awardRace } from './progress.js';
+import { activeCosmetics, tickCosmetics } from './cosmetics.js';
 import { createChat } from './ui/chat.js';
 import { Net } from './net.js';
 import { RemoteBuffer, encodeState, applyRemoteState, INTERP_DELAY } from './remote.js';
@@ -92,9 +93,18 @@ const karts = CHARACTERS.map((c) => {
   return kart;
 });
 const kartOf = (id) => karts.find((k) => k.character.id === id) ?? karts[0];
+// Seçilen boya ve iz yalnız oyuncunun kartına uygulanır (çevrimiçide diğerleri görmez; A5'te eklenecek)
+const syncCosmetics = (mine) => {
+  const c = activeCosmetics();
+  for (const k of karts) {
+    k.model.setPaint(k === mine ? c.paint : 'stock');
+    k.trail = k === mine ? c.trail : 'classic';
+  }
+};
 // Seçilen araç yalnız oyuncunun (menüde odaktaki) kartına uygulanır; diğerleri karakterin varsayılan aracını kullanır
 const syncVehicles = (mine) => {
   for (const k of karts) k.setVehicle(k === mine ? vehicleOf(settings.vehicle, k.character) : defaultVehicleFor(k.character));
+  syncCosmetics(mine);
 };
 // Kadro 24 kişi; sahada her zaman en çok 8 sürücü var. Sahada olmayanlar pasif (gizli) kalır.
 const setField = (list) => {
@@ -144,6 +154,7 @@ const menu = createMenu({
       if (booted && !race && track) showMenuField();
     },
     screen: (name) => setMenuView(name),
+    cosmetic: () => syncCosmetics(focus), // Garaj'da boya/iz seçimi: odaktaki kartta canlı önizleme
     character: (id) => {
       focus = kartOf(id);
       syncVehicles(focus);
@@ -442,7 +453,7 @@ function setMenuView(name) {
 const viewOffset = { x: 0, y: 0, tx: 0, ty: 0 };
 function updateViewOffset() {
   const narrow = window.innerWidth <= 820;
-  viewOffset.tx = race || narrow || menuView !== 'main' ? 0 : -0.2;
+  viewOffset.tx = race || narrow || (menuView !== 'main' && menuView !== 'garage') ? 0 : -0.2;
   viewOffset.ty = race || !narrow ? 0 : menuView === 'main' ? 0.18 : 0.3;
 }
 function applyViewOffset(dt) {
@@ -589,6 +600,7 @@ async function startOfflineRace(config) {
   lastConfig = config;
   player = kartOf(config.character);
   syncVehicles(player);
+  syncCosmetics(player);
   timeTrial = config.mode === 'timeTrial';
   const bots = (config.rivals ?? pickRivals(config.character)).map(kartOf).filter((k) => k !== player).slice(0, 7);
   // Oyuncu ortalarda (5.) başlar; önünde geçilecek rakipler olsun. Zamana Karşı: tek başına
@@ -764,6 +776,7 @@ async function startOnlineRace(msg) {
     return kart;
   });
   player = online.kartById.get(net.id);
+  syncCosmetics(player);
   online.isHost = online.room?.hostId === net.id;
   online.isBotHost = msg.botHostId ? msg.botHostId === net.id : online.isHost;
   online.botHostId = msg.botHostId ?? online.room?.hostId ?? null;
@@ -1093,6 +1106,7 @@ function frame(now) {
   lastDrawAt = now;
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
+  tickCosmetics(now / 1000);
 
   if (race && online) updateRemoteKarts();
 

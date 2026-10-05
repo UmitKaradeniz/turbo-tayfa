@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { cloneModel } from './assets.js';
+import { applyPaint } from './cosmetics.js';
 
 // Turbo Tayfa karakterleri: her biri bir Cube Pets hayvanı + bir Car Kit kartı.
 // personality: bot olarak sürerken davranışı (ai.js → PERSONALITIES)
@@ -86,6 +87,13 @@ export function createKartModel(character, bodyPath = character.kart) {
     pet.position.copy(seat.position).add(new THREE.Vector3(0, 0.02, 0.04));
     seat.visible = false;
     kart.add(pet);
+    if (paintId !== 'stock') applyPaint(kart, paintId);
+  };
+  let paintId = 'stock';
+  const setPaint = (id) => {
+    if (id === paintId) return;
+    paintId = id;
+    if (kart) applyPaint(kart, id);
   };
   const mixer = new THREE.AnimationMixer(pet);
   const clip = (name) => animations.find((a) => a.name === name);
@@ -109,6 +117,7 @@ export function createKartModel(character, bodyPath = character.kart) {
     steerWheels,
     wheelRadius: 0.21 * KART_SCALE,
     setBody,
+    setPaint,
     play,
     update(dt) {
       mixer.update(dt);
