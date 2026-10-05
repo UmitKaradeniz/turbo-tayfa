@@ -684,8 +684,41 @@ function buildTerrain(def, { closest, insideLoop, edge, count, shortcuts = [], d
   geo.computeVertexNormals();
   const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true });
   if (detail) addGroundDetail(terrainMat, detail);
-  const mesh = new THREE.Mesh(geo, terrainMat);
-  mesh.receiveShadow = true;
+  // Zemin kare karelere bölünür (öznitelikler ortak, her karenin kendi indeks listesi ve sınırı var): görünmeyen kareler çizilmez
+  const mesh = new THREE.Group();
+  const TILES = 4;
+  const q = Math.ceil(res / TILES);
+  const px = geo.attributes.position;
+  for (let ty = 0; ty < TILES; ty++) {
+    for (let tx = 0; tx < TILES; tx++) {
+      const i0 = tx * q;
+      const j0 = ty * q;
+      const i1 = Math.min(res, i0 + q);
+      const j1 = Math.min(res, j0 + q);
+      if (i0 >= i1 || j0 >= j1) continue;
+      const idx = [];
+      for (let j = j0; j < j1; j++) {
+        for (let i = i0; i < i1; i++) {
+          const a = i + n * j;
+          const b = i + n * (j + 1);
+          const c = i + 1 + n * (j + 1);
+          const d = i + 1 + n * j;
+          idx.push(a, b, d, b, c, d); // PlaneGeometry ile aynı sarım
+        }
+      }
+      const tg = new THREE.BufferGeometry();
+      for (const name of ['position', 'normal', 'uv', 'color']) tg.setAttribute(name, geo.attributes[name]);
+      tg.setIndex(idx);
+      const box = new THREE.Box3();
+      const v = new THREE.Vector3();
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) box.expandByPoint(v.fromBufferAttribute(px, i + n * j));
+      tg.boundingBox = box;
+      tg.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
+      const tile = new THREE.Mesh(tg, terrainMat);
+      tile.receiveShadow = true;
+      mesh.add(tile);
+    }
+  }
 
   const sample = (arr, x, z) => {
     const fx = Math.min(res - 1e-3, Math.max(0, (x + half) / cell));

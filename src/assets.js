@@ -99,6 +99,21 @@ export function normalizedModel(key) {
 // Aynı modelden çok sayıda kopyayı tek çizim çağrısıyla göstermek için:
 // modeldeki her mesh için bir InstancedMesh üretir.
 const _m = new THREE.Matrix4();
+// Çok üçgenli kalabalık modeller (ağaç, kaya...) konuma göre parçalara bölünür: üç.js her InstancedMesh'i tek parça olarak
+// görüş alanına ve gölge kamerasına karşı eler; tek parçada tüm pistteki örnekler her karede (gölge geçişi dahil) çizilirdi.
+const CHUNK = 220; // metre
+const CHUNK_MIN_TRIS = 10000; // bunun altındaki modeller tek parça kalır (çizim çağrısı sayısı artmasın)
+function chunkMatrices(matrices, trisPerInstance) {
+  if (matrices.length * trisPerInstance < CHUNK_MIN_TRIS) return [matrices];
+  const cells = new Map();
+  for (const m of matrices) {
+    const key = `${Math.floor(m.elements[12] / CHUNK)},${Math.floor(m.elements[14] / CHUNK)}`;
+    if (!cells.has(key)) cells.set(key, []);
+    cells.get(key).push(m);
+  }
+  return [...cells.values()];
+}
+
 export function instancedModel(key, matrices, { castShadow = true, frost = false, glow = 0, tint = null } = {}) {
   const group = new THREE.Group();
   if (!matrices.length) return group;
@@ -106,12 +121,16 @@ export function instancedModel(key, matrices, { castShadow = true, frost = false
   model.updateMatrixWorld(true);
   model.traverse((child) => {
     if (!child.isMesh) return;
-    const im = new THREE.InstancedMesh(child.geometry, frost ? frosted(child.material) : glow ? glowing(child.material, glow) : tint ? tinted(child.material, tint) : child.material, matrices.length);
-    matrices.forEach((m, i) => im.setMatrixAt(i, _m.multiplyMatrices(m, child.matrixWorld)));
-    im.castShadow = castShadow;
-    im.receiveShadow = true;
-    im.computeBoundingSphere();
-    group.add(im);
+    const g = child.geometry;
+    const material = frost ? frosted(child.material) : glow ? glowing(child.material, glow) : tint ? tinted(child.material, tint) : child.material;
+    for (const part of chunkMatrices(matrices, (g.index ? g.index.count : g.attributes.position.count) / 3)) {
+      const im = new THREE.InstancedMesh(g, material, part.length);
+      part.forEach((m, i) => im.setMatrixAt(i, _m.multiplyMatrices(m, child.matrixWorld)));
+      im.castShadow = castShadow;
+      im.receiveShadow = true;
+      im.computeBoundingSphere();
+      group.add(im);
+    }
   });
   return group;
 }
