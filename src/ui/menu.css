@@ -63,20 +63,6 @@
   gap: 14px;
 }
 #screen-main .buttons { display: grid; gap: 12px; margin-top: 18px; }
-/* Pist halkası: seçili pistin çizgisi ana menünün sahnesi */
-#screen-main .ring { position: relative; display: grid; place-items: center; margin-top: 4px; }
-#screen-main .ring-disc { position: relative; width: min(168px, 42vw); aspect-ratio: 1; border-radius: 50%; background: rgba(11, 42, 85, 0.5); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.85), 0 6px 0 4px rgba(11, 42, 85, 0.45); display: grid; place-items: center; }
-#screen-main .ring-map { width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 3px 0 rgba(11, 42, 85, 0.5)); }
-#screen-main .ring-head { position: absolute; left: -6px; bottom: -4px; width: 52px; height: 52px; border-radius: 50%; background: #fff; border: 3px solid var(--tt-yellow); box-shadow: 0 3px 0 var(--tt-yellow-dark); object-fit: cover; }
-#screen-main .ring-name { margin-top: 10px; padding: 3px 14px; border-radius: 12px; background: rgba(11, 42, 85, 0.6); color: #fff; font-family: var(--tt-font-display); font-weight: 800; font-size: 16px; text-shadow: 0 2px 0 rgba(11, 42, 85, 0.6); }
-#screen-main .ring-arrow { position: absolute; top: calc(min(168px, 42vw) / 2 - 20px); width: 40px; height: 40px; border: 0; border-radius: 50%; background: #fff; color: var(--tt-navy); font-size: 26px; font-weight: 800; line-height: 1; box-shadow: 0 3px 0 #c5d8f2; cursor: pointer; }
-#screen-main .ring-arrow:active { transform: translateY(2px); box-shadow: 0 1px 0 #c5d8f2; }
-#screen-main .ring-arrow.l { left: 6%; }
-#screen-main .ring-arrow.r { right: 6%; }
-#screen-main .ring-flag { position: absolute; top: 0; right: 14%; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #fff; font-size: 22px; box-shadow: 0 3px 0 #c5d8f2; cursor: pointer; }
-#screen-main .ring-flag .dot { display: none; position: absolute; top: -2px; right: -2px; width: 14px; height: 14px; border-radius: 50%; background: var(--tt-red); box-shadow: 0 0 0 3px #fff; }
-#screen-main .ring-flag.pending .dot { display: block; animation: tt-hint 1.2s ease-in-out infinite; }
-#screen-main .ring-flag::after { content: 'Günlük'; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 3px; padding: 0 8px; border-radius: 8px; background: rgba(11, 42, 85, 0.75); color: #fff; font-size: 11px; font-weight: 800; }
 #screen-main .quick-row { display: grid; grid-template-columns: 1.35fr 1fr; gap: 10px; }
 #screen-main .quick-row .rnd { font-size: 18px; padding-left: 10px; padding-right: 10px; }
 #screen-main .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -452,7 +438,6 @@
 
 /* ---------- Dikey telefon: ana menü düğmeleri daha kısa ---------- */
 @media (orientation: portrait) and (max-width: 600px) {
-  #screen-main .tt-tagline { display: none; }
   #screen-main .buttons { gap: 8px; margin-top: 10px; }
   #screen-main .buttons .tt-btn { font-size: 17px; padding: 7px 14px; border-radius: 13px; box-shadow: 0 3px 0 var(--edge); }
   #screen-main .buttons .tt-btn.big { font-size: 20px; padding: 9px 14px; }
@@ -477,7 +462,7 @@
   #screen-main .tt-logo { grid-column: 1; align-self: end; justify-self: start; -webkit-text-stroke: 2px var(--tt-navy); text-shadow: 0 4px 0 var(--tt-navy); }
   #screen-main .tt-logo .l1 { font-size: 34px; }
   #screen-main .tt-logo .l2 { font-size: 38px; }
-  #screen-main .tt-tagline, #screen-main .maker, #screen-main .credit, #screen-main .bubble, #screen-main .ring { display: none; }
+  #screen-main .tt-tagline, #screen-main .maker, #screen-main .credit, #screen-main .bubble { display: none; }
   #screen-main .lv-row, #screen-main .name-row, #screen-main .name-hint { grid-column: 1; margin-top: 2px; }
   #screen-main .name-hint { padding: 1px 10px; font-size: 13px; }
   #screen-main .tt-input { padding: 4px 10px; font-size: 16px; }
