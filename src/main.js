@@ -413,7 +413,6 @@ function newOnline() {
 }
 const isOwned = (kart) => !online || online.owned.has(kart);
 
-let startPress = null; // geri sayımda gaza ilk basılan an (başlangıç turbosu için)
 
 function placeOnGrid(order) {
   order.forEach((kart, k) => {
@@ -505,7 +504,6 @@ function setupRace(order, laps) {
   hud.setTimeTrial(timeTrial);
   emotes.clear();
   chat.setRacing(true);
-  startPress = null;
   lastTotalRecord = false;
   raceStats = { shortcuts: 0, gold: 0, lapRecords: 0 };
   raceReward = null;
@@ -531,14 +529,11 @@ function setupRace(order, laps) {
     startLights.go();
     play('go');
     driftCoachOnGo();
-    // Başlangıç turbosu: gaza "BAŞLA"dan hemen önce (son 0.6 s) basan roket gibi çıkar
-    if (startPress !== null && startPress >= -0.6) {
-      player.boost(KART.startBoost);
-      hud.boostBanner('ROKET KALKIŞ!');
-      play('start_boost');
-    }
+    // Başlangıç turbosu: "BAŞLA" anında herkese verilir (zamanlama gerekmez)
+    hud.boostBanner('BAŞLANGIÇ TURBOSU!');
+    play('start_boost');
     for (const kart of order) {
-      if (kart !== player && isOwned(kart) && Math.random() < (drivers.get(kart)?.skill ?? 0.9) - 0.45) kart.boost(KART.startBoost);
+      if (isOwned(kart)) kart.boost(KART.startBoost);
       botReact(kart, 'go', Math.random() * 1500);
     }
     recorder.startLap();
@@ -1116,8 +1111,6 @@ function frame(now) {
     // E: item kullan (basıldığı anda bir kez); fren basılıysa geriye atar
     if (input.item && !itemHeld && race.started && !pauseOpen) items.use(player, input.brake > 0);
     itemHeld = input.item;
-    // Başlangıç turbosu için gaza ilk basılan an
-    if (!race.started && startPress === null && input.throttle > 0) startPress = race.clock;
 
     accumulator += dt;
     while (accumulator >= STEP) {

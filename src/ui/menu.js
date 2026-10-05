@@ -73,7 +73,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       <div class="corner"><button class="tt-btn ghost icon fs-btn" data-go="fullscreen" aria-label="Tam ekran">⛶</button><button class="tt-btn ghost icon" data-go="settings" aria-label="Ayarlar">⚙</button></div>
       <div class="bubble"><span class="bn"></span><small class="bd"></small></div>
       <div class="controls" aria-label="Kontroller">
-        <div class="c-title">Nasıl oynanır? <small>💡 "BAŞLA!" öncesi gaza bas: roket kalkış!</small></div>
+        <div class="c-title">Nasıl oynanır? <small>💡 "BAŞLA!" anında herkes başlangıç turbosu alır</small></div>
         <div class="c-grid">
           <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Sür (ok tuşları da olur)</span></div>
           <div><kbd>Space</kbd><kbd>Shift</kbd><span>Drift: virajda basılı tut, bırakınca turbo</span></div>

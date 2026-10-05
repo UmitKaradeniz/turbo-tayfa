@@ -148,6 +148,17 @@ export function buildDecor(track, decorate, density = 1) {
   return group;
 }
 
+// Bariyer noktası kısayol ağzında ve kısayolun çıktığı kenarda mı? Karşı kenarda bariyer kesilmez
+// (kısayol ucu orta çizgiye uzandığı için koridor karşı kenara da taşıyor).
+function shortcutOpening(track, x, z, side) {
+  for (const sc of track.shortcuts) {
+    const n = sc.nearest(x, z);
+    if (!n || n.d - sc.halfAt(n.s) >= 2) continue;
+    if ((n.s < sc.length / 2 ? sc.sideA : sc.sideB) === side) return true;
+  }
+  return false;
+}
+
 // Pistin iki yanına kırmızı-beyaz bariyer dizisi. Dar virajların iç tarafında
 // bariyer hattı kendi üstüne katlanacağı için oralar atlanır.
 function placeBarriers(ctx, track) {
@@ -178,7 +189,7 @@ function placeBarriers(ctx, track) {
         const t = Math.min(1, (d + PIECE / 2) / len);
         const bx = a.x + seg.x * t;
         const bz = a.y + seg.y * t;
-        if (track.shortcutClearance(bx, bz) < 2) continue; // kısayol girişinde bariyer yok
+        if (shortcutOpening(track, bx, bz, side)) continue; // kısayol girişinde bariyer yok (karşı kenarda bariyer sürer)
         ctx.place(piece++ % 2 ? 'racing/barrierWhite' : 'racing/barrierRed', bx, bz, rotY, 8);
       }
       carry = d - len;

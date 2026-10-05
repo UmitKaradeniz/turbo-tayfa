@@ -6,7 +6,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 
 - 🌴 4 pist: **Palmiye Koyu** (tropik ada), **Çam Vadisi** (orman, göl, tepe), **Kar Zirvesi** (kış dağı, kar yağışı) ve **Neon Şehir** (gece, liman, neon tabelalar)
 - 🦊 8 karakter, en fazla 8 oyuncu; boş yerleri botlar doldurur
-- 💨 Drift + 3 kademeli mini-turbo, roket kalkış
+- 💨 Drift + 3 kademeli mini-turbo, başlangıç turbosu
 - 🛤️ Pist başına kısayol: hız tahtalı **kum yolu** (Palmiye Koyu), dereyi aşan **rampa** (Çam Vadisi), **buz geçidi** (Kar Zirvesi), kanalı aşan **servis yolu** (Neon Şehir)
 - 🎁 Itemler: Turbo Şişesi, Balon Kalkan, Hindistan Cevizi, Yağ Lekesi
 - 🌐 Oda koduyla çevrimiçi oyun, kopunca otomatik yeniden bağlanma
@@ -176,7 +176,7 @@ yarışa kaldığı yerden devam eder.
 - **Drift:** Virajda direksiyonu kırıp drift'e bas. Kıvılcımlar mavi → turuncu → mor
   oldukça bırakınca aldığın turbo uzar.
 - **Kısayollar:** Haritada sarı kesik çizgi olarak görünür. *Palmiye Koyu:* firketeyi kesen kum yolu kartı yavaşlatır (turbo varken yavaşlatmaz); ortadaki sarı **hız tahtasına** girersen turbo alırsın, yolun ortasında item kutuları da var. *Kar Zirvesi:* doğu tırmanışını atlayıp zirveye çıkan sıkışmış kar yolu; buz tahtaları turbo verir. *Neon Şehir:* binaların arasından geçen servis yolu; ortada kanalı aşan rampa var (Çam Vadisi'ndeki gibi yeterli hız gerekir). *Çam Vadisi:* inişteki S virajlarını kesen toprak yolda rampadan yeterli hızla (≈ 75 km/sa üstü) çıkarsan dereyi uçarak geçersin; yetmezse dereye düşüp kısayolun girişine dönersin. Botlar da kişiliklerine göre (kurnaz/agresif sık, temiz/uykucu nadiren) kısayolu kullanır.
-- **Roket kalkış:** Geri sayımda "BAŞLA!" yazısından hemen önce gaza bas.
+- **Başlangıç turbosu:** "BAŞLA!" anında tüm yarışçılara otomatik verilir.
 - Grafik kalitesi: varsayılan **Otomatik**. İlk açılışta ana menüde ~5 sn kare süresi ölçülür (yükleme takılmaları ve 30 FPS'e kilitli ekranlar sonucu bozmaz), sonra yarışlarda gerçek performansa bakılır: iki ayrı yarışta çözünürlük uzun süre düşük kalırsa bir kademe iner, art arda 4 yarış tam FPS'le geçerse bir kademe çıkar (bir sonraki açılışta uygulanır). Elle **Düşük/Orta/Yüksek** seçersen hiç değişmez; adrese `?q=low`, `?q=medium`, `?q=high` ekleyerek de zorlanabilir. Mantık: `src/autoQuality.js`.
 
 ---

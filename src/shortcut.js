@@ -219,6 +219,9 @@ export function buildShortcut(sd, id, { closest, edge, count, points, rights }) 
     length,
     sA,
     sB,
+    // Kısayolun ana yoldan çıktığı / döndüğü taraf (-1 sol, +1 sağ): bariyer boşluğu yalnız bu tarafta açılır
+    sideA: Math.sign(cA.lateral) || 1,
+    sideB: Math.sign(cB.lateral) || 1,
     jump,
     pads,
     terrain: null,
