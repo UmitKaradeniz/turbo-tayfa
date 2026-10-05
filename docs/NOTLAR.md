@@ -48,3 +48,10 @@ Gerçek telefonda ve iki gerçek cihazda test edilmedi. Önizleme paneli gizliyk
 - v1.40.0 her pist kendi araç modelini kullanır
 - v1.38.7 item simgeleri SVG (D2) · v1.38.6 geri sayım donması giderildi · v1.38.5 podyum "yükleniyor" boyutu · v1.38.4 yapımcı yazısı sol üst · v1.38.3 nitro eski parlak görünüm · v1.38.2 sonuç tablosu yerinde güncellenir · v1.38.1 Baloo 2 · v1.38.0 adımlı hazırlık
 - v1.37 araç sınıfları · v1.36 ses varyantları · v1.35 yol/zemin dokuları · v1.34 gökyüzü · v1.33 parçacık atlası · v1.32 drift öğretisi · v1.22–v1.31 pist başına dağ-bayır profilleri · v1.21 otomatik kalite · v1.20 eğim fiziği
+
+## Saha geri bildirimi ve bekleyen işler (2026-10-05)
+- Canlı adres `https://turbo-tayfa.cgame.workers.dev`; kullanıcı (oda kurucusu) FPS göstergesi: ping 44 ms, yayın 20/sn, sunucu ≤50, ağ ≤65 ms (çok iyi). Botları kuran cihaz sürdüğü için kurucuda bot kasması yok.
+- Misafir geri bildirimi: ping 58 ms, yayın 20/sn, sunucu ≤50, ağ ≤91 ms (ağ sağlıklı, tampon `INTERP_DELAY` 110 ms'e yakın) ama ayarları MSAA 4x + keskin + çözünürlük x2.00 (en ağır) → kasma büyük olasılıkla cihaz FPS'i; FPS değeri henüz alınmadı. Önerilen: Otomatik ön ayar, çözünürlük ön ayar/1.25x, FXAA/SMAA, dinamik çözünürlük açık, gerekirse FPS sınırı 30.
+- Karar: ağ trafiği hafifletme (fikir 3) ertelendi; ancak misafirlerde "ağ ≤" ≥150 ms çıkarsa yalnızca titremeye göre ayarlanan ara değer tamponu yapılacak. Binary/seyrek gönderim, sunucuda bot çalıştırma (işlemci kotası ölçülmeden yapılmaz) ve meshopt model sıkıştırma (yol parçası dikiş riski) şimdilik yapılmadı.
+- Önerilebilecek: misafir varsayılan grafik ön ayarını daha hafif yapmak (ilk açılışta MSAA 4x/x2.00 seçilmesin), düşük FPS'te uyarı/ipucu.
+- Kullanıcı ağında Cloudflare WebSocket'i zaman zaman takılıyor (Render stabil, ping ~200 ms); `net.js` otomatik yedekli, v1.64.0.
