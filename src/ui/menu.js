@@ -8,6 +8,7 @@ import { QUALITY, saveQuality, saveGfx, GFX_DEFAULTS } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
+import { levelInfo } from '../progress.js';
 
 // Menü ekranları: ana menü, yarış hazırlığı, ayarlar, odaya katıl, duraklatma.
 // Oyun mantığı bilmez; seçimleri geri çağrılarla (handlers) bildirir.
@@ -56,6 +57,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
       <div class="col">
         <div class="tt-logo enter"><span class="l1">${letters('TURBO')}</span><span class="l2">${letters('TAYFA')}</span></div>
         <p class="tt-tagline enter">Tayfanı topla, adayı fethet!</p>
+        <div class="lv-row enter" title="Turbo Puan"><span class="lv-badge">Sv <b></b></span><div class="lv-bar"><i></i></div><small class="lv-tp"></small></div>
         <div class="name-row enter">
           <label for="tt-name">Takma adın</label>
           <input id="tt-name" class="tt-input" maxlength="14" placeholder="Pilot" autocomplete="off" />
@@ -562,9 +564,20 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
   document.body.appendChild(pause);
 
   // ---------- Geçişler ----------
+  // Seviye çubuğu (Turbo Puan)
+  const refreshLevel = () => {
+    const lv = levelInfo();
+    main.querySelector('.lv-badge b').textContent = lv.level;
+    main.querySelector('.lv-bar i').style.width = `${Math.round(lv.frac * 100)}%`;
+    main.querySelector('.lv-tp').textContent = `${lv.cur}/${lv.need} TP`;
+  };
+  refreshLevel();
   const screens = [main, setup];
   let settingsFromPause = false;
-  const show = (el) => screens.forEach((s) => s.classList.toggle('show', s === el));
+  const show = (el) => {
+    screens.forEach((s) => s.classList.toggle('show', s === el));
+    if (el === main) refreshLevel();
+  };
 
   document.addEventListener('click', (e) => {
     const go = e.target.closest('[data-go]')?.dataset.go;

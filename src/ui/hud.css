@@ -282,6 +282,25 @@
 @keyframes tt-cellpop { 0% { transform: scale(0.7); } 60% { transform: scale(1.18); } 100% { transform: none; } }
 #results .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 
+/* Turbo Puan ödülü */
+#results .reward { margin-top: 12px; padding: 10px 14px; border-radius: 14px; background: var(--tt-navy); color: #fff; animation: tt-rise 0.5s ease 0.4s both; }
+#results .reward[hidden] { display: none; }
+#results .rw-top { display: flex; justify-content: space-between; align-items: baseline; }
+#results .rw-gain { font-family: var(--tt-font-display); font-weight: 800; font-size: 26px; color: var(--tt-yellow); }
+#results .rw-lv { font-weight: 800; opacity: 0.9; }
+#results .rw-lv b { font-family: var(--tt-font-display); font-size: 20px; }
+#results .rw-lv.up { color: var(--tt-green); animation: tt-cellpop 0.6s ease; }
+#results .rw-bar { height: 10px; margin: 6px 0 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+#results .rw-bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--tt-yellow), #ffb020); transition: width 0.7s ease; }
+#results .rw-chips { display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; font-weight: 700; }
+#results .rw-chips span { padding: 1px 8px; border-radius: 9px; background: rgba(255, 255, 255, 0.14); }
+#results .rw-chips b { color: var(--tt-yellow); }
+@media (max-height: 720px) {
+  #results .reward { margin-top: 8px; padding: 6px 12px; }
+  #results .rw-gain { font-size: 22px; }
+  #results .rw-chips { display: none; }
+}
+
 @keyframes tt-pop {
   0% { transform: translateY(-12vh) scale(0.2); opacity: 0; }
   30% { transform: translateY(-12vh) scale(1.15); opacity: 1; }

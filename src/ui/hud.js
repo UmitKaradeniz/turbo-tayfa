@@ -49,6 +49,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
       <p class="subtitle"></p>
       <div class="podium"></div>
       <ol></ol>
+      <div class="reward" hidden></div>
       <div class="actions">
         <button class="tt-btn light" data-go="menu">⌂ Ana Menü</button>
         <button class="tt-btn primary" data-go="restart">↻ Tekrar Yarış</button>
@@ -363,7 +364,36 @@ export function createHud({ portraits, minimap, itemIcons }) {
         .join('') + `<li style="animation-delay:${0.3 + laps.length * 0.08}s"><span class="pos">★</span><span></span><span class="name">En iyi tur rekorun</span><span class="time">${formatTime(bestLap)}</span></li>`;
       results.classList.add('show');
     },
+    // Yarış ödülü: "+N TP", kalemler ve seviye çubuğu (bar eski orandan yeniye dolar)
+    showReward(rw) {
+      const box = results.querySelector('.reward');
+      const chips = rw.parts.map((p) => `<span>${p.label} <b>+${p.tp}</b></span>`).join('');
+      box.innerHTML = `
+        <div class="rw-top"><span class="rw-gain">+${rw.gain} TP</span><span class="rw-lv">Seviye <b>${rw.before.level}</b></span></div>
+        <div class="rw-bar"><i style="width:${rw.before.frac * 100}%"></i></div>
+        <div class="rw-chips">${chips}</div>`;
+      box.hidden = false;
+      const bar = box.querySelector('.rw-bar i');
+      const lv = box.querySelector('.rw-lv');
+      setTimeout(() => {
+        bar.style.width = `${(rw.levelUp ? 1 : rw.after.frac) * 100}%`;
+      }, 700);
+      if (rw.levelUp) {
+        setTimeout(() => {
+          lv.innerHTML = `Seviye <b>${rw.after.level}</b> 🎉`;
+          lv.classList.add('up');
+          bar.style.transition = 'none';
+          bar.style.width = '0%';
+          void bar.offsetWidth;
+          bar.style.transition = '';
+          bar.style.width = `${rw.after.frac * 100}%`;
+        }, 1500);
+      }
+    },
     hideResults() {
+      const rwBox = results.querySelector('.reward');
+      rwBox.hidden = true;
+      rwBox.innerHTML = '';
       stage.stop();
       delete results.dataset.kind;
       delete results.dataset.ids;

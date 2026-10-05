@@ -20,6 +20,7 @@ import { Race } from './race.js';
 import { createDriver, driveInput, botEmote } from './ai.js';
 import { createEmoteBubbles } from './emotes.js';
 import { recordOf, submitTotal, createGhostRecorder, createGhost } from './records.js';
+import { awardRace } from './progress.js';
 import { createChat } from './ui/chat.js';
 import { Net } from './net.js';
 import { RemoteBuffer, encodeState, applyRemoteState, INTERP_DELAY } from './remote.js';
@@ -325,6 +326,7 @@ function buildTrackNow(def) {
       if (kart !== player) return;
       play('item_box');
       hud.setItemCount(uses);
+      if (uses > 1) raceStats.gold++;
       hud.itemRoulette(item, 1.1, () => play('roulette', { volume: 0.35 }), () => play('item_land'));
     },
     // İsabet: vuran bot sevinir, vurulan bot kızar (kişiliğe göre)
@@ -376,6 +378,10 @@ let drivers = new Map();
 let timeTrial = false; // Zamana Karşı modu (tek oyunculu, botsuz, itemsiz)
 let ghost = null; // rekor turun hayaleti
 let lastTotalRecord = false;
+// Turbo Puan: yarış boyu sayaçlar, bitişte verilen ödül ve sonuç ekranında gösterildi mi
+let raceStats = { shortcuts: 0, gold: 0, lapRecords: 0 };
+let raceReward = null;
+let rewardShown = false;
 const recorder = createGhostRecorder();
 const emoteCooldown = new Map(); // kart → son tepki zamanı
 let lastConfig = null;
@@ -501,6 +507,9 @@ function setupRace(order, laps) {
   chat.setRacing(true);
   startPress = null;
   lastTotalRecord = false;
+  raceStats = { shortcuts: 0, gold: 0, lapRecords: 0 };
+  raceReward = null;
+  rewardShown = false;
   hazards.reset();
   race = new Race(track, order, { laps, isOwned });
   autoTuner?.raceReset();
@@ -539,6 +548,7 @@ function setupRace(order, laps) {
     const best = e.lapTimes.length > 1 && Math.min(...e.lapTimes) === time;
     // Kişisel tur rekoru mu? (rekorsa hayalet olarak saklanır)
     const record = recorder.finishLap(trackDef.id, player.character.id, time);
+    if (record) raceStats.lapRecords++;
     hud.lapToast(e.lapsDone, time, best, record);
     if (e.lapsDone < race.laps) play('lap');
   });
@@ -559,6 +569,7 @@ function setupRace(order, laps) {
     if (e.kart === player) {
       if (resultsTimer === 0) {
         lastTotalRecord = submitTotal(trackDef.id, race.laps, e.finishTime);
+        raceReward = awardRace({ place, racers: order.length, timeTrial, newRecord: lastTotalRecord, trackId: trackDef.id, ...raceStats });
         hud.finish(timeTrial ? (lastTotalRecord ? 1 : 2) : place);
         playMusic(null);
         play(place <= 3 ? 'finish_win' : 'finish');
@@ -601,6 +612,14 @@ async function startOfflineRace(config) {
 }
 
 function showResults() {
+  renderResults();
+  if (raceReward && !rewardShown) {
+    rewardShown = true;
+    hud.showReward(raceReward);
+  }
+}
+
+function renderResults() {
   autoTuner?.raceFinish();
   if (timeTrial) {
     const e = race.entryOf(player);
@@ -1018,7 +1037,10 @@ function kartInput(kart, playerInput, activeKarts) {
 let playerOnShortcut = false;
 function checkShortcutEvents(kart) {
   if (kart === player && race.started) {
-    if (kart.onShortcut && !playerOnShortcut) hud.toast('KISAYOL! ⚡');
+    if (kart.onShortcut && !playerOnShortcut) {
+      hud.toast('KISAYOL! ⚡');
+      raceStats.shortcuts++;
+    }
     playerOnShortcut = kart.onShortcut;
   }
   if (!race.started || race.entryOf(kart)?.finishTime !== null) return;

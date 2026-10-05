@@ -64,6 +64,12 @@
 }
 #screen-main .buttons { display: grid; gap: 12px; margin-top: 18px; }
 #screen-main .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+#screen-main .lv-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; max-width: 340px; }
+#screen-main .lv-badge { padding: 0 10px; border-radius: 12px; background: var(--tt-yellow); color: var(--tt-navy); font-weight: 800; white-space: nowrap; box-shadow: 0 2px 0 var(--tt-yellow-dark); }
+#screen-main .lv-badge b { font-family: var(--tt-font-display); font-size: 20px; }
+#screen-main .lv-bar { flex: 1; height: 10px; border-radius: 6px; background: rgba(11, 42, 85, 0.45); overflow: hidden; }
+#screen-main .lv-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--tt-yellow), #ffb020); transition: width 0.6s ease; }
+#screen-main .lv-tp { color: #fff; font-weight: 800; white-space: nowrap; text-shadow: 0 2px 0 rgba(11, 42, 85, 0.6); }
 #screen-main .name-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
 #screen-main .name-row label { color: #fff; font-weight: 800; white-space: nowrap; text-shadow: 0 2px 0 rgba(11, 42, 85, 0.6); }
 #screen-main .corner { position: absolute; top: max(18px, env(safe-area-inset-top)); right: 18px; display: flex; gap: 10px; }
