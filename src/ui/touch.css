@@ -66,3 +66,8 @@
   #touch .drift { width: 88px; height: 88px; }
   #touch .item { width: 58px; height: 58px; margin-bottom: 56px; }
 }
+
+/* Yatay telefon (kısa ekran): mini harita direksiyon düğmelerinin üstünde kalmasın; sıra numarasının yanında küçük */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
+  #hud #hud-map { top: 46px; left: calc(max(14px, env(safe-area-inset-left)) + 88px); transform: scale(0.58); }
+}

@@ -457,8 +457,10 @@ function setMenuView(name) {
 const viewOffset = { x: 0, y: 0, tx: 0, ty: 0 };
 function updateViewOffset() {
   const narrow = window.innerWidth <= 820;
-  viewOffset.tx = race || narrow || (menuView !== 'main' && menuView !== 'garage') ? 0 : -0.2;
-  viewOffset.ty = race || !narrow ? 0 : menuView === 'main' ? 0.18 : 0.3;
+  // Yatay telefon (kısa ekran): panel solda, sahne sağda; dikey kaydırma yok
+  const compact = window.innerHeight <= 520 && window.innerWidth > window.innerHeight;
+  viewOffset.tx = race ? 0 : compact ? -0.24 : narrow || (menuView !== 'main' && menuView !== 'garage') ? 0 : -0.2;
+  viewOffset.ty = race || !narrow || compact ? 0 : menuView === 'main' ? 0.18 : 0.3;
 }
 function applyViewOffset(dt) {
   const k = 1 - Math.exp(-4 * dt);

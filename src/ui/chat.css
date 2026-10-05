@@ -103,3 +103,8 @@
   #emote-bar button[data-emote="0"], #emote-bar button[data-emote="3"] { display: none; }
   #emote-bar small { display: none; }
 }
+
+/* Yatay telefon: emojiler ekranın ortasını kapatmasın; sol üstte, sıra numarasının yanında küçük bir satır */
+@media (pointer: coarse) and (orientation: landscape) {
+  #emote-bar { left: calc(max(12px, env(safe-area-inset-left)) + 120px); top: max(8px, env(safe-area-inset-top)); transform: none; opacity: 0.7; }
+}

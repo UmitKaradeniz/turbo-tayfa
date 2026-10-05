@@ -436,3 +436,34 @@
 #results .actions .tt-btn[disabled] { opacity: 0.6; }
 #results .rw-chips .bd { background: var(--tt-yellow); color: var(--tt-navy); }
 #results .rw-chips .bd b { color: var(--tt-navy); }
+
+/* Yatay telefon (kısa ekran): sonuç paneli iki sütun; soldaki podyum + başlık + düğmeler, sağdaki sıralama + puan */
+@media (orientation: landscape) and (max-height: 520px) {
+  #results { padding: 8px; }
+  #results .panel {
+    width: min(720px, 100%); padding: 10px 12px; border-radius: 18px;
+    display: grid; grid-template-columns: 40% 1fr; column-gap: 12px; row-gap: 4px; align-content: center;
+  }
+  #results .hero { grid-column: 1; grid-row: 1; height: 96px; margin: 0; }
+  #results .hero.stage { height: 96px; }
+  #results h2 { grid-column: 1; grid-row: 2; font-size: 22px; }
+  #results .subtitle { grid-column: 1; grid-row: 3; margin: 0; font-size: 12px; }
+  #results .actions { grid-column: 1; grid-row: 4; margin-top: 4px; gap: 6px; }
+  #results .actions .tt-btn { font-size: 14px; padding: 6px 6px; }
+  #results .podium { grid-column: 2; grid-row: 1; margin: 0; gap: 6px; }
+  #results .step img { max-width: 36px; margin-bottom: -4px; }
+  #results .step.s1 img { max-width: 44px; }
+  #results .step .nm { font-size: 11px; margin-bottom: 2px; }
+  #results .s1 .block { height: 46px; }
+  #results .s2 .block { height: 38px; }
+  #results .s3 .block { height: 30px; }
+  #results .step .block > span { font-size: 20px; }
+  #results .step .block small { font-size: 10px; }
+  #results ol { grid-column: 2; grid-row: 2 / span 2; grid-template-columns: 1fr 1fr; gap: 4px; align-content: start; }
+  #results li { grid-template-columns: 22px 24px 1fr auto; gap: 6px; padding: 1px 8px 1px 6px; font-size: 12px; }
+  #results li img { width: 24px; height: 24px; }
+  #results li .pos { font-size: 14px; }
+  #results .reward { grid-column: 2; grid-row: 4; margin-top: 2px; padding: 4px 10px; }
+  #results .rw-gain { font-size: 18px; }
+  #results .rw-bar { margin: 2px 0 0; height: 8px; }
+}

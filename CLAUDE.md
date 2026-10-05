@@ -19,6 +19,7 @@ Yalnızca CC0 ve CC-BY (ticari güvenli). `CREDITS.md` ve `README.md` güncel tu
 ## Test ve komutlar
 - Geliştirme sunucusu: `preview_start turbo-tayfa` (port 3000, `npm run dev`). Tarayıcı paneli gizliyken `requestAnimationFrame` çalışmaz: gerçek ölçüm için `node tools/dev/cdp-countdown.mjs <pist> <cpuYavaşlatma>` (headless Chrome, uzun görev ve kare süreleri). Pist duman testi: `node tools/dev/cdp-tracks-smoke.mjs`. Sunucu protokol testi: sunucuyu `PORT=3111 node server/index.js` ile aç, `node tools/dev/vehicle-protocol-test.mjs 3111`.
 - Dev'de `window.__tt` (karts, race, hud, track, fx, simulate(sn), player…). URL: `?q=low|medium|high` (kalite), `?nopause`. Panelde `q=low` kullan (medium yazılım çizimiyle çok yavaş).
+- Mobil/yatay telefon testi: `resize_window` ile 731×260 (yatay telefon; dikey için preset mobile 375×812), sonra `javascript_tool` ile `getBoundingClientRect` ölç. Bitince `preset: desktop`.
 - Dosya yazarken Windows yolları: Python'a `C:\...` ver, Git Bash'e `/c/...`.
 
 ## Mimari özeti
