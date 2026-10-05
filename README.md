@@ -37,6 +37,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌙 **Ay Yolu:** düşük yerçekimi, gökyüzünde Dünya, zamanlı meteorlar ve krater çukurunu aşan kısayol
 - 🏆 **Turbo Kupası / Büyük Kupa:** 4 ya da 13 pist art arda, her yarışta sıraya göre puan (tek oyunculu ve çevrimiçi)
 - 👻 Zamana Karşı modu: en iyi turunun hayaletiyle yarış, pist başına rekorlar
+- 💥 Eleme modu: 20 saniye ısınma, sonra her 15 saniyede son sıradaki elenir, son kalan kazanır (tek oyunculu)
 - 🪵 Hareketli tehlikeler: yuvarlanan kütükler (Çam Vadisi), çığ topları (Kar Zirvesi), yolu kesen trafik (Neon Şehir), dev plaj topları (Oyuncak Odası)
 - 🌿 Pistlere özgü zeminler: bataklık (Çam Vadisi), buz ve derin kar (Kar Zirvesi), sığ su (Palmiye), ıslak asfalt ve neon hız şeritleri (Neon), halı ve trambolin (Oyuncak Odası), bal (Şeker Diyarı), trambolin ve hız şeritleri (Lunapark, Ay)
 - 🎵 Her pistin kendi müziği var (Palmiye, Çam, Kar, Neon, Volkan, Ay); müzik yalnızca girilen pist için yüklenir

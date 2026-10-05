@@ -11,9 +11,12 @@ export const COUNTDOWN = 3; // saniye
 export class Race {
   // isOwned(kart): bu cihaz o kartın bitişine karar verebilir mi? (çevrimiçide
   // sadece kendi kartı ve oda sahibiyse botlar; diğerlerinin bitişi sunucudan gelir)
-  constructor(track, karts, { laps = 3, isOwned = () => true } = {}) {
+  // elimination: { grace, interval } verilirse Eleme modu: ısınmadan sonra her `interval` saniyede son sıradaki elenir
+  constructor(track, karts, { laps = 3, isOwned = () => true, elimination = null } = {}) {
     this.track = track;
     this.laps = laps;
+    this.elim = elimination ? { interval: elimination.interval, nextAt: elimination.grace } : null;
+    this.elimOrder = []; // elenenler, elenme sırasıyla
     this.isOwned = isOwned;
     this.state = 'countdown'; // countdown → racing → finished
     this.clock = -COUNTDOWN - 0.6; // negatif: geri sayım
@@ -118,8 +121,29 @@ export class Race {
       }
     }
 
-    if (this.state === 'racing' && this.finishOrder.length === this.entries.length) {
+    if (this.elim && this.state === 'racing') this.tickElimination();
+    if (this.state === 'racing' && this.finishOrder.length + this.elimOrder.length === this.entries.length) {
       this.finish();
+    }
+  }
+
+  // Eleme: süre dolunca en az ilerleyen elenir; tek kişi kalınca o kazanır
+  tickElimination() {
+    const alive = this.entries.filter((e) => e.finishTime === null);
+    if (alive.length > 1 && this.clock >= this.elim.nextAt) {
+      const last = alive.reduce((a, b) => (b.progress < a.progress ? b : a));
+      last.finishTime = this.clock;
+      last.eliminated = true;
+      this.elimOrder.push(last);
+      this.elim.nextAt = this.clock + this.elim.interval;
+      this.emit('eliminated', last, alive.length);
+      alive.splice(alive.indexOf(last), 1);
+    }
+    if (alive.length === 1) {
+      const w = alive[0];
+      w.finishTime = this.clock;
+      this.finishOrder.push(w);
+      this.emit('finish', w, 1);
     }
   }
 
@@ -157,7 +181,7 @@ export class Race {
   // Güncel sıralama: bitirenler bitiş sırasına göre, diğerleri ilerlemeye göre
   standings() {
     const running = this.entries.filter((e) => e.finishTime === null).sort((a, b) => b.progress - a.progress);
-    return [...this.finishOrder, ...running];
+    return [...this.finishOrder, ...running, ...[...this.elimOrder].reverse()];
   }
 
   positionOf(kart) {

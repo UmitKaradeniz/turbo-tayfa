@@ -405,6 +405,8 @@ let focus = kartOf(settings.character);
 syncVehicles(focus);
 let drivers = new Map();
 let timeTrial = false; // Zamana Karşı modu (tek oyunculu, botsuz, itemsiz)
+let elimMode = false; // Eleme modu (tek oyunculu): her 15 sn son sıra elenir
+const ELIM = { grace: 20, interval: 15 };
 let ghost = null; // rekor turun hayaleti
 let lastTotalRecord = false;
 // Turbo Puan: yarış boyu sayaçlar, bitişte verilen ödül ve sonuç ekranında gösterildi mi
@@ -506,6 +508,7 @@ function endRaceLocal() {
   ghost?.dispose();
   ghost = null;
   timeTrial = false;
+  elimMode = false;
   hud.setTimeTrial(false);
   menu.refreshRecords();
   touch.show(false);
@@ -524,7 +527,7 @@ function toMenu() {
 }
 
 // --- Yarış kurulumu (tek oyunculu ve çevrimiçi ortak) ---
-function setupRace(order, laps) {
+function setupRace(order, laps, opts = {}) {
   resultsTimer = 0;
   paused = false;
   pauseOpen = false;
@@ -535,6 +538,7 @@ function setupRace(order, laps) {
   items.reset();
   items.setEnabled(!timeTrial);
   hud.setTimeTrial(timeTrial);
+  hud.setElimMode(!!opts.elimination);
   emotes.clear();
   chat.setRacing(true);
   lastTotalRecord = false;
@@ -542,7 +546,7 @@ function setupRace(order, laps) {
   raceReward = null;
   rewardShown = false;
   hazards.reset();
-  race = new Race(track, order, { laps, isOwned });
+  race = new Race(track, order, { laps, isOwned, elimination: opts.elimination ?? null });
   autoTuner?.raceReset();
   playMusic('race', trackDef.id);
   touch.show(isTouchDevice);
@@ -598,8 +602,8 @@ function setupRace(order, laps) {
     if (place === 1) botReact(e.kart, 'win', 600);
     if (e.kart === player) {
       if (resultsTimer === 0) {
-        lastTotalRecord = submitTotal(trackDef.id, race.laps, e.finishTime);
-        const daily = !online && !timeTrial && lastConfig?.daily && lastConfig.track === trackDef.id ? lastConfig.daily : null;
+        lastTotalRecord = elimMode ? false : submitTotal(trackDef.id, race.laps, e.finishTime);
+        const daily = !online && !timeTrial && !elimMode && lastConfig?.daily && lastConfig.track === trackDef.id ? lastConfig.daily : null;
         const dailyOk = daily ? dailyDone(daily, { place, ...raceStats }) : false;
         raceReward = awardRace({ place, racers: order.length, timeTrial, newRecord: lastTotalRecord, trackId: trackDef.id, online: !!online, humans: online ? Math.max(0, humanKarts.size - 1) : 0, dailyKey: daily?.key, dailyOk, ...raceStats });
         raceReward.dailyMiss = daily && !dailyOk ? daily.text : null;
@@ -611,6 +615,26 @@ function setupRace(order, laps) {
       }
     } else if (resultsTimer < 0 && r === race) {
       showResults(); // tablo açıkken yeni bitirenleri ekle
+    }
+  });
+  race.on('eliminated', (e, place) => {
+    const kart = e.kart;
+    fx.event(kart, 'hit');
+    fx.event(kart, 'airBoost');
+    kart.active = false;
+    play('hit', { volume: kart === player ? 1 : nearVolume(kart) });
+    hud.elimBanner(displayNames.get(kart) ?? kart.character.name, kart === player);
+    if (kart === player) {
+      rig.shake(0.8);
+      if (resultsTimer === 0) {
+        raceReward = awardRace({ place, racers: order.length, timeTrial: false, newRecord: false, trackId: trackDef.id, online: false, humans: 0, ...raceStats });
+        raceReward.dailyMiss = null;
+        playMusic(null);
+        play('finish');
+        resultsTimer = 2.5;
+      }
+    } else if (resultsTimer < 0 && r === race) {
+      showResults();
     }
   });
   race.on('wrongWay', (e, wrong) => {
@@ -629,6 +653,7 @@ async function startOfflineRace(config) {
   syncVehicles(player);
   syncCosmetics(player);
   timeTrial = config.mode === 'timeTrial';
+  elimMode = config.mode === 'elimination';
   const bots = (config.rivals ?? pickRivals(config.character)).map(kartOf).filter((k) => k !== player).slice(0, 7);
   // Oyuncu ortalarda (5.) başlar; önünde geçilecek rakipler olsun. Zamana Karşı: tek başına
   const order = timeTrial ? [player] : [...bots.slice(0, 4), player, ...bots.slice(4)];
@@ -641,7 +666,8 @@ async function startOfflineRace(config) {
   ghost = null;
   const rec = recordOf(trackDef.id);
   if (timeTrial && rec?.ghost) ghost = createGhost(scene, CHARACTERS.find((c) => c.id === rec.ghost.char) ?? player.character, rec.ghost, trackDef.kartBody);
-  setupRace(order, config.laps);
+  if (elimMode) menu.toast('💥 Eleme: her 15 saniyede son sıradaki elenir. Son kalan kazanır!');
+  setupRace(order, elimMode ? 999 : config.laps, elimMode ? { elimination: ELIM } : {});
   if (timeTrial && !rec?.ghost) menu.toast('İlk turunu at: en iyi turun hayalet olarak kaydedilecek 👻');
 }
 
@@ -673,6 +699,13 @@ function renderResults() {
   }
   const standings = race.standings();
   const me = standings.findIndex((e) => e.kart === player) + 1;
+  if (elimMode) {
+    return hud.showResults(
+      standings.map((e) => ({ id: e.kart.character.id, name: displayNames.get(e.kart) ?? e.kart.character.name, time: e.finishTime, me: e.kart === player })),
+      `${trackDef.name} · 💥 Eleme · ${me}. oldun`,
+      previewOf(trackDef.id),
+    );
+  }
   const cupView = online ? onlineCupView(standings, me) : cup ? offlineCupView(standings, me) : null;
   if (cupView) return hud.showResults(cupView.rows, cupView.subtitle, previewOf(trackDef.id), cupView.opts);
   hud.showResults(
@@ -1210,7 +1243,8 @@ function frame(now) {
     const e = race.entryOf(player);
     ghost.update(race.started && e.finishTime === null ? race.clock - e.lapStart : -1, paused ? 0 : dt);
   }
-  const target = race ? player : focus;
+  // Eleme: elenince kalan yarışı lider kartın arkasından izle
+  const target = race ? (elimMode && race.entryOf(player)?.eliminated ? race.standings()[0].kart : player) : focus;
   applyViewOffset(dt);
   rig.update(paused ? 0 : dt, target);
   // Kameranın dibindeki rakip kart görüşü kapatmasın; bağlantısı kopan kart gizlenir
@@ -1369,9 +1403,13 @@ function applyPixelRatio() {
 function updateHud(dt) {
   const entry = race.entryOf(player);
   const activeKarts = karts.filter((k) => k.active);
-  hud.setPosition(race.positionOf(player), activeKarts.length);
+  hud.setPosition(race.positionOf(player), elimMode && entry.eliminated ? race.entries.length : activeKarts.length);
   hud.setLap(Math.min(race.laps, Math.max(1, entry.lapsDone + 1)), race.laps);
   hud.setTime(entry.finishTime ?? Math.max(0, race.clock));
+  if (elimMode) {
+    const alive = race.entries.filter((e) => e.finishTime === null).length;
+    hud.setElim(race.state === 'racing' && alive > 1 ? { left: race.elim.nextAt - race.clock, alive, danger: !entry.eliminated && race.positionOf(player) === alive } : null);
+  }
   hud.setDelta(timeTrial && race.started && entry.finishTime === null ? delta.update(player, race.clock - entry.lapStart) : null);
   const speed = Math.abs(player.speed);
   hud.setSpeed(speed * 3.6, speed / KART.maxSpeed, player.boostTime > 0);

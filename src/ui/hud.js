@@ -22,6 +22,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     <button id="hud-pause" data-go="pause" aria-label="Duraklat"><i></i><i></i></button>
     <button id="hud-fs" class="fs-btn" data-go="fullscreen" aria-label="Tam ekran"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
     <div id="hud-item"><div class="slot"><img alt="" /></div><div class="key">E</div></div>
+    <div id="hud-elim"><span class="lbl">ELEME</span><b class="sec">0</b><span class="alive"></span></div>
     <div id="hud-toast"></div>
     <div id="hud-coach"></div>
     <div id="hud-center"></div>
@@ -101,6 +102,9 @@ export function createHud({ portraits, minimap, itemIcons }) {
   const center = $('#hud-center');
   const toasts = $('#hud-toast');
   const coachEl = $('#hud-coach');
+  const elimEl = $('#hud-elim');
+  const elimSec = elimEl.querySelector('.sec');
+  const elimAlive = elimEl.querySelector('.alive');
   let coachTimer = null;
   const wrongWay = $('#hud-wrongway');
   const speedFg = $('#hud-speed .fg');
@@ -133,6 +137,23 @@ export function createHud({ portraits, minimap, itemIcons }) {
     // Zamana Karşı: sıra ve item yuvası gizli
     setTimeTrial(on) {
       root.classList.toggle('tt-mode', on);
+    },
+    setElimMode(on) {
+      root.classList.toggle('elim-mode', on);
+    },
+    // Eleme modu: sonraki elemeye kalan süre ve kalan sayısı (null = gizle); danger: son sıradasın
+    setElim(info) {
+      elimEl.classList.toggle('on', !!info);
+      if (!info) return;
+      const sec = Math.max(0, Math.ceil(info.left));
+      elimSec.textContent = sec;
+      elimAlive.textContent = `${info.alive} kaldı`;
+      elimEl.classList.toggle('danger', !!info.danger);
+      elimEl.classList.toggle('soon', sec <= 3);
+    },
+    // Eleme anı duyurusu (ben: oyuncunun kendisi elendi)
+    elimBanner(name, me) {
+      banner(me ? 'ELENDİN!' : `${name} elendi`, me ? 'wrong' : 'final small');
     },
     setPosition(p, total) {
       if (p !== lastPos) {
@@ -428,6 +449,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
       center.innerHTML = '';
       toasts.innerHTML = '';
       wrongWay.classList.remove('show');
+      elimEl.classList.remove('on', 'danger', 'soon');
       this.setItem(null);
       lastPos = 0;
       lastSpeed = -1;

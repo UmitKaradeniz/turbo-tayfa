@@ -126,6 +126,7 @@
 }
 #hud-center .banner.small { font-size: clamp(36px, 8vw, 72px); }
 #hud-center .banner.go { color: var(--tt-green); }
+#hud-center .banner.wrong { color: var(--tt-red); }
 #hud-center .banner.final { color: var(--tt-yellow); }
 #hud-center .banner.finish { color: #fff; animation-duration: 1.4s; }
 
@@ -147,6 +148,22 @@
 }
 #hud-bothost.show { display: block; }
 #hud-bothost.mine { background: rgba(10, 111, 214, 0.7); }
+
+/* Eleme modu: sonraki elemeye kalan süre */
+#hud-elim {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+  display: none; align-items: center; gap: 8px; padding: 4px 14px; border-radius: 14px;
+  background: rgba(11, 42, 85, 0.6); color: #fff; font-weight: 800; white-space: nowrap;
+  box-shadow: 0 4px 0 rgba(11, 42, 85, 0.45);
+}
+#hud.elim-mode #hud-lap .lap { display: none; }
+#hud-elim.on { display: flex; }
+#hud-elim .lbl { font-size: 13px; letter-spacing: 1px; opacity: 0.85; }
+#hud-elim .sec { font-family: var(--tt-font-display); font-size: 28px; line-height: 1; min-width: 1.2em; text-align: center; color: var(--tt-yellow); font-variant-numeric: tabular-nums; }
+#hud-elim .alive { font-size: 14px; }
+#hud-elim.danger { background: var(--tt-red); box-shadow: 0 4px 0 #a21d1d; }
+#hud-elim.danger .sec { color: #fff; }
+#hud-elim.soon .sec { animation: tt-blink 0.5s steps(2) infinite; }
 
 /* Ters yön */
 #hud-wrongway {
