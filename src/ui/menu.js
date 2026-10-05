@@ -8,6 +8,7 @@ import { QUALITY, saveQuality, saveGfx, GFX_DEFAULTS } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
+import { toggleFullscreen } from './fullscreen.js';
 import { levelInfo, selection, setSelection, achievementList, bumpStat } from '../progress.js';
 import { PAINTS, TRAILS } from '../cosmetics.js';
 
@@ -748,11 +749,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         handlers.toLobby();
         break;
       case 'fullscreen':
-        // Telefonda tam ekran + yatay kilit (destekleniyorsa)
-        document.documentElement
-          .requestFullscreen?.()
-          .then(() => screen.orientation?.lock?.('landscape'))
-          .catch(() => {});
+        toggleFullscreen();
         break;
       case 'join':
         if (demandName()) break;

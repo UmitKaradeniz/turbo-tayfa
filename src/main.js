@@ -205,7 +205,7 @@ const menu = createMenu({
 
 // Butonlarda tık sesi
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.tt-btn, .tt-seg button, .tt-track, #hud-pause')) play('ui_click', { volume: 0.6 });
+  if (e.target.closest('.tt-btn, .tt-seg button, .tt-track, #hud-pause, #hud-fs')) play('ui_click', { volume: 0.6 });
 });
 
 const rig = new CameraRig(camera);
