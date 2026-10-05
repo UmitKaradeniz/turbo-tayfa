@@ -63,14 +63,13 @@ export default {
       edge: { keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/plant_bushLarge', 'nature/rock_largeC'], step: 5, scale: [4, 7] },
       botChance: 0.55,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta (korsan fıçı ve sandık dizisi); sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı (korsan fıçı ve sandık dizisi); sonunda altın kutu (çift hak)
     {
       id: 'treasureWalk',
       name: 'Hazine Patikası',
-      follow: { from: 0.66, to: 0.83, side: -1, lateral: 24 },
-      halfWidth: 3.8,
-      surface: 'boardwalk',
-      speed: 0.96,
+      follow: { from: 0.717, to: 0.904, side: -1 },
+      halfWidth: 5,
+      surface: 'dirt',
       color: 0x9a6b3a,
       surprise: { skin: 'chest', f: 0.78 },
       edge: { keys: ['pirate/barrel', 'pirate/crate', 'pirate/crate-bottles'], step: 5, scale: [3, 3.6] },

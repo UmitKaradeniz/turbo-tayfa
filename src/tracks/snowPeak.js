@@ -79,14 +79,13 @@ export default {
       edge: { keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/log_stack', 'nature/rock_largeC'], step: 5, scale: [4, 6.5] },
       botChance: 0.5,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'iceCave',
       name: 'Buz Mağarası',
-      follow: { from: 0.488, to: 0.688, side: 1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.61, to: 0.762, side: 1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0xbcd6ea,
       surprise: { skin: 'ice', f: 0.78 },
       edge: { keys: ['nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_largeC', 'holiday/lantern'], step: 4, scale: [4.5, 6] },

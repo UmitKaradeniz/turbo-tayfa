@@ -65,14 +65,13 @@ export default {
       edge: { keys: ['toy/item-cone'], step: 8, scale: [10, 12] },
       botChance: 0.5,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'boxMaze',
       name: 'Kutu Labirenti',
-      follow: { from: 0.108, to: 0.309, side: -1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.288, to: 0.499, side: 1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0xd9a066,
       surprise: { skin: 'jack', f: 0.78 },
       edge: { keys: ['furniture/cardboardBoxOpen', 'tayfa/alphabet_block', 'furniture/cardboardBoxClosed', 'tayfa/spinning_top'], step: 6, scale: [18, 23] },

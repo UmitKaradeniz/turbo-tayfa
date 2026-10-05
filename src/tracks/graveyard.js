@@ -90,14 +90,13 @@ export default {
       edge: { keys: ['graveyard/gravestone-wide', 'graveyard/gravestone-round', 'graveyard/rocks-tall', 'halloween/gravemarker_A'], step: 6, scale: [6, 9] },
       botChance: 0.5,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'crypt',
       name: 'Gizli Mahzen',
-      follow: { from: 0.174, to: 0.348, side: -1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.439, to: 0.571, side: -1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0x2a2a3a,
       surprise: { skin: 'lantern', f: 0.78 },
       edge: { keys: ['graveyard/fire-basket', 'halloween/shrine_candles', 'graveyard/coffin-old', 'graveyard/fire-basket'], step: 5, scale: [5, 7] },

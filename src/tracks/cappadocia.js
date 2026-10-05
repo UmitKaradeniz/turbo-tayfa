@@ -58,14 +58,13 @@ export default {
       edge: { keys: ['tayfa/rock_boulder_a', 'tayfa/rock_boulder_b'], step: 5, scale: [6, 9] },
       botChance: 0.5,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta (iki yanda peribacaları); sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı (iki yanda peribacaları); sonunda altın kutu (çift hak)
     {
       id: 'chimneyCave',
       name: 'Peribacası Mağarası',
-      follow: { from: 0.41, to: 0.555, side: -1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.707, to: 0.879, side: 1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0xb98a5a,
       surprise: { skin: 'pot', f: 0.78 },
       edge: { keys: ['tayfa/chimney_a', 'tayfa/chimney_b', 'tayfa/chimney_c'], step: 9, scale: [10, 15] },

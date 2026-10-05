@@ -68,14 +68,13 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'canyArch',
       name: 'Şeker Kamışı Kemeri',
-      follow: { from: 0.103, to: 0.284, side: 1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.25, to: 0.466, side: -1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0xe3b878,
       surprise: { skin: 'gift', f: 0.78 },
       edge: { keys: ['tayfa/candy_cane', 'tayfa/swirl_lollipop', 'tayfa/gumdrop_cluster'], step: 7, scale: [14, 18] },

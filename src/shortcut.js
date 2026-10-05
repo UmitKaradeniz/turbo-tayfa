@@ -10,64 +10,71 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-// sd.follow: ana yolun bir bölümünü yandan izleyen yol üretir (süpriz yolları). Uzunluğu ana yolun aynı
-// bölümüne eşitlenir: yol önce yanal uzaklığa (lateral) çıkar, gerekirse dalgalanarak (wiggle) uzar.
-// follow = { from, to (turun oranı), side (+1 sağ / -1 sol), lateral (m), waves, tol }
+// sd.follow: ana yolun bir bölümünü yandan, hemen yanında izleyen yol üretir (süpriz yolları).
+// Yol ana yoldan çıkarken ve girerken çok uzun, yumuşak bir S çizer (geçiş boyu ≥ ~60 m, dönüş yarıçapı ≥ ~40 m);
+// dalgalanma yok, yol hep ana yolun yanında kalır (diğer yarışçılar görünür).
+// follow = { from, to (turun oranı), side (+1 sağ / -1 sol), lateral (m), tol }
+const smoother = (t) => {
+  t = Math.min(1, Math.max(0, t));
+  return t * t * t * (t * (t * 6 - 15) + 10);
+};
+
+// Üç ardışık noktadan geçen çemberin yarıçapı (m); doğruya yakınsa Infinity
+function minRadius(pts) {
+  const v = pts.map(([x, z]) => new THREE.Vector3(x, 0, z));
+  const curve = new THREE.CatmullRomCurve3(v, false, 'centripetal');
+  const q = curve.getSpacedPoints(Math.max(8, Math.round(curve.getLength() / 6)));
+  let min = Infinity;
+  // Uçlar ana yolun üstünde (oranın eğriliği zaten ana yolun): yalnızca aradaki %76'ya bakılır
+  const skip = Math.ceil(q.length * 0.12);
+  for (let i = Math.max(1, skip); i < q.length - 1 - skip; i++) {
+    const a = q[i - 1];
+    const b = q[i];
+    const c = q[i + 1];
+    const cross = Math.abs((b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x));
+    if (cross < 1e-6) continue;
+    min = Math.min(min, (a.distanceTo(b) * b.distanceTo(c) * a.distanceTo(c)) / (2 * cross));
+  }
+  return { min, length: curve.getLength() };
+}
+
 export function followPoints(follow, { points, rights, count }) {
-  const { from, to, side = 1, lateral = 24, tol = 0 } = follow;
+  const { from, to, side = 1, lateral = 28 } = follow;
   const i0 = Math.round(from * count);
   const n = (Math.round(to * count) - i0 + count) % count;
   const step = 3;
   const M = Math.max(6, Math.round(n / step));
   let target = 0;
   for (let k = 1; k <= n; k++) target += points[(i0 + k) % count].distanceTo(points[(i0 + k - 1) % count]);
-  target *= 1 + tol;
-  const waves = follow.waves ?? Math.max(1, Math.round(target / 130)); // dalga boyu ≥ ~110 m: kart rahat döner
-  const env = (u) => smoothstep(0, 0.2, u) * (1 - smoothstep(0.8, 1, u));
-  const build = (L, amp) => {
+  const w = Math.min(95, target * 0.42) / target; // geçiş payı (bölümün oranı)
+  const env = (u) => smoother(u / w) * smoother((1 - u) / w);
+  const build = (L) => {
     const out = [];
     for (let m = 0; m <= M; m++) {
       const u = m / M;
       const idx = (i0 + Math.round(u * n)) % count;
-      const lat = side * (L + amp * 0.5 * (1 - Math.cos(u * waves * Math.PI * 2))) * env(u);
+      const lat = side * L * env(u);
       out.push([points[idx].x + rights[idx].x * lat, points[idx].z + rights[idx].z * lat]);
     }
     return out;
   };
-  const lenOf = (pts) => new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal').getLength();
-  let L = lateral;
-  let amp = 0;
-  let len = lenOf(build(L, 0));
-  if (len > target) {
-    // Yol ana yoldan uzun (dış virajda): yanal uzaklığı azalt
-    let lo = 16;
-    let hi = L;
-    for (let it = 0; it < 14; it++) {
-      L = (lo + hi) / 2;
-      if (lenOf(build(L, 0)) > target) hi = L;
-      else lo = L;
+  const pts = build(lateral);
+  // Kıvrımlı ana yollarda ofset yol da kıvrımlanır: uçlar sabit, aradaki noktalar komşu ortalamasına çekilerek yumuşatılır
+  for (let it = 0; it < (follow.smooth ?? 30); it++) {
+    for (let m = 2; m < pts.length - 2; m++) {
+      pts[m] = [pts[m][0] * 0.5 + (pts[m - 1][0] + pts[m + 1][0]) * 0.25, pts[m][1] * 0.5 + (pts[m - 1][1] + pts[m + 1][1]) * 0.25];
     }
-    L = lo;
-  } else {
-    // Kısa: dalgalanma genliğini artır
-    let lo = 0;
-    let hi = 36;
-    for (let it = 0; it < 16; it++) {
-      amp = (lo + hi) / 2;
-      if (lenOf(build(L, amp)) < target) lo = amp;
-      else hi = amp;
-    }
-    amp = lo;
   }
-  const pts = build(L, amp);
-  pts.follow = { len: lenOf(pts), target, L, amp };
+  const { min, length } = minRadius(pts);
+  pts.follow = { len: length, target, L: lateral, minR: min };
   return pts;
 }
 
 export function buildShortcut(sd, id, { closest, edge, count, points, rights }) {
   if (sd.follow && !sd.points) {
     const pts = followPoints(sd.follow, { points, rights, count });
-    sd = { ...sd, points: pts, followInfo: pts.follow };
+    // Ana yoldan kısaysa hız çarpanı süreyi eşitler (yalnız yavaş yüzeylerde etkili: kum/toprak/çamur)
+    sd = { ...sd, points: pts, followInfo: pts.follow, speed: sd.speed ?? Math.min(1, Math.max(0.8, pts.follow.len / pts.follow.target)) };
   }
   const halfWidth = sd.halfWidth ?? 4.5;
   const blend = sd.blend ?? 9;

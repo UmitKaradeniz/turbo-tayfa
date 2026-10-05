@@ -90,14 +90,13 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'crystalCave',
       name: 'Kristal Mağarası',
-      follow: { from: 0.106, to: 0.304, side: -1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.367, to: 0.518, side: -1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0x7d8696,
       surprise: { skin: 'moon', f: 0.78 },
       edge: { keys: ['space/rock_crystalsLargeA', 'space/rock_crystalsLargeB', 'space/rock_crystals', 'space/rocks_smallA'], step: 5, scale: [7, 11] },

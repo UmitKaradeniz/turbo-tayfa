@@ -91,14 +91,13 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'obsidian',
       name: 'Obsidyen Geçidi',
-      follow: { from: 0.114, to: 0.327, side: 1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.296, to: 0.458, side: 1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0x1d1618,
       surprise: { skin: 'magma', f: 0.78 },
       edge: { keys: ['nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_tallE'], step: 4, scale: [5, 8] },

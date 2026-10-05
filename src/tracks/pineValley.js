@@ -63,14 +63,13 @@ export default {
       edge: { keys: ['nature/log_stack', 'nature/rock_largeA', 'nature/stump_round', 'nature/rock_largeB'], step: 5, scale: [4, 6.5] },
       botChance: 0.5,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'campTrail',
       name: 'Kamp Patikası',
-      follow: { from: 0.66, to: 0.83, side: 1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.72, to: 0.905, side: 1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0x8a6b3f,
       surprise: { skin: 'honey', f: 0.78 },
       edge: { keys: ['nature/log_stack', 'nature/stump_round', 'nature/mushroom_redGroup'], step: 5, scale: [4, 5.5] },

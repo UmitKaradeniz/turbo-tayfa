@@ -93,14 +93,13 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'nest',
       name: 'Yumurta Yuvası',
-      follow: { from: 0.104, to: 0.286, side: 1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.113, to: 0.252, side: 1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0x8a7a4a,
       surprise: { skin: 'egg', f: 0.78 },
       edge: { keys: ['nat2/Rock_Moss_1', 'nat2/Rock_Moss_2', 'nat2/Cactus_1', 'nat2/Plant_2'], step: 5, scale: [4, 7] },

@@ -73,14 +73,13 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
-    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    // Süpriz yolu: ana yolun hemen yanında, aynı uzunlukta, yumuşak girişli çıkışlı; sonunda altın kutu (çift hak)
     {
       id: 'circusTent',
       name: 'Cambaz Çadırı',
-      follow: { from: 0.576, to: 0.752, side: -1, lateral: 24 },
-      halfWidth: 3.8,
+      follow: { from: 0.493, to: 0.651, side: -1 },
+      halfWidth: 5,
       surface: 'dirt',
-      speed: 0.94,
       color: 0xc96a9a,
       surprise: { skin: 'balloons', f: 0.78 },
       edge: { keys: ['tayfa/balloon_bunch', 'coaster/flowers', 'tayfa/popcorn_cart', 'coaster/bench'], step: 5, scale: [6, 9] },
