@@ -5,7 +5,7 @@
 //
 // Mesajlar JSON: { type, ... }. İstemci → sunucu:
 //   create {name, character, vehicle}  join {code, name, character, vehicle}
-//   resume {code, token}              character {character}   vehicle {vehicle}
+//   resume {code, token}              character {character}   vehicle {vehicle}   look {paint, trail}
 //   settings {laps, difficulty, track, mode}   ready {ready}
 //   start {trackCount | trackCounts}  nextRace (kupa)   state {s: {...}, bots: [{id, s}]}
 //   finish {id, time}                 backToLobby
@@ -79,6 +79,8 @@ function roomView(room) {
       name: p.name,
       character: p.character,
       vehicle: p.vehicle,
+      paint: p.paint,
+      trail: p.trail,
       ready: p.ready,
       connected: !!p.ws,
     })),
@@ -96,13 +98,21 @@ function freeCharacter(room, wanted, exceptId) {
 const VEHICLES = ['balanced', 'agile', 'rocket', 'heavy', 'sprint'];
 const cleanVehicle = (v) => (VEHICLES.includes(v) ? v : null); // null = istemci karakterin varsayılan aracını kullanır
 
-function addPlayer(room, ws, name, character, vehicle) {
+// Kozmetik (boya/iz): yalnızca bilinen kimlikler kabul edilir; 'stock'/'classic' = varsayılan
+const PAINTS = ['stock', 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'teal', 'black', 'pearl', 'silver', 'gold', 'rainbow'];
+const TRAILS = ['classic', 'violet', 'toxic', 'ice', 'candy', 'gold', 'ghost', 'rainbow'];
+const cleanPaint = (v) => (PAINTS.includes(v) ? v : 'stock');
+const cleanTrail = (v) => (TRAILS.includes(v) ? v : 'classic');
+
+function addPlayer(room, ws, name, character, vehicle, look) {
   const p = {
     id: crypto.randomUUID().slice(0, 8),
     token: crypto.randomUUID(),
     name: cleanName(name),
     character: freeCharacter(room, character, null),
     vehicle: cleanVehicle(vehicle),
+    paint: cleanPaint(look?.paint),
+    trail: cleanTrail(look?.trail),
     ready: false,
     ws,
     leftAt: 0,
@@ -205,7 +215,7 @@ function startRace(room, trackCount) {
   }
   const bots = botChars.filter((c) => !taken.has(c)).map((c) => ({ id: `bot-${c}`, character: c }));
   room.entrants = [
-    ...order.map((p) => ({ id: p.id, character: p.character, vehicle: p.vehicle, name: p.name, bot: false })),
+    ...order.map((p) => ({ id: p.id, character: p.character, vehicle: p.vehicle, paint: p.paint, trail: p.trail, name: p.name, bot: false })),
     ...bots.map((b) => ({ id: b.id, character: b.character, name: null, bot: true })),
   ];
   room.botState = new Map(); // bot id → {state, progress, finished}
@@ -325,7 +335,7 @@ function handleMessage(ws, raw) {
       const r = { code, hostId: null, phase: 'lobby', settings: { laps: 3, difficulty: 'normal', track: 'palmCove', mode: 'race' }, players: new Map(), emptySince: 0 };
       rooms.set(code, r);
       if (fixedCode && !timer) startTicker(); // Cloudflare: ticker oda varken çalışır, oda bitince durur (DO uyuyabilsin)
-      const me = addPlayer(r, ws, msg.name, msg.character, msg.vehicle);
+      const me = addPlayer(r, ws, msg.name, msg.character, msg.vehicle, msg.look);
       r.hostId = me.id;
       syncRoom(r);
       return;
@@ -337,7 +347,7 @@ function handleMessage(ws, raw) {
       if (!r) return send(ws, { type: 'error', code: 'no-room', msg: 'Bu kodla bir oda bulunamadı.' });
       if (r.phase !== 'lobby') return send(ws, { type: 'error', code: 'in-race', msg: 'Bu odada yarış sürüyor. Bitince tekrar dene.' });
       if (r.players.size >= MAX_PLAYERS) return send(ws, { type: 'error', code: 'full', msg: 'Oda dolu (en fazla 8 oyuncu).' });
-      const joined = addPlayer(r, ws, msg.name, msg.character, msg.vehicle);
+      const joined = addPlayer(r, ws, msg.name, msg.character, msg.vehicle, msg.look);
       if (!r.hostId) pickHost(r);
       send(ws, { type: 'chatHistory', list: r.chat ?? [] });
       systemChat(r, `${joined.name} odaya katıldı`);
@@ -390,6 +400,13 @@ function handleMessage(ws, raw) {
     case 'vehicle':
       if (room.phase !== 'lobby') return;
       p.vehicle = cleanVehicle(msg.vehicle);
+      syncRoom(room);
+      return;
+
+    case 'look':
+      if (room.phase !== 'lobby') return;
+      p.paint = cleanPaint(msg.paint);
+      p.trail = cleanTrail(msg.trail);
       syncRoom(room);
       return;
 

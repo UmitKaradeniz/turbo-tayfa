@@ -94,13 +94,19 @@ const karts = CHARACTERS.map((c) => {
   return kart;
 });
 const kartOf = (id) => karts.find((k) => k.character.id === id) ?? karts[0];
-// Seçilen boya ve iz yalnız oyuncunun kartına uygulanır (çevrimiçide diğerleri görmez; A5'te eklenecek)
+// Boya ve iz: kendi kartında seçimin; çevrimiçide diğer oyuncuların kartında onların seçimi (botlar standart)
+const remoteLooks = new Map(); // kart → {paint, trail}; yalnız çevrimiçi yarışta dolu
 const syncCosmetics = (mine) => {
   const c = activeCosmetics();
   for (const k of karts) {
-    k.model.setPaint(k === mine ? c.paint : 'stock');
-    k.trail = k === mine ? c.trail : 'classic';
+    const l = k === mine ? c : remoteLooks.get(k);
+    k.model.setPaint(l?.paint ?? 'stock');
+    k.trail = l?.trail ?? 'classic';
   }
+};
+const lookMsg = () => {
+  const c = activeCosmetics();
+  return { paint: c.paint, trail: c.trail };
 };
 // Seçilen araç yalnız oyuncunun (menüde odaktaki) kartına uygulanır; diğerleri karakterin varsayılan aracını kullanır
 const syncVehicles = (mine) => {
@@ -157,7 +163,10 @@ const menu = createMenu({
       if (booted && !race && track) showMenuField();
     },
     screen: (name) => setMenuView(name),
-    cosmetic: () => syncCosmetics(focus), // Garaj'da boya/iz seçimi: odaktaki kartta canlı önizleme
+    cosmetic: () => {
+      syncCosmetics(focus); // Garaj'da boya/iz seçimi: odaktaki kartta canlı önizleme
+      if (online) net.send({ type: 'look', ...lookMsg() });
+    },
     character: (id) => {
       focus = kartOf(id);
       syncVehicles(focus);
@@ -187,12 +196,12 @@ const menu = createMenu({
     host: () => {
       online = newOnline();
       slowConnectHint();
-      net.send({ type: 'create', name: playerName(), character: settings.character, vehicle: settings.vehicle || null });
+      net.send({ type: 'create', name: playerName(), character: settings.character, vehicle: settings.vehicle || null, look: lookMsg() });
     },
     join: (code) => {
       online = newOnline();
       slowConnectHint();
-      net.send({ type: 'join', code, name: playerName(), character: settings.character, vehicle: settings.vehicle || null });
+      net.send({ type: 'join', code, name: playerName(), character: settings.character, vehicle: settings.vehicle || null, look: lookMsg() });
     },
     leaveRoom: () => leaveRoom(),
     lobbyButton: (action) => {
@@ -757,6 +766,7 @@ document.addEventListener('visibilitychange', () => {
 function leaveRoom() {
   net.leave();
   online = null;
+  remoteLooks.clear();
   menu.setOnline(null);
   chat.setOnline(false);
   chat.clear();
@@ -791,8 +801,10 @@ async function startOnlineRace(msg) {
   online.kartById.clear();
   online.idByKart.clear();
   online.buffers.clear();
+  remoteLooks.clear();
   const order = msg.entrants.map((e) => {
     const kart = kartOf(e.character);
+    if (!e.bot) remoteLooks.set(kart, { paint: e.paint, trail: e.trail });
     kart.setVehicle(vehicleOf(e.vehicle, kart.character)); // botlarda e.vehicle yok → karakterin varsayılanı
     online.kartById.set(e.id, kart);
     online.idByKart.set(kart, e.id);

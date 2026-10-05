@@ -7,7 +7,7 @@ Tilki Fındık, penguen Buzi, panda Pofuduk ve tayfanın geri kalanıyla tropik 
 - 🌴 4 pist: **Palmiye Koyu** (tropik ada), **Çam Vadisi** (orman, göl, tepe), **Kar Zirvesi** (kış dağı, kar yağışı) ve **Neon Şehir** (gece, liman, neon tabelalar)
 - 🦊 8 karakter, en fazla 8 oyuncu; boş yerleri botlar doldurur
 - 💨 Drift + 3 kademeli mini-turbo, başlangıç turbosu
-- 🏅 **Turbo Puan ve Garaj:** yarışlardan puan kazan, seviye atla; 14 kart boyası ve 8 drift/turbo izi seviyeyle açılır (Garaj ekranı, ilerleme tarayıcıda saklanır)
+- 🏅 **Turbo Puan ve Garaj:** yarışlardan puan kazan, seviye atla; 14 kart boyası ve 8 drift/turbo izi seviyeyle açılır (Garaj ekranı; çevrimiçi odada herkes seçtiğin boyayı görür; ilerleme tarayıcıda saklanır)
 - 🏆 **Başarımlar:** 24 rozet (ilk zafer, kestirmeci, nişancı, kupa…), her biri Turbo Puan verir
 - 📅 **Günlük meydan okuma:** her gün herkes için aynı pist ve hedef, seriyle artan Turbo Puan ödülü
 - 🗺️ **Mini harita:** her yarışçı hayvan kafasıyla ve sıra rozetiyle görünür (çevrimiçide arkadaşını da takip et)

@@ -1,0 +1,25 @@
+// Kullanım: node tools/dev/look-protocol-test.mjs <port>  (boya/iz protokolü: kabul, geçersizi eler, yarışa taşır)
+import WebSocket from 'ws';
+const port = process.argv[2];
+const mk = (q = 'create=1') => new Promise((res) => { const ws = new WebSocket(`ws://localhost:${port}/ws?${q}`); ws.msgs = []; ws.on('message', (d) => ws.msgs.push(JSON.parse(d))); ws.on('open', () => res(ws)); });
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const last = (ws, t) => [...ws.msgs].reverse().find((m) => m.type === t);
+const show = (ws) => last(ws, 'room').players.map((p) => `${p.character}:${p.paint}/${p.trail}`).join(' ');
+const a = await mk();
+a.send(JSON.stringify({ type: 'create', name: 'A', character: 'fox', look: { paint: 'gold', trail: 'rainbow' } }));
+await sleep(200);
+const code = last(a, 'room').code;
+const b = await mk(`c=${code}`);
+b.send(JSON.stringify({ type: 'join', code, name: 'B', character: 'panda' }));
+await sleep(200);
+console.log('1 (gold/rainbow, stock/classic)', show(a));
+b.send(JSON.stringify({ type: 'look', paint: 'teal', trail: 'ice' })); await sleep(150);
+console.log('2 (B teal/ice)', show(a));
+b.send(JSON.stringify({ type: 'look', paint: '<x>', trail: 5 })); await sleep(150);
+console.log('3 (B stock/classic)', show(a));
+b.send(JSON.stringify({ type: 'look', paint: 'pink', trail: 'candy' })); await sleep(150);
+b.send(JSON.stringify({ type: 'ready', ready: true })); await sleep(150);
+a.send(JSON.stringify({ type: 'start', trackCount: 600 })); await sleep(600);
+const st = last(a, 'start');
+console.log('4 entrants', st ? st.entrants.map((e) => `${e.bot ? 'bot' : e.character}:${e.paint}/${e.trail}`).join(' ') : 'no start');
+process.exit(0);
