@@ -71,14 +71,17 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
   for (const sc of track.shortcuts) {
     const b = sc.def.boxes;
     if (!b) continue;
-    const s0 = b.at === 'landing' && sc.jump ? sc.jump.pitB + 7 : b.at === 'mid' ? sc.length * 0.45 : (b.f ?? 0.5) * sc.length;
-    for (const lateral of b.lateral) {
-      const q = sc.pointAt(s0, lateral);
-      const pos = new THREE.Vector3(q.x, q.y + 1.3, q.z);
-      const mesh = createItemBox();
-      mesh.position.copy(pos);
-      scene.add(mesh);
-      boxes.push({ index: -1, lateral, pos, mesh, active: true, respawn: 0 });
+    // fs: birden çok sıra (kısayolun oranları), yoksa tek sıra
+    const rowsAt = b.fs ? b.fs.map((f) => f * sc.length) : [b.at === 'landing' && sc.jump ? sc.jump.pitB + 7 : b.at === 'mid' ? sc.length * 0.45 : (b.f ?? 0.5) * sc.length];
+    for (const s0 of rowsAt) {
+      for (const lateral of b.lateral) {
+        const q = sc.pointAt(s0, lateral);
+        const pos = new THREE.Vector3(q.x, q.y + 1.3, q.z);
+        const mesh = createItemBox();
+        mesh.position.copy(pos);
+        scene.add(mesh);
+        boxes.push({ index: -1, lateral, pos, mesh, active: true, respawn: 0 });
+      }
     }
   }
 

@@ -76,10 +76,14 @@ export default {
 
   // Kısayol: yanardağın eteğinden geçen toprak yol; ortasında lav nehrini aşan rampa var.
   // Yeterli hızla çıkmazsan lava düşer, girişe dönersin. İniş alanında item kutuları var.
+  story: '🌋 Ateş Ruhu uyandı! Yanardağ kızgın, lav nehri yükseliyor — hazine tapınağına ilk sen ulaş!',
+
+  // Üç kısayol: Lav Atlayışı (rampa) · Obsidyen Tüneli (kor kapısı + hız tahtaları) · Kül Tarlası Yolu (meteor yağmurlu, kutu dolu uzun yol)
   shortcuts: [
     {
       id: 'lavaLeap',
       name: 'Lav Atlayışı',
+      tip: 'Hızla zıpla, lava düşme!',
       points: [[111, -76], [104, -42], [99, -6], [97, 26], [92, 56], [86, 72]],
       halfWidth: 4.4,
       surface: 'dirt',
@@ -91,6 +95,41 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
+    {
+      id: 'obsidian',
+      name: 'Obsidyen Tüneli',
+      tip: 'Kor kapısını zamanla, tahtalar seni fırlatır!',
+      points: [[-91, 109], [-118, 60], [-125, 10], [-120, -35], [-92, -64]],
+      halfWidth: 3.8,
+      surface: 'road',
+      speed: 1,
+      color: 0x1d1618,
+      pads: [{ f: 0.1, boost: 0.95 }, { f: 0.3, boost: 0.95 }, { f: 0.6, boost: 0.95 }, { f: 0.78, boost: 0.95 }, { f: 0.92, boost: 0.95 }],
+      edge: { keys: ['nature/rock_tallA', 'nature/rock_tallB', 'nature/rock_tallE'], step: 5, scale: [5, 8] },
+      botChance: 0.6,
+    },
+    {
+      id: 'ashField',
+      name: 'Kül Tarlası Yolu',
+      tip: 'Uzun ve meteorlu ama kutular dolu!',
+      points: [[-73, -117], [-96, -158], [-66, -203], [-14, -214], [22, -188], [41, -144]],
+      halfWidth: 4.4,
+      surface: 'dirt',
+      speed: 0.95,
+      color: 0x30251f,
+      pads: [{ f: 0.45 }],
+      boxes: { fs: [0.2, 0.5, 0.85], lateral: [-2.5, 0, 2.5] },
+      edge: { keys: ['nature/rock_largeA', 'nature/rock_largeB', 'nature/rock_largeC'], step: 6, scale: [4, 6.5] },
+      botChance: 0.25,
+    },
+  ],
+
+  // Kısayol içi tehlikeler (f: kısayolun oranı): tünelde kor kapıları, kül tarlasında meteor yağmuru
+  shortcutHazards: [
+    { type: 'geyser', shortcut: 'obsidian', f: 0.45, lateral: 0, radius: 4.4, period: 6, offset: 2 },
+    { type: 'geyser', shortcut: 'obsidian', f: 0.85, lateral: 0, radius: 4.4, period: 7, offset: 5 },
+    { type: 'meteor', shortcut: 'ashField', f: 0.35, lateral: -1.5, radius: 4.5, period: 8, offset: 2 },
+    { type: 'meteor', shortcut: 'ashField', f: 0.7, lateral: 1.5, radius: 4.5, period: 9, offset: 6 },
   ],
 
   models: [
@@ -176,7 +215,7 @@ export default {
 
     // Meşaleler: yol boyunca sıcak ışıklı direkler
     // (gayzerlerin uyarı halkası ışık lekeleriyle karışmasın diye onların yanında meşale yok)
-    const vents = this.hazards.map((h) => Math.round(h.f * track.count));
+    const vents = this.hazards.filter((h) => !h.shortcut).map((h) => Math.round(h.f * track.count));
     buildStreetLamps(ctx, { every: 14, skip: (i) => vents.some((k) => Math.abs(i - k) < 9) });
 
     // --- Doğa: kayalar, yanmış ağaçlar ---

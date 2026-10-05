@@ -7,6 +7,7 @@ import { hasModels, cloneModel, normalizedModel } from './assets.js';
 // (item isabetleriyle aynı mantık: karta sahip olan cihaz savrulmayı uygular).
 //
 // def.hazards: [{ type: 'geyser' | 'meteor' | 'ball', f (turun oranı), lateral (m), radius (m), period (s), offset (s) }]
+// def.shortcutHazards: aynısı, ama `shortcut: <kısayol id>` ile; f o kısayolun uzunluğunun oranıdır
 
 const EMBER = new THREE.Color(2.2, 0.65, 0.1);
 const EMBER_HOT = new THREE.Color(2.6, 1.3, 0.3);
@@ -52,7 +53,7 @@ const HAZARD_MODEL = {
   ghost: { key: 'hazard/hazard-ghost', k: 0.8, float: 0.1 },
   crab: { key: 'hazard/hazard-crab', k: 0.6 }, // tools/gen_crab.py; yan yürür (gövde X'te geniş), yavaşlatır
 };
-export const hazardModelKeys = (def) => [...new Set((def.hazards ?? []).filter((h) => h.type === 'ball').map((h) => HAZARD_MODEL[h.skin ?? 'beach']?.key).filter(Boolean))];
+export const hazardModelKeys = (def) => [...new Set([...(def.hazards ?? []), ...(def.shortcutHazards ?? [])].filter((h) => h.type === 'ball').map((h) => HAZARD_MODEL[h.skin ?? 'beach']?.key).filter(Boolean))];
 
 function makeModelBall(radius, spec, skin) {
   const wrap = new THREE.Group();
@@ -182,7 +183,7 @@ function ringTexture() {
 }
 
 export function createHazards({ scene, track, fx, quality }) {
-  const list = track.def.hazards ?? [];
+  const list = [...(track.def.hazards ?? []), ...(track.def.shortcutHazards ?? [])];
   const rate = quality?.particles ?? 1;
   const n = track.count;
   const group = new THREE.Group();
@@ -193,12 +194,24 @@ export function createHazards({ scene, track, fx, quality }) {
   const hazards = [];
 
   for (const d of list) {
-    const i = Math.round(d.f * n) % n;
-    const c = track.centerline[i];
-    const r = track.rights[i];
-    const pos = new THREE.Vector3(c.x + r.x * (d.lateral ?? 0), c.y + (d.lateral ?? 0) * (track.rolls[i] ?? 0), c.z + r.z * (d.lateral ?? 0));
+    // d.shortcut (kısayol kimliği) + d.f (kısayol uzunluğunun oranı): tehlike ana yolda değil kısayolun içinde
+    const sc = d.shortcut ? track.shortcuts.find((s) => s.id === d.shortcut) : null;
+    if (d.shortcut && !sc) continue;
+    const i = sc ? 0 : Math.round(d.f * n) % n;
+    let c;
+    let r;
+    let pos;
+    if (sc) {
+      const q = sc.pointAt(d.f * sc.length, d.lateral ?? 0);
+      pos = new THREE.Vector3(q.x, q.y, q.z);
+      r = { x: q.rx, z: q.rz };
+    } else {
+      c = track.centerline[i];
+      r = track.rights[i];
+      pos = new THREE.Vector3(c.x + r.x * (d.lateral ?? 0), c.y + (d.lateral ?? 0) * (track.rolls[i] ?? 0), c.z + r.z * (d.lateral ?? 0));
+    }
     const style = STYLE[d.type];
-    const h = { d, style, index: i, pos, lateral: d.lateral ?? 0, ballPos: new THREE.Vector3(), radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
+    const h = { d, style, sc, index: i, pos, lateral: d.lateral ?? 0, ballPos: new THREE.Vector3(), radius: d.radius ?? 4.2, period: d.period ?? 8, offset: d.offset ?? 0, lastCycle: -1 };
 
     h.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ map: d.type === 'ball' ? stripeTex : ringTex, color: style.ring, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4, toneMapped: false }));
     // Renk paleti (şeker diyarında pembe, lunaparkta konfeti): d.colors = { ring, column, ember, hot, smoke } (r,g,b dizileri)
@@ -213,8 +226,8 @@ export function createHazards({ scene, track, fx, quality }) {
 
     if (d.type === 'ball') {
       // Top yolun sağ vektörü boyunca bir yandan öbür yana yuvarlanır
-      h.right = track.rights[i];
-      h.span = track.def.halfWidth + (d.overshoot ?? 8);
+      h.right = r;
+      h.span = (sc ? sc.halfWidth : track.def.halfWidth) + (d.overshoot ?? (sc ? 3 : 8));
       h.dir = d.dir ?? 1;
       h.ballR = d.ballRadius ?? 2.6;
       h.radius = h.ballR + 0.9; // isabet yarıçapı
@@ -405,7 +418,7 @@ export function createHazards({ scene, track, fx, quality }) {
       if (((driver?.phase ?? 0) % 1) < 0.25) return lane; // dikkatsiz bot
       const hw = track.def.halfWidth - 1.6;
       for (const h of hazards) {
-        if (h.d.type === 'ball') continue; // top yolu baştan başa keser, şerit değiştirmek kurtarmaz
+        if (h.d.type === 'ball' || h.sc) continue; // top yolu baştan başa keser, şerit değiştirmek kurtarmaz; kısayol tehlikesi ana yolda değil
         const ahead = (h.index - idx + n) % n;
         if (ahead > 28) continue;
         if (Math.abs(lane - h.lateral) < h.radius + 1.6) {

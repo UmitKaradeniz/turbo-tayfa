@@ -520,6 +520,7 @@ function setupRace(order, laps) {
     hud.go();
     startLights.go();
     play('go');
+    if (track.def.story) hud.toast(track.def.story); // pistin kısa hikayesi (yarış başında bir kez)
     driftCoachOnGo();
     // Başlangıç turbosu: gaza "BAŞLA"dan hemen önce (son 0.6 s) basan roket gibi çıkar
     if (startPress !== null && startPress >= -0.6) {
@@ -1017,7 +1018,15 @@ function kartInput(kart, playerInput, activeKarts) {
 let playerOnShortcut = false;
 function checkShortcutEvents(kart) {
   if (kart === player && race.started) {
-    if (kart.onShortcut && !playerOnShortcut) hud.toast('KISAYOL! ⚡');
+    if (kart.onShortcut && !playerOnShortcut) {
+      // Hangi kısayol: adı + ipucu (pist tanımında name/tip); bilinmiyorsa genel mesaj
+      let sc = null;
+      for (const s of track.shortcuts) {
+        const h = s.nearest(kart.position.x, kart.position.z);
+        if (h && h.d <= s.halfAt(h.s) + 1) sc = s;
+      }
+      hud.toast(sc?.def.tip ? `${sc.def.name} ⚡ ${sc.def.tip}` : 'KISAYOL! ⚡');
+    }
     playerOnShortcut = kart.onShortcut;
   }
   if (!race.started || race.entryOf(kart)?.finishTime !== null) return;
