@@ -19,6 +19,7 @@ import { createStartLights } from './startLights.js';
 import { Race } from './race.js';
 import { createDriver, driveInput, botEmote } from './ai.js';
 import { createEmoteBubbles } from './emotes.js';
+import { tipOnce } from './tips.js';
 import { recordOf, submitTotal, createGhostRecorder, createDeltaTracker, createGhost } from './records.js';
 import { awardRace, setTrackTotal, recordCupWin } from './progress.js';
 import { dailyDone } from './daily.js';
@@ -350,6 +351,10 @@ function buildTrackNow(def) {
       play('item_box');
       hud.setItemCount(uses);
       if (uses > 1) raceStats.gold++;
+      // İlk kez: kısa ipucu (altın kutu / eşyayı nasıl kullanırım)
+      if (uses > 1 ? tipOnce('gold') : tipOnce('item')) {
+        setTimeout(() => race && !paused && hud.coach(uses > 1 ? '✨ Altın kutu: eşyayı 2 kez kullanırsın!' : isTouchDevice ? '📦 Eşyayı ITEM düğmesiyle kullan!' : '📦 Eşyayı E ya da F ile kullan!', 3500), 1400);
+      }
       hud.itemRoulette(item, 1.1, () => play('roulette', { volume: 0.35 }), () => play('item_land'));
     },
     // İsabet: vuran bot sevinir, vurulan bot kızar (kişiliğe göre)
@@ -1091,6 +1096,7 @@ function checkShortcutEvents(kart) {
     if (kart.onShortcut && !playerOnShortcut) {
       hud.toast('KISAYOL! ⚡');
       raceStats.shortcuts++;
+      if (tipOnce('shortcut')) setTimeout(() => race && !paused && hud.coach('⚡ Kestirmeler yolu kısaltır, Turbo Puan da getirir!', 3500), 1500);
     }
     playerOnShortcut = kart.onShortcut;
   }
