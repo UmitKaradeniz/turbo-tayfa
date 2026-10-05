@@ -182,10 +182,16 @@ export function createHud({ portraits, minimap, itemIcons }) {
         if (k % 2) onTick?.();
       }, 70);
     },
-    setItem(kind) {
+    // Altın kutudan gelen çift hak: yuvada "×2" rozeti
+    setItemCount(n) {
+      if (n > 1) itemSlot.dataset.n = n;
+      else delete itemSlot.dataset.n;
+    },
+    setItem(kind, count = 0) {
       clearInterval(rouletteTimer);
       itemSlot.classList.remove('rolling');
       itemSlot.classList.toggle('has', !!kind);
+      this.setItemCount(count);
       if (kind) itemImg.src = itemIcons[kind];
       else itemImg.removeAttribute('src');
     },

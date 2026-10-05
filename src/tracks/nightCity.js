@@ -52,14 +52,10 @@ export default {
 
   // Kısayol: binaların arasından geçen dar servis yolu. Ortasında kanalı aşan bir rampa var: yeterli hızla
   // çıkmazsan kanala düşersin. İniş alanında item kutuları var.
-  story: '🌃 Liman kaçakçıları gece yarısı yarışı bastı! Polis şehirde, kestirmeler tehlikeli…',
-
-  // Üç kısayol: Servis Yolu (rampa + kanal) · Metro Hattı (hız tahtaları + geçen taksi) · Kaçakçı İskelesi (uzun, kutu dolu, yük kamyonu)
   shortcuts: [
     {
       id: 'alley',
       name: 'Servis Yolu',
-      tip: 'Hızla zıpla, kanala düşme!',
       points: [[11, -103], [-25, -96], [-65, -86], [-111, -75]],
       halfWidth: 4.2,
       surface: 'dirt',
@@ -71,39 +67,19 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
+    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
     {
-      id: 'metro',
-      name: 'Metro Hattı',
-      tip: 'Tahtalar boşta ama taksiye dikkat!',
-      points: [[107, 86], [94, 44], [97, 0], [106, -45], [130, -96]],
+      id: 'underpass',
+      name: 'Yeraltı Pasajı',
+      follow: { from: 0.181, to: 0.398, side: -1, lateral: 24 },
       halfWidth: 3.8,
       surface: 'road',
-      speed: 1,
+      speed: 0.96,
       color: 0x30364a,
-      pads: [{ f: 0.12, boost: 0.95 }, { f: 0.3, boost: 0.95 }, { f: 0.5, boost: 0.95 }, { f: 0.7, boost: 0.95 }, { f: 0.9, boost: 0.95 }],
-      edge: { keys: ['racing/barrierWhite'], step: 2, scale: [8, 8], aligned: true },
-      botChance: 0.6,
+      surprise: { skin: 'neon', f: 0.78 },
+      edge: { keys: ['tayfa/vending_machine', 'tayfa/traffic_cone', 'tayfa/tire_stack'], step: 4, scale: [3.4, 4] },
+      botChance: 0.2,
     },
-    {
-      id: 'smuggler',
-      name: 'Kaçakçı İskelesi',
-      tip: 'Uzun yol ama kutular dolu: güçlü eşya kap!',
-      points: [[-6, 133], [8, 176], [48, 190], [84, 160], [70, 116]],
-      halfWidth: 4.4,
-      surface: 'dirt',
-      speed: 0.95,
-      color: 0x3b4157,
-      pads: [{ f: 0.4 }],
-      boxes: { fs: [0.2, 0.5, 0.85], lateral: [-2.5, 0, 2.5] },
-      edge: { keys: ['tayfa/tire_stack', 'tayfa/traffic_cone'], step: 5, scale: [3.4, 4] },
-      botChance: 0.25,
-    },
-  ],
-
-  // Kısayol içi trafik (f: kısayolun oranı)
-  shortcutHazards: [
-    { type: 'ball', skin: 'car', ballRadius: 2.4, shortcut: 'metro', f: 0.45, period: 9, offset: 3, dir: 1 },
-    { type: 'ball', skin: 'car', ballRadius: 2.4, shortcut: 'smuggler', f: 0.55, period: 10, offset: 1, dir: -1 },
   ],
 
   // Zemin bölgeleri: ıslak asfalt (hafif kaygan) ve yola serpilmiş neon hız şeritleri
@@ -165,7 +141,7 @@ export default {
         }
       }
       if (sc.jump) {
-        for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
+        for (const s of sc.jump ? [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2] : []) {
           for (const side of [-1, 1]) {
             const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
             ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);

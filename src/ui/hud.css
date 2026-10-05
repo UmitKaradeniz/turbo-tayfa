@@ -350,6 +350,22 @@
   display: grid;
   place-items: center;
 }
+#hud-item .slot { position: relative; }
+#hud-item[data-n] .slot { border-color: #ffc933; box-shadow: 0 5px 0 rgba(120, 80, 0, 0.55), 0 0 16px rgba(255, 201, 51, 0.7); }
+#hud-item[data-n] .slot::after {
+  content: '×2';
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  min-width: 28px;
+  padding: 1px 6px;
+  border-radius: 12px;
+  background: #ffc933;
+  color: #4a2c00;
+  font-weight: 900;
+  font-size: 15px;
+  text-align: center;
+}
 #hud-item img { width: 62px; height: 62px; opacity: 0; transition: opacity 0.1s; }
 #hud-item.has img { opacity: 1; }
 #hud-item img:not([src]) { visibility: hidden; }

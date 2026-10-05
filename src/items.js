@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createItemBox, createCoconut, createSlick, createBubble } from './itemModels.js';
+import { createGoldBox, createSurpriseArch } from './goldBox.js';
 
 // Item sistemi: kutular, sıraya göre dağıtım, hindistan cevizi mermisi, yağ lekesi,
 // kalkan ve turbo.
@@ -34,6 +35,7 @@ export function rollItem(place, total) {
 }
 
 const BOX_RESPAWN = 3;
+const GOLD_RESPAWN = 10; // altın süpriz kutusu (çift hak)
 const BOX_RADIUS = 2.1;
 const ROLL_TIME = 1.1;
 const TURBO_TIME = 1.5;
@@ -71,18 +73,34 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
   for (const sc of track.shortcuts) {
     const b = sc.def.boxes;
     if (!b) continue;
-    // fs: birden çok sıra (kısayolun oranları), yoksa tek sıra
-    const rowsAt = b.fs ? b.fs.map((f) => f * sc.length) : [b.at === 'landing' && sc.jump ? sc.jump.pitB + 7 : b.at === 'mid' ? sc.length * 0.45 : (b.f ?? 0.5) * sc.length];
-    for (const s0 of rowsAt) {
-      for (const lateral of b.lateral) {
-        const q = sc.pointAt(s0, lateral);
-        const pos = new THREE.Vector3(q.x, q.y + 1.3, q.z);
-        const mesh = createItemBox();
-        mesh.position.copy(pos);
-        scene.add(mesh);
-        boxes.push({ index: -1, lateral, pos, mesh, active: true, respawn: 0 });
-      }
+    const s0 = b.at === 'landing' && sc.jump ? sc.jump.pitB + 7 : b.at === 'mid' ? sc.length * 0.45 : (b.f ?? 0.5) * sc.length;
+    for (const lateral of b.lateral) {
+      const q = sc.pointAt(s0, lateral);
+      const pos = new THREE.Vector3(q.x, q.y + 1.3, q.z);
+      const mesh = createItemBox();
+      mesh.position.copy(pos);
+      scene.add(mesh);
+      boxes.push({ index: -1, lateral, pos, mesh, active: true, respawn: 0 });
     }
+  }
+
+  // Süpriz yolu: girişte altın kemer, sonda tek altın kutu (çift hak)
+  const extras = [];
+  for (const sc of track.shortcuts) {
+    const sp = sc.def.surprise;
+    if (!sp) continue;
+    const arch = createSurpriseArch(sc.halfWidth);
+    const a = sc.pointAt(sc.sA + 6);
+    arch.position.set(a.x, a.y, a.z);
+    arch.rotation.y = Math.atan2(-a.fx, -a.fz); // yerel X ekseni yolun sağ vektörüne bakar
+    scene.add(arch);
+    extras.push(arch);
+    const q = sc.pointAt(sc.length * (sp.f ?? 0.78));
+    const pos = new THREE.Vector3(q.x, q.y + 1.5, q.z);
+    const mesh = createGoldBox(sp.skin);
+    mesh.position.copy(pos);
+    scene.add(mesh);
+    boxes.push({ index: -1, lateral: 0, pos, mesh, active: true, respawn: 0, gold: true });
   }
 
   const projectiles = new Map(); // id → coconut
@@ -188,7 +206,9 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
           break;
         }
       }
-      onUse?.(kart, h.item);
+      const left = (h.uses ?? 1) - 1;
+      if (left > 0) held.set(kart, { item: h.item, rolling: 0, uses: left });
+      onUse?.(kart, h.item, left);
       return true;
     },
 
@@ -204,7 +224,7 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
         const b = boxes[msg.i];
         if (b) {
           b.active = false;
-          b.respawn = BOX_RESPAWN;
+          b.respawn = b.gold ? GOLD_RESPAWN : BOX_RESPAWN;
         }
       }
     },
@@ -224,10 +244,12 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
           if (!isOwned(kart) || held.has(kart)) continue;
           if (kart.position.distanceToSquared(b.pos) > BOX_RADIUS * BOX_RADIUS + 1) continue;
           b.active = false;
-          b.respawn = BOX_RESPAWN;
-          const item = rollItem(positionOf(kart), karts.length);
-          held.set(kart, { item, rolling: ROLL_TIME });
-          onRoll?.(kart, item);
+          b.respawn = b.gold ? GOLD_RESPAWN : BOX_RESPAWN;
+          let item = rollItem(positionOf(kart), karts.length);
+          if (b.gold) while (item === 'oil') item = rollItem(positionOf(kart), karts.length); // altın kutu yağ vermez
+          const uses = b.gold ? 2 : 1;
+          held.set(kart, { item, rolling: ROLL_TIME, uses });
+          onRoll?.(kart, item, uses);
           send({ type: 'box', i });
           break;
         }
@@ -313,6 +335,7 @@ export function createItemSystem({ scene, track, send, isOwned, idOf, kartById, 
     dispose() {
       this.reset();
       for (const b of boxes) scene.remove(b.mesh);
+      for (const m of extras) scene.remove(m);
       for (const m of bubbles.values()) scene.remove(m);
       bubbles.clear();
     },

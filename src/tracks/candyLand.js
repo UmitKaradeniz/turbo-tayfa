@@ -51,16 +51,11 @@ export default {
     colors: { ring: [1.7, 0.45, 1.2], column: [1.8, 0.6, 1.4], ember: [2.3, 0.9, 1.7], hot: [2.6, 1.6, 2.2], smoke: [1.0, 0.82, 0.95] },
   })),
 
-  // Hikaye: yarış başında bir kez gösterilir
-  story: '🍰 Şef Pastacı\'nın tarif defteri kayıp! Çikolata nehri taştı, fıskiyeler delirdi…',
-
-  // Üç kısayol, üç farklı karakter: Atlayış (rampa + çukur) · Dondurma Tüneli (fıskiye kapısı + hız tahtaları) ·
-  // Kurabiye Hazine Yolu (uzun, dolambaçlı, kutu dolu, kaçak top)
+  // Kısayol: kurabiye yolu; ortasında erimiş çikolata nehrini aşan rampa var.
   shortcuts: [
     {
       id: 'chocoLeap',
       name: 'Çikolata Atlayışı',
-      tip: 'Hızla zıpla, nehre düşme!',
       points: [[-110, 130], [-122, 88], [-135, 40], [-146, -8], [-156, -54], [-165, -100]],
       halfWidth: 4.4,
       surface: 'dirt',
@@ -73,41 +68,19 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
+    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
     {
-      id: 'iceTunnel',
-      name: 'Dondurma Tüneli',
-      tip: 'Fıskiye kapısını zamanla, çıkışta hız tahtaları var!',
-      points: [[85, -150], [110, -108], [134, -62], [149, -18], [157, 12], [165, 40]],
+      id: 'canyArch',
+      name: 'Şeker Kamışı Kemeri',
+      follow: { from: 0.103, to: 0.284, side: 1, lateral: 24 },
       halfWidth: 3.8,
-      surface: 'road',
-      speed: 1,
-      color: 0xfff1f8,
-      pads: [{ f: 0.08, boost: 0.95 }, { f: 0.27, boost: 0.95 }, { f: 0.52, boost: 0.95 }, { f: 0.7, boost: 0.95 }, { f: 0.9, boost: 0.95 }],
-      edge: { keys: ['food/ice-cream', 'food/popsicle', 'food/popsicle-chocolate', 'food/ice-cream-cup'], step: 6, scale: [8, 11] },
-      botChance: 0.6,
-    },
-    {
-      id: 'cookieLoot',
-      name: 'Kurabiye Hazine Yolu',
-      tip: 'Uzun yol ama kutular dolu: güçlü eşya kap!',
-      points: [[95, 125], [104, 170], [66, 212], [6, 226], [-44, 203], [-55, 160]],
-      halfWidth: 4.4,
       surface: 'dirt',
-      speed: 0.95,
-      color: 0xe8b774,
-      pads: [{ f: 0.4 }],
-      boxes: { fs: [0.2, 0.5, 0.85], lateral: [-2.5, 0, 2.5] },
-      edge: { keys: ['food/cookie', 'food/cookie-chocolate', 'food/donut', 'food/muffin'], step: 6, scale: [10, 14] },
-      botChance: 0.25,
+      speed: 0.94,
+      color: 0xe3b878,
+      surprise: { skin: 'gift', f: 0.78 },
+      edge: { keys: ['tayfa/candy_cane', 'tayfa/swirl_lollipop', 'tayfa/gumdrop_cluster'], step: 7, scale: [14, 18] },
+      botChance: 0.2,
     },
-  ],
-
-  // Kısayol içi tehlikeler: tünelde fıskiye kapısı, hazine yolunda kaçak top
-  // (d.shortcut + d.f = kısayol uzunluğunun oranı)
-  shortcutHazards: [
-    { type: 'geyser', shortcut: 'iceTunnel', f: 0.42, lateral: 0, radius: 4.4, period: 6, offset: 1, colors: { ring: [1.7, 0.45, 1.2], column: [1.8, 0.6, 1.4], ember: [2.3, 0.9, 1.7], hot: [2.6, 1.6, 2.2], smoke: [1.0, 0.82, 0.95] } },
-    { type: 'geyser', shortcut: 'iceTunnel', f: 0.8, lateral: 0, radius: 4.4, period: 7, offset: 4, colors: { ring: [1.7, 0.45, 1.2], column: [1.8, 0.6, 1.4], ember: [2.3, 0.9, 1.7], hot: [2.6, 1.6, 2.2], smoke: [1.0, 0.82, 0.95] } },
-    { type: 'ball', skin: 'beach', ballRadius: 2.2, shortcut: 'cookieLoot', f: 0.65, period: 9, offset: 3, dir: 1 },
   ],
 
   // Zemin bölgeleri: sol şeritte yapışkan bal (çok yavaşlatır, sağdan kaçılır)
@@ -159,12 +132,10 @@ export default {
           ctx.place(s < 10 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
         }
       }
-      if (sc.jump) {
-        for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
-          for (const side of [-1, 1]) {
-            const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
-            ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);
-          }
+      for (const s of sc.jump ? [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2] : []) {
+        for (const side of [-1, 1]) {
+          const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
+          ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);
         }
       }
     }

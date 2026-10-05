@@ -280,8 +280,10 @@ export function buildTrack(def, detail = {}) {
 
   // Kısayol giriş/çıkışında yatık viraj yok (bağlantı düzgün kalsın)
   for (const sd of def.shortcuts ?? []) {
-    for (const p of [sd.points[0], sd.points[sd.points.length - 1]]) {
-      const ci = closest(p[0], p[1]).index;
+    const ends = sd.follow
+      ? [sd.follow.from, sd.follow.to].map((f) => Math.round(f * count) % count)
+      : [sd.points[0], sd.points[sd.points.length - 1]].map((p) => closest(p[0], p[1]).index);
+    for (const ci of ends) {
       for (let k = -14; k <= 14; k++) rolls[at(ci + k)] *= smoothstep(4, 14, Math.abs(k));
     }
   }
@@ -394,14 +396,14 @@ export function buildTrack(def, detail = {}) {
   const hotMeshes = zoneMeshes.filter((m) => m.userData.type === 'hot');
 
   // --- Kısayollar (orta çizgiden ayrılıp geri dönen ek yollar) ---
-  const shortcuts = (def.shortcuts ?? []).map((sd, k) => buildShortcut(sd, k, { closest, edge, count }));
+  const shortcuts = (def.shortcuts ?? []).map((sd, k) => buildShortcut(sd, k, { closest, edge, count, points, rights }));
 
   // --- Ada zemini (yükseklik ızgarası) ---
   const terrain = buildTerrain(def, { closest, insideLoop, edge, count, shortcuts, detail: detail.detailGround ? def.groundTex : null });
   group.add(terrain.mesh);
   for (const sc of shortcuts) {
     sc.terrain = terrain;
-    group.add(...sc.buildMeshes(terrain));
+    for (const m of sc.buildMeshes(terrain)) group.add(m); // hız tahtası/çukur yoksa boş liste olabilir
   }
 
   // --- Checkpointler (sayım Aşama 3'te) ---
@@ -492,6 +494,7 @@ export function buildTrack(def, detail = {}) {
         if (!n || n.d > sc.halfAt(n.s) + 0.5) continue;
         g.surface = sc.surface;
         g.speed = sc.def.speed ?? null;
+        g.grip = sc.def.grip ?? null;
         if (n.s >= sc.sA && n.s <= sc.sB) {
           g.shortcut = true;
           g.pathIndex = sc.virtualIndex(n.s);

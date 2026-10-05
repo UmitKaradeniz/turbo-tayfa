@@ -79,19 +79,29 @@ export default {
   // Kısayol: açık mezarlardan geçen toprak yol; ortasında mezar çukurunu aşan rampa var.
   shortcuts: [
     {
-      id: 'graveLeap',
-      name: 'Mezar Atlayışı',
+      id: 'cryptCut',
+      name: 'Kripta Geçidi',
       points: [[-95, -95], [-118, -70], [-140, -35], [-160, 5], [-182, 40], [-200, 70]],
       halfWidth: 4.4,
-      surface: 'dirt',
-      speed: 0.88,
-      color: 0x514a3c,
-      pads: [{ f: 0.15 }, { f: 0.85 }],
-      jump: { at: [-150, -15], ramp: 12, height: 2.4, gap: 12, depth: 5.5, landing: 14, drop: 0.7, rampColor: 0x7a5cc8, water: 0x0d1a12, fallText: 'Açık mezara düştün! ⚰️' },
-      boxes: { at: 'landing', lateral: [-2, 2] },
+      surface: 'mud',
+      speed: 0.86,
+      color: 0x3a3226,
+      pads: [{ f: 0.15 }, { f: 0.5 }, { f: 0.85 }],
       edge: { keys: ['graveyard/gravestone-wide', 'graveyard/gravestone-round', 'graveyard/rocks-tall', 'halloween/gravemarker_A'], step: 6, scale: [6, 9] },
       botChance: 0.5,
-      botMinSpeed: 22,
+    },
+    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    {
+      id: 'crypt',
+      name: 'Gizli Mahzen',
+      follow: { from: 0.174, to: 0.348, side: -1, lateral: 24 },
+      halfWidth: 3.8,
+      surface: 'dirt',
+      speed: 0.94,
+      color: 0x2a2a3a,
+      surprise: { skin: 'lantern', f: 0.78 },
+      edge: { keys: ['graveyard/fire-basket', 'halloween/shrine_candles', 'graveyard/coffin-old', 'graveyard/fire-basket'], step: 5, scale: [5, 7] },
+      botChance: 0.2,
     },
   ],
 
@@ -145,7 +155,7 @@ export default {
           ctx.place(s < 10 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
         }
       }
-      for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
+      for (const s of sc.jump ? [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2] : []) {
         for (const side of [-1, 1]) {
           const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
           ctx.place('graveyard/fire-basket', f.x, f.z, 0, 4);

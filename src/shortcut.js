@@ -10,7 +10,65 @@ const smoothstep = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-export function buildShortcut(sd, id, { closest, edge, count }) {
+// sd.follow: ana yolun bir bölümünü yandan izleyen yol üretir (süpriz yolları). Uzunluğu ana yolun aynı
+// bölümüne eşitlenir: yol önce yanal uzaklığa (lateral) çıkar, gerekirse dalgalanarak (wiggle) uzar.
+// follow = { from, to (turun oranı), side (+1 sağ / -1 sol), lateral (m), waves, tol }
+export function followPoints(follow, { points, rights, count }) {
+  const { from, to, side = 1, lateral = 24, tol = 0 } = follow;
+  const i0 = Math.round(from * count);
+  const n = (Math.round(to * count) - i0 + count) % count;
+  const step = 3;
+  const M = Math.max(6, Math.round(n / step));
+  let target = 0;
+  for (let k = 1; k <= n; k++) target += points[(i0 + k) % count].distanceTo(points[(i0 + k - 1) % count]);
+  target *= 1 + tol;
+  const waves = follow.waves ?? Math.max(1, Math.round(target / 130)); // dalga boyu ≥ ~110 m: kart rahat döner
+  const env = (u) => smoothstep(0, 0.2, u) * (1 - smoothstep(0.8, 1, u));
+  const build = (L, amp) => {
+    const out = [];
+    for (let m = 0; m <= M; m++) {
+      const u = m / M;
+      const idx = (i0 + Math.round(u * n)) % count;
+      const lat = side * (L + amp * 0.5 * (1 - Math.cos(u * waves * Math.PI * 2))) * env(u);
+      out.push([points[idx].x + rights[idx].x * lat, points[idx].z + rights[idx].z * lat]);
+    }
+    return out;
+  };
+  const lenOf = (pts) => new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal').getLength();
+  let L = lateral;
+  let amp = 0;
+  let len = lenOf(build(L, 0));
+  if (len > target) {
+    // Yol ana yoldan uzun (dış virajda): yanal uzaklığı azalt
+    let lo = 16;
+    let hi = L;
+    for (let it = 0; it < 14; it++) {
+      L = (lo + hi) / 2;
+      if (lenOf(build(L, 0)) > target) hi = L;
+      else lo = L;
+    }
+    L = lo;
+  } else {
+    // Kısa: dalgalanma genliğini artır
+    let lo = 0;
+    let hi = 36;
+    for (let it = 0; it < 16; it++) {
+      amp = (lo + hi) / 2;
+      if (lenOf(build(L, amp)) < target) lo = amp;
+      else hi = amp;
+    }
+    amp = lo;
+  }
+  const pts = build(L, amp);
+  pts.follow = { len: lenOf(pts), target, L, amp };
+  return pts;
+}
+
+export function buildShortcut(sd, id, { closest, edge, count, points, rights }) {
+  if (sd.follow && !sd.points) {
+    const pts = followPoints(sd.follow, { points, rights, count });
+    sd = { ...sd, points: pts, followInfo: pts.follow };
+  }
   const halfWidth = sd.halfWidth ?? 4.5;
   const blend = sd.blend ?? 9;
   const surface = sd.surface ?? 'sand';

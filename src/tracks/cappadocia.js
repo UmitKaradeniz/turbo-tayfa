@@ -44,6 +44,35 @@ export default {
     [68, 202, 3.2],
     [155, 176, 3.5],
   ],
+  // İki kestirme: Peribacası Kemeri (dik iniş, süre kazandırır) · Peribacası Mağarası (süpriz yolu, ana yolla aynı uzunluk)
+  shortcuts: [
+    {
+      id: 'chimneyPass',
+      name: 'Peribacası Kemeri',
+      points: [[-144, -131], [-166, -84], [-189, -36], [-212, 11], [-235, 59]],
+      halfWidth: 4.6,
+      surface: 'dirt',
+      speed: 0.95,
+      color: 0xc58a52,
+      pads: [{ f: 0.5 }],
+      edge: { keys: ['tayfa/rock_boulder_a', 'tayfa/rock_boulder_b'], step: 5, scale: [6, 9] },
+      botChance: 0.5,
+    },
+    // Süpriz yolu: ana yolla aynı uzunlukta (iki yanda peribacaları); sonunda altın kutu (çift hak)
+    {
+      id: 'chimneyCave',
+      name: 'Peribacası Mağarası',
+      follow: { from: 0.41, to: 0.555, side: -1, lateral: 24 },
+      halfWidth: 3.8,
+      surface: 'dirt',
+      speed: 0.94,
+      color: 0xb98a5a,
+      surprise: { skin: 'pot', f: 0.78 },
+      edge: { keys: ['tayfa/chimney_a', 'tayfa/chimney_b', 'tayfa/chimney_c'], step: 9, scale: [10, 15] },
+      botChance: 0.2,
+    },
+  ],
+
   hillReach: 140,
   bank: [{ f: [0.2, 0.3], deg: 7 }, { f: [0.5, 0.6], deg: 9 }],
   bumps: [{ f: [0.34, 0.4], amp: 1.3, period: 32 }, { f: [0.78, 0.9], amp: 0.5, period: 38 }], // kanyon kenarında atlayış, vadi düzlüğünde dalgalar

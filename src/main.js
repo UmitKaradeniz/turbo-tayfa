@@ -321,9 +321,10 @@ function buildTrackNow(def) {
     kartById: (kid) => (online ? online.kartById.get(kid) : kartOf(kid)),
     // Tek oyunculuda her şey zaten yerelde uygulandı; çevrimiçide diğerlerine duyur
     send: (msg) => online && net.send(msg),
-    onRoll: (kart, item) => {
+    onRoll: (kart, item, uses = 1) => {
       if (kart !== player) return;
       play('item_box');
+      hud.setItemCount(uses);
       hud.itemRoulette(item, 1.1, () => play('roulette', { volume: 0.35 }), () => play('item_land'));
     },
     // İsabet: vuran bot sevinir, vurulan bot kızar (kişiliğe göre)
@@ -332,8 +333,8 @@ function buildTrackNow(def) {
       if (owner && owner !== victim) botReact(owner, 'hitOther', 300);
       botReact(victim, 'gotHit', 500);
     },
-    onUse: (kart, item) => {
-      if (kart === player) hud.setItem(null);
+    onUse: (kart, item, left = 0) => {
+      if (kart === player) hud.setItem(left ? item : null, left);
       const vol = kart === player ? 1 : nearVolume(kart);
       if (vol > 0) play({ turbo: 'turbo', shield: 'shield', coconut: 'throw', oil: 'oil' }[item], { volume: vol });
     },
@@ -520,7 +521,6 @@ function setupRace(order, laps) {
     hud.go();
     startLights.go();
     play('go');
-    if (track.def.story) hud.toast(track.def.story); // pistin kısa hikayesi (yarış başında bir kez)
     driftCoachOnGo();
     // Başlangıç turbosu: gaza "BAŞLA"dan hemen önce (son 0.6 s) basan roket gibi çıkar
     if (startPress !== null && startPress >= -0.6) {
@@ -1018,15 +1018,7 @@ function kartInput(kart, playerInput, activeKarts) {
 let playerOnShortcut = false;
 function checkShortcutEvents(kart) {
   if (kart === player && race.started) {
-    if (kart.onShortcut && !playerOnShortcut) {
-      // Hangi kısayol: adı + ipucu (pist tanımında name/tip); bilinmiyorsa genel mesaj
-      let sc = null;
-      for (const s of track.shortcuts) {
-        const h = s.nearest(kart.position.x, kart.position.z);
-        if (h && h.d <= s.halfAt(h.s) + 1) sc = s;
-      }
-      hud.toast(sc?.def.tip ? `${sc.def.name} ⚡ ${sc.def.tip}` : 'KISAYOL! ⚡');
-    }
+    if (kart.onShortcut && !playerOnShortcut) hud.toast('KISAYOL! ⚡');
     playerOnShortcut = kart.onShortcut;
   }
   if (!race.started || race.entryOf(kart)?.finishTime !== null) return;

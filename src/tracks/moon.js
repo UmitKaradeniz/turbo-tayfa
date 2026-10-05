@@ -90,6 +90,19 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
+    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    {
+      id: 'crystalCave',
+      name: 'Kristal Mağarası',
+      follow: { from: 0.106, to: 0.304, side: -1, lateral: 24 },
+      halfWidth: 3.8,
+      surface: 'dirt',
+      speed: 0.94,
+      color: 0x7d8696,
+      surprise: { skin: 'moon', f: 0.78 },
+      edge: { keys: ['space/rock_crystalsLargeA', 'space/rock_crystalsLargeB', 'space/rock_crystals', 'space/rocks_smallA'], step: 5, scale: [7, 11] },
+      botChance: 0.2,
+    },
   ],
 
   // Zemin bölgeleri: ortada turbo şeridi ve krater trambolini (düşük yerçekiminde çok yükseğe atar)
@@ -162,7 +175,7 @@ export default {
         }
       }
       if (sc.jump) {
-        for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
+        for (const s of sc.jump ? [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2] : []) {
           for (const side of [-1, 1]) {
             const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
             ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);

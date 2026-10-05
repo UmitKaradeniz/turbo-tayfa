@@ -93,6 +93,19 @@ export default {
       botChance: 0.5,
       botMinSpeed: 22,
     },
+    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    {
+      id: 'nest',
+      name: 'Yumurta Yuvası',
+      follow: { from: 0.104, to: 0.286, side: 1, lateral: 24 },
+      halfWidth: 3.8,
+      surface: 'dirt',
+      speed: 0.94,
+      color: 0x8a7a4a,
+      surprise: { skin: 'egg', f: 0.78 },
+      edge: { keys: ['nat2/Rock_Moss_1', 'nat2/Rock_Moss_2', 'nat2/Cactus_1', 'nat2/Plant_2'], step: 5, scale: [4, 7] },
+      botChance: 0.2,
+    },
   ],
 
   models: [
@@ -134,7 +147,7 @@ export default {
           ctx.place(s < 10 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
         }
       }
-      for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
+      for (const s of sc.jump ? [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2] : []) {
         for (const side of [-1, 1]) {
           const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
           ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);

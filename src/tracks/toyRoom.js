@@ -54,19 +54,29 @@ export default {
   // Kısayol: halıdan kutuların arasına dalan yol; ortada oyuncak sandığını aşan rampa var.
   shortcuts: [
     {
-      id: 'boxLeap',
-      name: 'Kutu Geçidi',
+      id: 'trainRail',
+      name: 'Tren Rayı',
       points: [[-105, -70], [-112, -36], [-119, -2], [-128, 30], [-140, 52], [-150, 70]],
       halfWidth: 4.4,
-      surface: 'dirt',
+      surface: 'road',
       speed: 0.9,
-      color: 0xc9975e,
-      pads: [{ f: 0.15 }, { f: 0.85 }],
-      jump: { at: [-119, -2], ramp: 12, height: 2.4, gap: 12, depth: 5.5, landing: 14, drop: 0.7, rampColor: 0x2f6fd6, water: 0x3b7be0, fallText: 'Oyuncak sandığına düştün! 📦' },
-      boxes: { at: 'landing', lateral: [-2, 2] },
-      edge: { keys: ['furniture/cardboardBoxClosed', 'furniture/cardboardBoxOpen', 'furniture/books'], step: 6, scale: [16, 22] },
+      color: 0x6b4a2b,
+      pads: [{ f: 0.12 }, { f: 0.38 }, { f: 0.64 }, { f: 0.88 }],
+      edge: { keys: ['toy/item-cone'], step: 8, scale: [10, 12] },
       botChance: 0.5,
-      botMinSpeed: 22,
+    },
+    // Süpriz yolu: ana yolla aynı uzunlukta; sonunda altın kutu (çift hak)
+    {
+      id: 'boxMaze',
+      name: 'Kutu Labirenti',
+      follow: { from: 0.108, to: 0.309, side: -1, lateral: 24 },
+      halfWidth: 3.8,
+      surface: 'dirt',
+      speed: 0.94,
+      color: 0xd9a066,
+      surprise: { skin: 'jack', f: 0.78 },
+      edge: { keys: ['furniture/cardboardBoxOpen', 'tayfa/alphabet_block', 'furniture/cardboardBoxClosed', 'tayfa/spinning_top'], step: 6, scale: [18, 23] },
+      botChance: 0.2,
     },
   ],
 
@@ -123,7 +133,7 @@ export default {
           ctx.place(s < 10 ? 'racing/bannerTowerGreen' : 'racing/bannerTowerRed', b.x, b.z, b.faceTrackY, 9);
         }
       }
-      for (const s of [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2]) {
+      for (const s of sc.jump ? [sc.jump.rampA - 6, sc.jump.rampA + 2, sc.jump.pitB + 2] : []) {
         for (const side of [-1, 1]) {
           const f = ctx.shortcutAt(sc, s, side * (sc.halfWidth + 1.8));
           ctx.place('racing/flagCheckers', f.x, f.z, f.faceTrackY, 6);
