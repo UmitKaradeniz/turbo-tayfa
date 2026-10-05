@@ -97,6 +97,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         </div>
       </div>
       <div class="maker">Yapımcı <b>cafunify</b></div>
+      <div class="ver" aria-label="Sürüm">v<b>${typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '?'}</b></div>
       <div class="credit">3D modeller: Kenney (CC0) · Detaylar CREDITS.md</div>
     </section>`);
   document.body.appendChild(main);
