@@ -39,6 +39,7 @@ import { createTouchControls, isTouchDevice } from './ui/touch.js';
 import { initTilt } from './tilt.js';
 import { createItemSystem } from './items.js';
 import { ITEM_ICONS } from './itemIcons.js';
+import { hitch } from './hitch.js';
 import { play, playMusic, preloadMusic, updateEngine, applyVolumes } from './audio.js';
 import { TRACKS, TRACK_IDS, CUP_SETS } from './tracks/index.js';
 
@@ -523,7 +524,16 @@ function applyViewOffset(dt) {
 }
 
 // Yarış bitti ya da çıkıldı: kartları gride dizip menü kamerasına dön
+// Takılma özeti (yarış bitince ya da yarıştan çıkılınca bir kez): sunucu loguna "[istemci] perf: takılma ..."
+let hitchSent = false;
+function reportHitches() {
+  if (hitchSent || !race?.started) return;
+  hitchSent = true;
+  reportIssue('perf', `takılma ${hitch.total} (${QUALITY.name})`, hitch.summary());
+}
+
 function endRaceLocal() {
+  reportHitches();
   race = null;
   paused = false;
   pauseOpen = false;
@@ -578,6 +588,8 @@ function setupRace(order, laps, opts = {}) {
   raceReward = null;
   rewardShown = false;
   hazards.reset();
+  hitch.reset();
+  hitchSent = false;
   race = new Race(track, order, { laps, isOwned, elimination: opts.elimination ?? null });
   autoTuner?.raceReset();
   playMusic('race', trackDef.id);
@@ -643,6 +655,7 @@ function setupRace(order, laps, opts = {}) {
         play(place <= 3 ? 'finish_win' : 'finish');
         hud.wrongWay(false);
         resultsTimer = 2.5; // biraz kutlama, sonra sonuç tablosu
+        if (!online) reportHitches();
       }
     } else if (resultsTimer < 0 && r === race) {
       showResults(); // tablo açıkken yeni bitirenleri ekle
@@ -1217,6 +1230,7 @@ function frame(now) {
     return;
   }
   lastDrawAt = now;
+  hitch.begin(now, !!race && race.started && !paused);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   tickCosmetics(now / 1000);
@@ -1236,7 +1250,7 @@ function frame(now) {
     resetHeld = input.reset;
 
     // E: item kullan (basıldığı anda bir kez); fren basılıysa geriye atar
-    if (input.item && !itemHeld && race.started && !pauseOpen) items.use(player, input.brake > 0);
+    if (input.item && !itemHeld && race.started && !pauseOpen) { hitch.note('item'); items.use(player, input.brake > 0); }
     itemHeld = input.item;
 
     accumulator += dt;
@@ -1257,6 +1271,7 @@ function frame(now) {
       fx.boostFlame(kart, dt);
     }
     for (const ev of kart.events) {
+      hitch.note(ev);
       fx.event(kart, ev);
       kartSound(kart, ev);
       if (kart === player) driftCoach(ev);
@@ -1292,7 +1307,9 @@ function frame(now) {
   if (isTouchDevice && race) touch.show(!pauseOpen && !hud.resultsOpen);
 
   applyPixelRatio();
+  hitch.mid();
   postfx.render();
+  hitch.end(race ? race.clock : 0);
 
   if (autoTuner && !race) autoTuner.menuFrame(dt, now, !paused && !online && !document.querySelector('.tt-modal.show'));
   fpsFrames++;
@@ -1304,7 +1321,7 @@ function frame(now) {
     lastFps = fps;
     fpsAvg = fpsAvg ? fpsAvg * 0.85 + fps * 0.15 : fps;
     const flags = `${QUALITY.bloom ? 'bloom' : 'bloom yok'} · AA ${QUALITY.aa}${QUALITY.sharpen ? ' +keskin' : ''}`;
-    debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}`;
+    debug.textContent = `${Math.round(fps)} FPS · ${QUALITY.name} · ${flags} · x${pixelRatio.toFixed(2)}${ping} · ${gpuName}${hitch.total ? ` · takılma ${hitch.total} (en kötü ${hitch.worst}ms)` : ''}`;
     adaptResolution(fps);
     fpsFrames = 0;
     fpsTime = 0;

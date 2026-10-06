@@ -1,6 +1,8 @@
 // Sunucu bağlantısı: WebSocket, otomatik yeniden bağlanma, sunucu saati senkronu.
 // Oyun mantığı bilmez; mesajları `on(type, fn)` ile dağıtır.
 
+import { IS_APP, APP_HOSTS } from './platform.js';
+
 const SESSION_KEY = 'tt-session'; // { code, token, host } — sayfa yenilenince odaya geri dön
 const BACKEND_KEY = 'tt-backend'; // { idx, t } — son çalışan sunucu (bir süre önce denenir)
 
@@ -9,6 +11,7 @@ const BACKEND_KEY = 'tt-backend'; // { idx, t } — son çalışan sunucu (bir s
 const HOSTS = (() => {
   const forced = new URLSearchParams(location.search).get('hosts'); // test: ?hosts=sunucu1,sunucu2
   if (forced) return forced.split(',').slice(0, 2);
+  if (IS_APP) return APP_HOSTS;
   const h = location.hostname;
   const alt = h.endsWith('.workers.dev') ? 'turbo-tayfa.onrender.com' : h.endsWith('onrender.com') ? 'turbo-tayfa.cgame.workers.dev' : null;
   return alt ? [location.host, alt] : [location.host];
@@ -119,7 +122,7 @@ export class Net {
     // Oda anahtarı: odadaysak onun kodu, katılırken girilen kod, yoksa yeni oda ('new')
     const key = this.code || this.pendingKey || 'new';
     const q = key === 'new' ? 'create=1' : `c=${encodeURIComponent(key)}`;
-    const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${HOSTS[idx]}/ws?${q}`;
+    const url = `${IS_APP || location.protocol === 'https:' ? 'wss' : 'ws'}://${HOSTS[idx]}/ws?${q}`;
     const ws = new WebSocket(url);
     this.ws = ws;
     this.wsKey = key;

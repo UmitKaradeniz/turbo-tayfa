@@ -8,6 +8,7 @@ import { QUALITY, saveQuality, saveGfx, GFX_DEFAULTS } from '../quality.js';
 import { CUP_SETS } from '../tracks/index.js';
 import { enableTilt, applyTiltUI } from '../tilt.js';
 import { VEHICLES, vehicleOf, statBar } from '../vehicles.js';
+import { SITE_ORIGIN } from '../platform.js';
 import { toggleFullscreen } from './fullscreen.js';
 import { levelInfo, selection, setSelection, achievementList, bumpStat, dailyState, dailyReward } from '../progress.js';
 import { dailyChallenge, dateKey } from '../daily.js';
@@ -812,7 +813,7 @@ export function createMenu({ characters, portraits, tracks, handlers, records, c
         copy(online?.room.code, 'Oda kodu kopyalandı!');
         break;
       case 'share-link': {
-        const url = `${location.origin}/?oda=${online?.room.code}`;
+        const url = `${SITE_ORIGIN}/?oda=${online?.room.code}`;
         if (navigator.share) navigator.share({ title: 'Turbo Tayfa', text: 'Turbo Tayfa odama gel!', url }).catch(() => {});
         else copy(url, 'Davet linki kopyalandı!');
         break;

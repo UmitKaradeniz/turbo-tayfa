@@ -4,3 +4,5 @@ dist/
 .claude/
 .DS_Store
 .wrangler/
+*.apk
+android/local.properties

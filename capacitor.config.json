@@ -1,0 +1,7 @@
+{
+  "appId": "com.cafunify.turbotayfa",
+  "appName": "Turbo Tayfa",
+  "webDir": "dist",
+  "backgroundColor": "#000000",
+  "android": { "allowMixedContent": false }
+}

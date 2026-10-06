@@ -1,6 +1,6 @@
 {
   "name": "turbo-tayfa",
-  "version": "1.78.0",
+  "version": "1.78.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,12 +10,15 @@
     "fake": "node tools/fake-player.mjs"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.2",
     "compression": "^1.8.2",
     "express": "^4.21.2",
     "three": "^0.170.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
     "vite": "^6.0.0"
   },
   "engines": {

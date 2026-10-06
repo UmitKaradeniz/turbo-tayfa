@@ -2,6 +2,9 @@
 // Kişisel veri yok: sadece hata metni, tarayıcı/GPU bilgisi ve oyun bağlamı. Oturum başına en fazla 8 rapor,
 // aynı hata bir kez.
 
+import { IS_APP, SITE_ORIGIN } from './platform.js';
+
+const LOG_URL = IS_APP ? `${SITE_ORIGIN}/api/log` : '/api/log';
 const MAX_REPORTS = 8;
 const sent = new Set();
 let count = 0;
@@ -37,8 +40,8 @@ export function reportIssue(kind, message, stack = '') {
       touch: matchMedia('(pointer: coarse)').matches,
       ...safeContext(),
     });
-    const blob = new Blob([body], { type: 'application/json' });
-    if (!navigator.sendBeacon?.('/api/log', blob)) fetch('/api/log', { method: 'POST', body: blob, keepalive: true }).catch(() => {});
+    const blob = new Blob([body], { type: IS_APP ? 'text/plain' : 'application/json' });
+    if (!navigator.sendBeacon?.(LOG_URL, blob)) fetch(LOG_URL, { method: 'POST', body: blob, keepalive: true, mode: IS_APP ? 'no-cors' : 'cors' }).catch(() => {});
   } catch {
     // raporlama asla oyunu bozmamalı
   }
