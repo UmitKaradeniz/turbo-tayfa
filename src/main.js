@@ -341,6 +341,7 @@ function buildTrackNow(def) {
   items = createItemSystem({
     scene,
     track,
+    fx,
     isOwned,
     idOf: (kart) => (online ? online.idByKart.get(kart) : kart.character.id),
     kartById: (kid) => (online ? online.kartById.get(kid) : kartOf(kid)),
@@ -367,7 +368,38 @@ function buildTrackNow(def) {
     onUse: (kart, item, left = 0) => {
       if (kart === player) hud.setItem(left ? item : null, left);
       const vol = kart === player ? 1 : nearVolume(kart);
-      if (vol > 0) play({ turbo: 'turbo', shield: 'shield', coconut: 'throw', oil: 'oil' }[item], { volume: vol });
+      if (vol > 0) play({ turbo: 'turbo', shield: 'shield', coconut: 'throw', oil: 'oil', gull: 'item_land', parrot: 'throw' }[item], { volume: vol });
+    },
+    // Martı damlayı bıraktı (hit: leke yedi, değilse kalkan engelledi)
+    onGull: (kart, hit) => {
+      if (kart === player) {
+        if (hit) {
+          hud.toast('MARTI! 🐦 Görüşün kapandı', 'warn');
+          rig.shake(0.5);
+          play('hit', { volume: 0.7 });
+        } else {
+          hud.toast('Kalkan martıyı savdı! 🛡️');
+          play('shield_pop');
+        }
+      } else play(hit ? 'hit' : 'shield_pop', { volume: nearVolume(kart) * 0.6 });
+    },
+    // Papağan hedefe vardı: 'stolen' çaldı · 'empty' boş eldi · 'blocked' kalkan engelledi (hedefin cihazında)
+    onSteal: (thief, target, result) => {
+      if (target === player) {
+        if (result === 'stolen') hud.setItem(null);
+        hud.toast(result === 'stolen' ? 'Papağan eşyanı çaldı! 🦜' : result === 'blocked' ? 'Kalkan papağanı kovdu! 🛡️' : 'Papağan eli boş döndü 🦜', result === 'stolen' ? 'warn' : '');
+        if (result === 'stolen') play('hit', { volume: 0.5 });
+      } else if (thief === player && result === 'blocked') hud.toast('Papağan kalkana takıldı 🛡️');
+    },
+    // Hırsız çalınan eşyayı aldı
+    onLoot: (thief, item, uses) => {
+      if (thief !== player) return;
+      hud.itemRoulette(item, 0.7, null, () => play('item_land'));
+      hud.setItemCount(uses);
+      hud.toast('Papağan eşya getirdi! 🦜');
+    },
+    onNoTarget: (kart) => {
+      if (kart === player) hud.toast('Önünde kimse yok!', 'warn');
     },
   });
   mark('oyun nesneleri');
@@ -566,8 +598,7 @@ function setupRace(order, laps, opts = {}) {
     startLights.go();
     play('go');
     driftCoachOnGo();
-    // Başlangıç turbosu: "BAŞLA" anında herkese verilir (zamanlama gerekmez)
-    hud.boostBanner('BAŞLANGIÇ TURBOSU!');
+    // Başlangıç turbosu: "BAŞLA" anında herkese verilir (zamanlama gerekmez); ekranda yazı yok, "BAŞLA!" bandı yeterli
     play('start_boost');
     for (const kart of order) {
       if (isOwned(kart)) kart.boost(KART.startBoost);
@@ -1406,6 +1437,7 @@ function updateHud(dt) {
   hud.setPosition(race.positionOf(player), elimMode && entry.eliminated ? race.entries.length : activeKarts.length);
   hud.setLap(Math.min(race.laps, Math.max(1, entry.lapsDone + 1)), race.laps);
   hud.setTime(entry.finishTime ?? Math.max(0, race.clock));
+  hud.setSplat(player.gullTime);
   if (elimMode) {
     const alive = race.entries.filter((e) => e.finishTime === null).length;
     hud.setElim(race.state === 'racing' && alive > 1 ? { left: race.elim.nextAt - race.clock, alive, danger: !entry.eliminated && race.positionOf(player) === alive } : null);

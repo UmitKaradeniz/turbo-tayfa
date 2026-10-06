@@ -95,6 +95,7 @@ function freeCharacter(room, wanted, exceptId) {
   return CHARACTERS.find((c) => !taken.has(c));
 }
 
+const ITEM_KINDS = ['turbo', 'shield', 'coconut', 'oil', 'gull', 'parrot'];
 const VEHICLES = ['balanced', 'agile', 'rocket', 'heavy', 'sprint'];
 const cleanVehicle = (v) => (VEHICLES.includes(v) ? v : null); // null = istemci karakterin varsayılan aracını kullanır
 
@@ -481,7 +482,7 @@ function handleMessage(ws, raw) {
     // --- Itemler ---
     case 'item': {
       // Fırlatılan hindistan cevizi / bırakılan yağ lekesi: diğerlerine duyur
-      if (room.phase !== 'racing' || !['coconut', 'oil'].includes(msg.kind)) return;
+      if (room.phase !== 'racing' || !['coconut', 'oil', 'gull', 'parrot', 'loot'].includes(msg.kind)) return;
       const owner = String(msg.owner ?? '');
       if (!controls(room, p, owner)) return;
       const id = String(msg.id ?? '');
@@ -491,6 +492,18 @@ function handleMessage(ws, raw) {
       room.lastItemAt.set(owner, t);
       room.things.set(id, { kind: msg.kind, t, consumed: false });
       const vec = (a) => (Array.isArray(a) && a.length === 3 && a.every(Number.isFinite) ? a : [0, 0, 0]);
+      if (['gull', 'parrot', 'loot'].includes(msg.kind)) {
+        // Anlık etkili eşyalar: hedef/alıcı ve (loot için) eşya adı doğrulanır
+        const out = { type: 'item', kind: msg.kind, id, owner };
+        if (msg.kind === 'gull' || msg.kind === 'parrot') out.target = String(msg.target ?? '').slice(0, 16);
+        if (msg.kind === 'loot') {
+          out.to = String(msg.to ?? '').slice(0, 16);
+          out.item = ITEM_KINDS.includes(msg.item) ? msg.item : null;
+          out.uses = msg.uses === 2 ? 2 : 1;
+        }
+        broadcast(room, out, p.id);
+        return;
+      }
       broadcast(room, { type: 'item', kind: msg.kind, id, owner, p: vec(msg.p), v: vec(msg.v) }, p.id);
       return;
     }

@@ -84,6 +84,7 @@ export class Kart {
     this.boostTime = 0; // turbo (item, mini-turbo, başlangıç)
     this.spinTime = 0; // isabet sonrası savrulma
     this.shieldTime = 0; // balon kalkan
+    this.gullTime = 0; // martı pisliği: görüşün kapalı, biraz yavaşsın
     this.events = []; // 'miniTurbo', 'hit', 'blocked' … (ses/efekt için, her karede boşaltılır)
 
     // Görsel interpolasyon için bir önceki fizik adımı
@@ -147,7 +148,7 @@ export class Kart {
     this.grade = 0;
     this.crestCool = 0;
     this.airTime = 0;
-    this.boostTime = this.spinTime = this.shieldTime = 0;
+    this.boostTime = this.spinTime = this.shieldTime = this.gullTime = 0;
   }
 
   boost(seconds) {
@@ -184,6 +185,7 @@ export class Kart {
     }
     this.shieldTime = Math.max(0, this.shieldTime - dt);
     this.boostTime = Math.max(0, this.boostTime - dt);
+    this.gullTime = Math.max(0, this.gullTime - dt);
 
     // Direksiyon: dijital girdiyi yumuşat
     this.steer += (input.steer - this.steer) * Math.min(1, KART.steerResponse * dt);
@@ -243,6 +245,7 @@ export class Kart {
     const grade = this.grounded ? -(n.x * _fwd.x + n.z * _fwd.z) / Math.max(0.3, n.y) : 0;
     this.grade += (grade - this.grade) * Math.min(1, 8 * dt);
     maxSpeed *= slopeSpeedMul(this.grade);
+    if (this.gullTime > 0) maxSpeed *= 0.94;
 
     // İleri/geri ivme
     if (this.grounded) {

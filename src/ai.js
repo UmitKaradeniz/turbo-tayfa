@@ -214,6 +214,11 @@ function decideItem(driver, kart, items, ctx, radius, progress, dt, input) {
       if (p.sneaky) input.useItem = (radius < 35 && behind < 45) || bored;
       else input.useItem = behind < 10 + 22 * p.attack || bored;
       break;
+    case 'gull':
+    case 'parrot':
+      // Önünde biri varsa kullanır (yoksa use() reddeder ve elde kalır)
+      input.useItem = place > 1 && (driver.itemHeld > 0.8 + 2 * (1 - p.attack) || bored);
+      break;
     case 'shield': {
       // Yaklaşan hindistan cevizi varsa ya da (savunmacıysa) öndeyse kalkanı aç
       let threat = false;

@@ -238,3 +238,155 @@ export function createBubble() {
   m.renderOrder = 3;
   return m;
 }
+
+// ---------- Martı, papağan ve fil donanımı (A: yeni eşyalar) ----------
+const flat = (color, extra = {}) => mat(color, { flatShading: true, roughness: 0.7, ...extra });
+const ball = (r, color, sx = 1, sy = 1, sz = 1) => {
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), flat(color));
+  m.scale.set(sx, sy, sz);
+  m.castShadow = true;
+  return m;
+};
+const cone = (r, h, color) => new THREE.Mesh(new THREE.ConeGeometry(r, h, 6), flat(color));
+
+// Kanat: iç kısım düz, dış kısım yukarı kıvrık (V silüeti); menteşe gövdede, dışa doğru uzanır
+function wing(len, wide, color, tip) {
+  const g = new THREE.Group();
+  const a = new THREE.Mesh(new THREE.BoxGeometry(len * 0.55, 0.07, wide), flat(color));
+  a.position.x = len * 0.275;
+  const outer = new THREE.Group();
+  outer.position.x = len * 0.55;
+  outer.rotation.z = 0.32;
+  const b = new THREE.Mesh(new THREE.BoxGeometry(len * 0.45, 0.075, wide * 0.78), flat(tip));
+  b.position.x = len * 0.225;
+  outer.add(b);
+  g.add(a, outer);
+  return g;
+}
+
+// Martı: beyaz gövde, gri uçlu kanatlar, turuncu gaga. Yerel +Z ileri.
+export function createGull() {
+  const g = new THREE.Group();
+  g.add(ball(0.5, 0xffffff, 0.8, 0.7, 1.35));
+  const head = ball(0.3, 0xffffff);
+  head.position.set(0, 0.28, 0.85);
+  const beak = cone(0.09, 0.4, 0xff9a1a);
+  beak.rotation.x = Math.PI / 2;
+  beak.position.set(0, 0.25, 1.28);
+  const eyeL = ball(0.045, 0x14213d);
+  eyeL.position.set(-0.17, 0.34, 1.04);
+  const eyeR = eyeL.clone();
+  eyeR.position.x = 0.17;
+  const tail = cone(0.28, 0.55, 0xdfe6ef);
+  tail.rotation.x = -Math.PI / 2;
+  tail.scale.z = 0.35;
+  tail.position.set(0, 0.04, -0.95);
+  const wl = wing(1.5, 0.75, 0xffffff, 0x4a5568);
+  wl.scale.x = -1;
+  wl.position.set(-0.3, 0.12, 0.05);
+  const wr = wing(1.5, 0.75, 0xffffff, 0x4a5568);
+  wr.position.set(0.3, 0.12, 0.05);
+  g.add(head, beak, eyeL, eyeR, tail, wl, wr);
+  g.userData.flap = (t) => {
+    const a = Math.sin(t * 15) * 0.65;
+    wl.rotation.z = -a;
+    wr.rotation.z = a;
+  };
+  return g;
+}
+
+// Papağan: kırmızı gövde, mavi-sarı kanat, uzun renkli kuyruk, kıvrık gaga
+export function createParrot() {
+  const g = new THREE.Group();
+  g.add(ball(0.42, 0xe8332c, 0.75, 0.75, 1.25));
+  const head = ball(0.3, 0xe8332c);
+  head.position.set(0, 0.34, 0.72);
+  const face = ball(0.2, 0xfff4d6, 0.9, 0.9, 0.5);
+  face.position.set(0, 0.34, 0.9);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 6), flat(0x3a3a3a));
+  beak.rotation.x = Math.PI / 2 + 0.5;
+  beak.position.set(0, 0.22, 1.05);
+  const eyeL = ball(0.05, 0x111111);
+  eyeL.position.set(-0.17, 0.42, 0.93);
+  const eyeR = eyeL.clone();
+  eyeR.position.x = 0.17;
+  g.add(head, face, beak, eyeL, eyeR);
+  [[0x1f6fe0, -0.14, 1.0], [0xffc21a, 0, 1.25], [0x22b573, 0.14, 1.0]].forEach(([c, x, len]) => {
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.04, len), flat(c));
+    f.position.set(x, -0.05, -0.55 - len / 2);
+    f.rotation.x = 0.12;
+    g.add(f);
+  });
+  const wl = wing(1.2, 0.65, 0x1f6fe0, 0xffc21a);
+  wl.scale.x = -1;
+  wl.position.set(-0.28, 0.1, 0.0);
+  const wr = wing(1.2, 0.65, 0x1f6fe0, 0xffc21a);
+  wr.position.set(0.28, 0.1, 0.0);
+  g.add(wl, wr);
+  g.userData.flap = (t) => {
+    const a = Math.sin(t * 19) * 0.75;
+    wl.rotation.z = -a;
+    wr.rotation.z = a;
+  };
+  return g;
+}
+
+// Martının attığı beyaz-yeşilimsi damla
+export function createGullDrop() {
+  const g = new THREE.Group();
+  const d = ball(0.22, 0xf4fff0, 0.8, 1.3, 0.8);
+  const t = ball(0.1, 0xb7e08a, 0.8, 1, 0.8);
+  t.position.set(0.05, 0.1, 0.05);
+  g.add(d, t);
+  return g;
+}
+
+// Papağanın taşıdığı hediye kutusu
+export function createGiftBox() {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.42, 0.5), flat(0xffd23f)));
+  const r1 = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.46, 0.1), flat(0xe8332c));
+  const r2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.46, 0.54), flat(0xe8332c));
+  g.add(r1, r2);
+  return g;
+}
+
+// Martı pisliği lekesi: kartın başına yapışan beyaz-yeşil topaklar ve süzülen damlalar
+export function createSplatBlob() {
+  const g = new THREE.Group();
+  const white = (r, x, y, z, sx = 1, sy = 0.55, sz = 1) => {
+    const m = ball(r, 0xf6fff0, sx, sy, sz);
+    m.position.set(x, y, z);
+    g.add(m);
+    return m;
+  };
+  white(0.78, 0, 2.0, 0, 1.2, 0.5, 1.1);
+  white(0.46, 0.55, 1.9, 0.18);
+  white(0.4, -0.58, 1.95, -0.14);
+  white(0.34, 0.08, 1.9, 0.62);
+  white(0.3, -0.2, 2.0, -0.55);
+  const green = ball(0.22, 0xb7e08a, 1, 0.6, 1);
+  green.position.set(0.2, 2.3, 0.15);
+  g.add(green);
+  const drips = [];
+  for (const [x, z, len] of [[0.75, 0.25, 0.7], [-0.7, 0.05, 0.55], [0.12, 0.75, 0.45]]) {
+    const d = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, len, 6), flat(0xf6fff0));
+    d.position.set(x, 1.75 - len / 2, z);
+    g.add(d);
+    drips.push([d, len]);
+  }
+  g.traverse((o) => {
+    if (o.material) {
+      o.material.emissive = new THREE.Color(0xdfeedd);
+      o.material.emissiveIntensity = 0.45;
+    }
+  });
+  g.userData.animate = (t) => {
+    drips.forEach(([d, len], i) => {
+      const k = 1 + Math.min(1.2, t * 0.5) * (0.4 + i * 0.2);
+      d.scale.y = k;
+      d.position.y = 1.75 - (len * k) / 2;
+    });
+  };
+  return g;
+}

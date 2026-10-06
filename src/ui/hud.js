@@ -23,6 +23,7 @@ export function createHud({ portraits, minimap, itemIcons }) {
     <button id="hud-fs" class="fs-btn" data-go="fullscreen" aria-label="Tam ekran"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path class="fs-in" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><path class="fs-out" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
     <div id="hud-item"><div class="slot"><img alt="" /></div><div class="key">E</div></div>
     <div id="hud-elim"><span class="lbl">ELEME</span><b class="sec">0</b><span class="alive"></span></div>
+    <div id="hud-splat" aria-hidden="true"><svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="#bfdcaa" stroke-width="7" stroke-linejoin="round"><circle cx="120" cy="82" r="50"/><circle cx="178" cy="72" r="40"/><circle cx="92" cy="128" r="34"/><circle cx="160" cy="120" r="38"/><circle cx="212" cy="104" r="26"/><rect x="100" y="120" width="16" height="92" rx="8"/><rect x="160" y="130" width="13" height="120" rx="6.5"/><circle cx="108" cy="212" r="10"/><circle cx="166" cy="250" r="9"/><circle cx="305" cy="168" r="40"/><circle cx="342" cy="146" r="28"/><circle cx="286" cy="208" r="27"/><circle cx="330" cy="196" r="22"/><rect x="292" y="205" width="12" height="74" rx="6"/><circle cx="298" cy="279" r="8"/><circle cx="62" cy="214" r="24"/><circle cx="86" cy="238" r="16"/><rect x="56" y="222" width="10" height="42" rx="5"/><circle cx="61" cy="266" r="7"/><circle cx="250" cy="60" r="16"/><circle cx="372" cy="90" r="14"/></g><g fill="#fbfff7"><circle cx="120" cy="82" r="50"/><circle cx="178" cy="72" r="40"/><circle cx="92" cy="128" r="34"/><circle cx="160" cy="120" r="38"/><circle cx="212" cy="104" r="26"/><rect x="100" y="120" width="16" height="92" rx="8"/><rect x="160" y="130" width="13" height="120" rx="6.5"/><circle cx="108" cy="212" r="10"/><circle cx="166" cy="250" r="9"/><circle cx="305" cy="168" r="40"/><circle cx="342" cy="146" r="28"/><circle cx="286" cy="208" r="27"/><circle cx="330" cy="196" r="22"/><rect x="292" y="205" width="12" height="74" rx="6"/><circle cx="298" cy="279" r="8"/><circle cx="62" cy="214" r="24"/><circle cx="86" cy="238" r="16"/><rect x="56" y="222" width="10" height="42" rx="5"/><circle cx="61" cy="266" r="7"/><circle cx="250" cy="60" r="16"/><circle cx="372" cy="90" r="14"/></g><g fill="#c8e6a8"><circle cx="140" cy="76" r="9"/><circle cx="196" cy="96" r="6"/><circle cx="104" cy="104" r="5"/><circle cx="312" cy="160" r="7"/><circle cx="294" cy="196" r="5"/><circle cx="66" cy="210" r="5"/></g><g fill="#fbfff7" stroke="#bfdcaa" stroke-width="2"><circle cx="30" cy="150" r="5"/><circle cx="250" cy="150" r="6"/><circle cx="230" cy="215" r="4"/><circle cx="380" cy="220" r="5"/><circle cx="20" cy="60" r="4"/></g></svg></div>
     <div id="hud-toast"></div>
     <div id="hud-coach"></div>
     <div id="hud-center"></div>
@@ -102,6 +103,8 @@ export function createHud({ portraits, minimap, itemIcons }) {
   const center = $('#hud-center');
   const toasts = $('#hud-toast');
   const coachEl = $('#hud-coach');
+  const splatEl = $('#hud-splat');
+  let lastSplat = 0;
   const elimEl = $('#hud-elim');
   const elimSec = elimEl.querySelector('.sec');
   const elimAlive = elimEl.querySelector('.alive');
@@ -154,6 +157,19 @@ export function createHud({ portraits, minimap, itemIcons }) {
     // Eleme anı duyurusu (ben: oyuncunun kendisi elendi)
     elimBanner(name, me) {
       banner(me ? 'ELENDİN!' : `${name} elendi`, me ? 'wrong' : 'final small');
+    },
+    // Martı pisliği: kalan süreye göre ekran lekesi (0 = gizle)
+    setSplat(left) {
+      if (left <= 0) {
+        if (lastSplat > 0) splatEl.classList.remove('on');
+        lastSplat = 0;
+        return;
+      }
+      if (lastSplat <= 0) {
+        splatEl.classList.add('on');
+      }
+      lastSplat = left;
+      splatEl.style.opacity = Math.min(1, left / 1.4).toFixed(2);
     },
     setPosition(p, total) {
       if (p !== lastPos) {
